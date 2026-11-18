@@ -4,6 +4,7 @@ import "./simulator.js";   // virtual hand (no phone needed)
 import "./recorder.js";    // record & replay
 import "./analytics.js";   // metrics, chart, event log
 import "./predictor.js";   // forecast fingertip position
-import "./pose.js";        // second twin: the phone's own orientation
+import "./pose.js";        // second twin: the phone's own orientation (smart parcel)
+import "./nav.js";         // left navigation between the twins
 
 start();

@@ -48,7 +48,8 @@
     <div class="stat"><b id="fps">–</b><span>detections / sec</span></div>
     <div class="stat"><b id="rtt">–</b><span>round trip to twin</span></div>
     <div class="stat" style="grid-column:span 2"><b><i id="swatch"></i><span id="twinGesture" style="color:inherit;font-size:16px">waiting…</span></b><span>what the twin says your hand is doing (feedback)</span></div>
-    <div class="stat" style="grid-column:span 2"><b id="twinPose">–</b><span>what the twin says this phone is doing (feedback)</span></div>
+    <div class="stat" style="grid-column:span 2"><b id="twinPose">–</b><span>parcel status from the pose twin (feedback)</span></div>
+    <div id="modeHint" style="grid-column:span 2;color:var(--muted);font-size:13px"></div>
   </div>
 
   <div class="row">
@@ -110,6 +111,19 @@ function connect() {
       if (m.event === "cleared") navigator.vibrate?.([80, 60, 80]);
       if (m.event === "color") navigator.vibrate?.(40);
     }
+    if (m.type === "parcel") {                         // parcel twin -> physical parcel tag
+      $("twinPose").textContent = `${m.text} · condition ${m.score}/100`;
+      $("twinPose").style.color = { ok: "var(--ok)", warn: "#ffd60a", crit: "var(--bad)" }[m.level] || "";
+      if (m.alert) navigator.vibrate?.(m.level === "crit" ? [200, 80, 200, 80, 200] : [150]);
+    }
+    if (m.type === "mode") {                           // which twin is open on the laptop
+      const pose = m.mode === "pose";
+      $("poseBtn").classList.toggle("secondary", !pose);
+      $("start").classList.toggle("secondary", pose);
+      $("modeHint").textContent = pose
+        ? "The twin shows the 📦 Phone pose twin - tap “Share phone pose”, then tilt, flip or bump the phone."
+        : "The twin shows ✍️ Hand drawing - tap “Start camera” and show your hand.";
+    }
   };
 }
 function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
@@ -167,7 +181,7 @@ $("flip").onclick = async () => { facing = facing === "user" ? "environment" : "
 // Second sensor: the phone's own orientation. The phone only reports raw angles
 // and how hard it is being shaken; the twin decides what that means.
 const pose = { alpha: null, beta: null, gamma: null, absolute: false };
-let accPeak = 0, poseOn = false;
+let accPeak = 0, gMin = Infinity, poseOn = false;
 
 function onOrientation(e) {
   pose.alpha = e.alpha; pose.beta = e.beta; pose.gamma = e.gamma; pose.absolute = !!e.absolute;
@@ -182,6 +196,9 @@ function onMotion(e) {
     a = Math.abs(Math.hypot(g.x, g.y, g.z) - 9.81);
   }
   accPeak = Math.max(accPeak, a);
+  // lowest total acceleration since the last send: ~9.8 at rest, near 0 while falling
+  const g = e.accelerationIncludingGravity;
+  if (g && g.x != null) gMin = Math.min(gMin, Math.hypot(g.x, g.y, g.z));
 }
 
 $("poseBtn").onclick = async () => {
@@ -205,9 +222,9 @@ $("poseBtn").onclick = async () => {
       if (pose.beta == null) return;
       const r = v => v == null ? null : +v.toFixed(1);
       send({ type: "pose", ts: Date.now(), alpha: r(pose.alpha), beta: r(pose.beta), gamma: r(pose.gamma),
-             absolute: pose.absolute, acc: +accPeak.toFixed(1) });
-      $("poseInfo").textContent = `α ${Math.round(pose.alpha ?? 0)}°  β ${Math.round(pose.beta)}°  γ ${Math.round(pose.gamma)}°  · shake ${accPeak.toFixed(1)} m/s²`;
-      accPeak = 0;
+             absolute: pose.absolute, acc: +accPeak.toFixed(1), gmin: isFinite(gMin) ? +gMin.toFixed(1) : null });
+      $("poseInfo").textContent = `α ${Math.round(pose.alpha ?? 0)}°  β ${Math.round(pose.beta)}°  γ ${Math.round(pose.gamma)}°  · shock ${(accPeak / 9.81).toFixed(1)} g`;
+      accPeak = 0; gMin = Infinity;
     }, 50);                                         // 20 updates per second
   } catch (e) {
     $("poseInfo").textContent = "Could not start motion sensors: " + e.message;

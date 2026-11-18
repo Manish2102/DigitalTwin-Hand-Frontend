@@ -81,7 +81,11 @@ function connect() {
 // Presence: the phone pings every second, so "connected" means "heard from it recently".
 function phoneSeen() {
   lastPhoneMsg = performance.now();
-  if (!twin.phones) { twin.phones = 1; logEvent("Phone connected", "ok"); sendFeedback(); updateConn(); }
+  if (!twin.phones) {
+    twin.phones = 1; logEvent("Phone connected", "ok"); sendFeedback(); updateConn();
+    showHint(false);
+    emit("phoneConnected");
+  }
 }
 setInterval(() => {
   if (twin.phones && performance.now() - lastPhoneMsg > 3000) {
@@ -89,18 +93,21 @@ setInterval(() => {
   }
 }, 1000);
 function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+export const sendToPhone = send;                 // for feature modules with their own messages
 export function sendFeedback(event) {
   send({ type: "feedback", gesture: twin.gesture, color: twin.color, poseState: twin.poseState, event });
 }
-let hintDismissed = false;
 function updateConn() {
   const on = twin.phones > 0;
   $("connDot").classList.toggle("on", on);
   $("conn").textContent = on ? "Phone: connected" : "Phone: offline";
-  $("hint").classList.toggle("hidden", on || twin.source !== "phone" || hintDismissed);
 }
-$("hintClose").onclick = () => { hintDismissed = true; updateConn(); };
-$("connPill").onclick = () => { hintDismissed = !hintDismissed; updateConn(); };
+// Connect-phone pop-up: shown on first load, hidden once a phone connects or the user closes it.
+export function showHint(show) { $("hint").classList.toggle("hidden", !show); }
+$("hintClose").onclick = () => showHint(false);
+$("hint").onclick = e => { if (e.target === $("hint")) showHint(false); };   // click outside the dialog
+$("connPill").onclick = () => showHint(true);
+$("connectBtn").onclick = () => showHint(true);
 
 // ------------------------------------------- sync: physical -> virtual
 // Single entry point for ALL inputs. The phone, the simulator and the replayer

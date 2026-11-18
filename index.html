@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hand Digital Twin</title>
+<title>Digital Twin Lab</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root { --bg:#0f1115; --panel:#1a1d24; --line:#2a2e37; --text:#e8eaed; --muted:#9aa0a6;
@@ -17,17 +17,31 @@
   header { display:flex; align-items:center; gap:12px; padding:10px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
   header h1 { font-size:17px; margin:0; }
   header .sub { color:var(--muted); font-size:13px; }
-  .pills { margin-left:auto; display:flex; gap:8px; }
+  .pills { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
   .pill { padding:4px 10px; border-radius:999px; background:var(--panel); border:1px solid var(--line); font-size:13px; }
   .pill b { font-weight:600; }
   .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--bad); margin-right:6px; }
   .dot.on { background:var(--ok); }
 
-  /* ---------- layout ---------- */
-  main { flex:1; display:grid; grid-template-columns:1fr 360px; min-height:0; }
+  /* ---------- app layout: left nav + active section ---------- */
+  .app { flex:1; display:grid; grid-template-columns:210px 1fr; min-height:0; }
+  nav.sections { border-right:1px solid var(--line); padding:12px 10px; display:flex; flex-direction:column; gap:6px; background:#13151a; }
+  nav.sections .navlabel { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); padding:4px 8px; }
+  .navbtn { display:flex; gap:10px; align-items:flex-start; text-align:left; width:100%; padding:10px; border-radius:10px;
+            border:1px solid transparent; background:transparent; }
+  .navbtn:hover:not(:disabled) { background:#1d2027; }
+  .navbtn.active { background:rgba(79,140,255,.12); border-color:rgba(79,140,255,.45); }
+  .navbtn .ico { font-size:20px; line-height:1.1; }
+  .navbtn b { display:block; font-size:14px; }
+  .navbtn small { display:block; color:var(--muted); font-size:12px; }
+  .navfoot { margin-top:auto; display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--muted); padding:0 4px; }
+  .navfoot button { width:100%; }
+
+  .section { display:none; grid-template-columns:1fr 360px; min-height:0; min-width:0; }
+  .section.active { display:grid; }
   .stagecol { display:flex; flex-direction:column; min-width:0; min-height:0; }
 
-  /* ---------- top toolbar ---------- */
+  /* ---------- toolbar ---------- */
   .toolbar { position:relative; display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; padding:8px 12px;
              border-bottom:1px solid var(--line); background:var(--panel); }
   .group { display:flex; align-items:center; gap:6px; }
@@ -57,15 +71,19 @@
   button.active { border-color:var(--accent); background:rgba(79,140,255,.15); }
   button.rec { border-color:var(--bad); color:var(--bad); background:rgba(255,69,58,.12); }
 
-  /* ---------- canvas ---------- */
+  /* ---------- hand canvas ---------- */
   #viewport { position:relative; flex:1; min-height:320px; }
   #viewport canvas { position:absolute; inset:0; width:100%; height:100%; }
-  #hint { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:16px; background:rgba(15,17,21,.6); }
+
+  /* ---------- connect-phone pop-up (shared by both sections) ---------- */
+  #hint { position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; background:rgba(8,9,12,.72); padding:16px; }
   #hint.hidden { display:none; }
+  #hint .dialog { position:relative; background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px;
+                  max-width:440px; display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; }
   #qr { background:#fff; padding:8px; border-radius:8px; }
   #phoneUrl { font-family:ui-monospace, monospace; color:var(--accent); word-break:break-all; }
 
-  /* ---------- sidebar ---------- */
+  /* ---------- sidebars ---------- */
   aside { border-left:1px solid var(--line); overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:12px; }
   .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px; }
   .card h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 8px; display:flex; align-items:center; }
@@ -84,7 +102,7 @@
   .gbar span { display:block; height:100%; }
   .glegend { display:flex; flex-wrap:wrap; gap:4px 10px; font-size:12px; margin-top:6px; }
   .glegend i { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:4px; }
-  #chart { width:100%; height:70px; display:block; margin-top:10px; background:#14171d; border-radius:6px; }
+  canvas.chart { width:100%; height:70px; display:block; margin-top:10px; background:#14171d; border-radius:6px; }
   .legend { display:flex; gap:12px; font-size:12px; color:var(--muted); margin-top:4px; }
   .legend i { display:inline-block; width:10px; height:2px; vertical-align:middle; margin-right:4px; }
   input[type=range] { flex:1; accent-color:var(--accent); }
@@ -92,27 +110,11 @@
   table { width:100%; border-collapse:collapse; font-size:13px; }
   td { padding:3px 0; vertical-align:top; }
   td:first-child { width:34px; font-size:16px; }
-  #log { list-style:none; margin:0; padding:0; max-height:170px; overflow:auto; font-size:12px; }
-  #log li { padding:3px 0; border-bottom:1px solid var(--line); }
-  #log time { color:var(--muted); margin-right:8px; font-variant-numeric:tabular-nums; }
-  #log li.ok { color:var(--ok); } #log li.warn { color:var(--bad); }
-  #log li.action { color:var(--warn); } #log li.source { color:var(--accent); }
-  /* ---------- phone pose twin (CSS 3D, no library) ---------- */
-  .pose-stage { position:relative; height:200px; perspective:700px; overflow:hidden; background:#14171d; border-radius:8px; margin-top:4px; }
-  .pose-stage.stale .pose-table { opacity:.35; }
-  .pose-table { position:absolute; left:50%; top:58%; width:0; height:0; transform-style:preserve-3d; transform:rotateX(55deg); transition:opacity .3s; }
-  .pose-grid { position:absolute; width:240px; height:240px; left:-120px; top:-120px; border:1px solid #2a2e37; border-radius:6px;
-               background-image:linear-gradient(#232731 1px, transparent 1px), linear-gradient(90deg, #232731 1px, transparent 1px); background-size:24px 24px; }
-  .pose-grid::after { content:"N"; position:absolute; top:4px; left:50%; transform:translateX(-50%); font-size:11px; color:var(--muted); }
-  .phone3d { position:absolute; left:0; top:0; width:0; height:0; transform-style:preserve-3d; }
-  .phone3d .face { position:absolute; width:64px; height:128px; left:-32px; top:-64px; border-radius:12px; backface-visibility:hidden;
-                   display:flex; flex-direction:column; align-items:center; justify-content:space-between; padding:6px 0; font-size:10px; color:#fff; }
-  .phone3d .front { transform:translateZ(4px); background:linear-gradient(160deg, #2c4f99, #4f8cff); border:3px solid #0b0d12; }
-  .phone3d .front i { width:14px; height:4px; border-radius:2px; background:#0b0d12; }
-  .phone3d .back { transform:rotateY(180deg) translateZ(4px); background:linear-gradient(160deg, #3a3f4b, #23262e); border:3px solid #0b0d12; }
-  .phone3d .back i { width:16px; height:16px; border-radius:50%; background:#0b0d12; border:2px solid #555; align-self:flex-start; margin-left:8px; }
-  #pState { font-size:17px; font-weight:700; }
-
+  .log { list-style:none; margin:0; padding:0; max-height:170px; overflow:auto; font-size:12px; }
+  .log li { padding:3px 0; border-bottom:1px solid var(--line); }
+  .log time { color:var(--muted); margin-right:8px; font-variant-numeric:tabular-nums; }
+  .log li.ok { color:var(--ok); } .log li.warn { color:var(--bad); }
+  .log li.action { color:var(--warn); } .log li.source { color:var(--accent); }
   details summary { cursor:pointer; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
   details[open] summary { margin-bottom:8px; }
   pre { margin:0; font:11px/1.4 ui-monospace, monospace; color:var(--muted); max-height:180px; overflow:auto; white-space:pre-wrap; }
@@ -120,9 +122,60 @@
   dt { font-weight:600; margin-top:6px; }
   dd { margin:0; color:var(--muted); }
 
-  @media (max-width: 900px) {
-    main { grid-template-columns:1fr; }
+  /* ---------- parcel monitor (CSS 3D, no library) ---------- */
+  .pose-stage { position:relative; flex:1; min-height:360px; perspective:1000px; overflow:hidden;
+                background:radial-gradient(ellipse at 50% 40%, #1a1e27 0%, #0f1115 70%); }
+  .pose-stage::after { content:""; position:absolute; inset:0; pointer-events:none; border:3px solid transparent; transition:border-color .2s; }
+  .pose-stage.ok::after { border-color:rgba(52,199,89,.35); }
+  .pose-stage.warn::after { border-color:rgba(255,214,10,.75); }
+  .pose-stage.crit::after { border-color:rgba(255,69,58,.9); }
+  .pose-stage.stale .pose-table { opacity:.35; }
+  .pose-banner { position:absolute; top:14px; left:50%; transform:translateX(-50%); padding:6px 16px; border-radius:18px; font-weight:700;
+                 background:var(--panel); border:1px solid var(--line); z-index:2; width:max-content; max-width:calc(100% - 32px); text-align:center; }
+  .pose-banner.ok { color:var(--ok); } .pose-banner.warn { color:var(--warn); } .pose-banner.crit { color:var(--bad); }
+  .pose-flash { position:absolute; inset:0; background:rgba(255,69,58,.25); opacity:0; pointer-events:none; transition:opacity .5s; }
+  .pose-flash.on { opacity:1; transition:none; }
+  .pose-table { position:absolute; left:50%; top:60%; width:0; height:0; transform-style:preserve-3d; transform:rotateX(58deg); transition:opacity .3s; }
+  .pose-grid { position:absolute; width:520px; height:520px; left:-260px; top:-260px; border:1px solid #2a2e37; border-radius:10px;
+               background-image:linear-gradient(#20242c 1px, transparent 1px), linear-gradient(90deg, #20242c 1px, transparent 1px); background-size:40px 40px; }
+  .pose-grid::after { content:"N"; position:absolute; top:6px; left:50%; transform:translateX(-50%); font-size:13px; color:var(--muted); }
+  .model3d { position:absolute; left:0; top:0; width:0; height:0; transform-style:preserve-3d; }
+  .model3d.hidden { display:none; }
+  .model3d .face { position:absolute; backface-visibility:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center;
+                   gap:4px; font-weight:800; letter-spacing:.04em; color:#3b2a18; text-align:center; }
+  /* parcel: 140 (x) × 190 (y) × 100 (z) */
+  .parcel .face { background:linear-gradient(135deg, #c99a68, #a8784a); border:2px solid #7a5532; }
+  .parcel .top    { width:140px; height:190px; left:-70px; top:-95px; transform:translateZ(50px); }
+  .parcel .top::before { content:""; position:absolute; left:58px; top:0; width:24px; height:100%; background:rgba(255,255,255,.18); }
+  .parcel .bottom { width:140px; height:190px; left:-70px; top:-95px; transform:rotateY(180deg) translateZ(50px); color:#5a3d22; }
+  .parcel .north  { width:140px; height:100px; left:-70px; top:-50px; transform:rotateX(90deg) translateZ(95px); }
+  .parcel .south  { width:140px; height:100px; left:-70px; top:-50px; transform:rotateX(-90deg) translateZ(95px); }
+  .parcel .east   { width:100px; height:190px; left:-50px; top:-95px; transform:rotateY(90deg) translateZ(70px); }
+  .parcel .west   { width:100px; height:190px; left:-50px; top:-95px; transform:rotateY(-90deg) translateZ(70px); }
+  .parcel .arrow { font-size:30px; line-height:1; color:#3b2a18; }
+  .parcel .fragile { color:#b3261e; font-size:12px; border:2px solid #b3261e; padding:1px 5px; border-radius:4px; }
+  /* phone: 76 × 156 × 10 */
+  .phone .face { width:76px; height:156px; left:-38px; top:-78px; border-radius:14px; border:3px solid #0b0d12; color:#fff; font-size:11px; }
+  .phone .front { transform:translateZ(5px); background:linear-gradient(160deg, #2c4f99, #4f8cff); justify-content:space-between; padding:8px 0; }
+  .phone .front i { width:16px; height:4px; border-radius:2px; background:#0b0d12; }
+  .phone .back { transform:rotateY(180deg) translateZ(5px); background:linear-gradient(160deg, #3a3f4b, #23262e); }
+  #pStatus { font-size:20px; font-weight:800; }
+  #pStatus.ok { color:var(--ok); } #pStatus.warn { color:var(--warn); } #pStatus.crit { color:var(--bad); }
+  .score { display:flex; align-items:baseline; gap:8px; margin-top:6px; }
+  .score b { font-size:34px; font-variant-numeric:tabular-nums; }
+  .scorebar { height:8px; border-radius:4px; background:var(--line); overflow:hidden; margin-top:4px; }
+  .scorebar i { display:block; height:100%; width:100%; background:var(--ok); transition:width .3s, background .3s; }
+  .rules label { justify-content:space-between; font-size:13px; margin-top:6px; }
+  .rules input[type=range] { max-width:140px; }
+
+  @media (max-width: 1000px) {
+    .app { grid-template-columns:1fr; }
+    nav.sections { flex-direction:row; border-right:0; border-bottom:1px solid var(--line); overflow-x:auto; }
+    nav.sections .navlabel, .navfoot { display:none; }
+    .navbtn { width:auto; flex:1; }
+    .section.active { grid-template-columns:1fr; }
     #viewport { height:60vh; flex:none; }
+    .pose-stage { height:55vh; flex:none; }
     aside { border-left:0; border-top:1px solid var(--line); }
     .sep { display:none; }
   }
@@ -131,189 +184,296 @@
 <body>
 <header>
   <div>
-    <h1>Digital Twin · Hand</h1>
-    <div class="sub">A live virtual copy of your hand, built from your phone's camera</div>
+    <h1>Digital Twin Lab</h1>
+    <div class="sub">Your phone is the sensor - this page is the live virtual copy</div>
   </div>
   <div class="pills">
     <span class="pill" title="Your private room - only phones that scan this page's QR code can join">Room: <b id="roomCode">…</b></span>
-    <span class="pill">Source: <b id="source">Live phone</b></span>
-    <span class="pill" id="connPill" style="cursor:pointer" title="Show phone connection help"><i class="dot" id="connDot"></i><span id="conn">Phone: offline</span></span>
+    <span class="pill">Hand source: <b id="source">Live phone</b></span>
+    <span class="pill" id="connPill" style="cursor:pointer" title="Show how to connect the phone"><i class="dot" id="connDot"></i><span id="conn">Phone: offline</span></span>
   </div>
 </header>
 
-<main>
-  <div class="stagecol">
-    <!-- ================= top toolbar ================= -->
-    <div class="toolbar">
-      <div class="group" title="Pen color - also sent to the phone">
-        <span class="glabel">Pen</span>
-        <div class="palette" id="palette"></div>
-        <label class="colorpick" id="colorPick" title="Custom color"><input type="color" id="customColor" value="#ff9f0a"></label>
-      </div>
-      <div class="group" title="Brush size">
-        <div class="seg" id="sizes">
-          <button data-size="3" title="Thin"><i style="width:4px;height:4px"></i></button>
-          <button data-size="6" title="Medium" class="sel"><i style="width:8px;height:8px"></i></button>
-          <button data-size="12" title="Thick"><i style="width:12px;height:12px"></i></button>
+<div class="app">
+  <!-- ================= left navigation ================= -->
+  <nav class="sections">
+    <div class="navlabel">Twins</div>
+    <button class="navbtn active" data-section="hand">
+      <span class="ico">✍️</span>
+      <span><b>Hand drawing</b><small>Camera · gestures · drawing</small></span>
+    </button>
+    <button class="navbtn" data-section="pose">
+      <span class="ico">📦</span>
+      <span><b>Phone pose twin</b><small>Motion sensors · smart parcel</small></span>
+    </button>
+    <div class="navfoot">
+      <button id="connectBtn">📲 Connect phone</button>
+      <span>One phone can feed both twins at the same time.</span>
+    </div>
+  </nav>
+
+  <!-- ================= section 1: hand drawing ================= -->
+  <section class="section active" id="sec-hand">
+    <div class="stagecol">
+      <div class="toolbar">
+        <div class="group" title="Pen color - also sent to the phone">
+          <span class="glabel">Pen</span>
+          <div class="palette" id="palette"></div>
+          <label class="colorpick" id="colorPick" title="Custom color"><input type="color" id="customColor" value="#ff9f0a"></label>
         </div>
-      </div>
-      <span class="sep"></span>
-      <div class="group">
-        <span class="glabel">Canvas</span>
-        <button id="undo" title="Undo last stroke (Ctrl+Z)">↶ Undo</button>
-        <button id="clear">Clear</button>
-        <button id="save">Save PNG</button>
-      </div>
-      <span class="sep"></span>
-      <div class="group">
-        <span class="glabel">Input</span>
-        <button id="simBtn" title="Drive the twin with a virtual hand - no phone needed">▶ Simulate hand</button>
-      </div>
-      <span class="sep"></span>
-      <div class="group">
-        <span class="glabel">History</span>
-        <button id="recBtn">● Record</button>
-        <button id="replayBtn" disabled>▶ Replay</button>
-        <select id="speedSel" title="Replay speed">
-          <option value="1">1×</option><option value="2">2×</option><option value="4">4×</option>
-        </select>
-        <button id="dlBtn" disabled title="Download recording as JSON">⤓</button>
-        <button id="loadBtn" title="Load a recording">⤒ Load</button>
-        <input type="file" id="loadInput" accept="application/json,.json" hidden>
-      </div>
-      <div class="tstatus"><span id="simStatus"></span><span id="recInfo"></span></div>
-      <div class="progress"><i id="replayBar"></i></div>
-    </div>
-
-    <!-- ================= canvas ================= -->
-    <section id="viewport">
-      <canvas id="drawLayer"></canvas>
-      <canvas id="handLayer"></canvas>
-      <div id="hint">
-        <button id="hintClose" title="Hide (click the Phone pill to show again)" style="position:absolute;top:12px;right:12px">✕</button>
-        <div style="font-size:16px;font-weight:600">Connect your phone (the sensor)</div>
-        <div id="qr"></div>
-        <div>Scan with your phone's camera, or open<br><a id="phoneUrl" target="_blank" rel="noopener">…</a><br>
-          <span style="color:var(--muted)">Any network works - Wi-Fi or mobile data. Allow the camera, then tap “Start camera”.</span></div>
-        <div style="color:var(--muted);font-size:13px">No phone handy? Use <b>▶ Simulate hand</b> in the toolbar.
-          · <button id="newRoom" title="Start over with a fresh private room">New room</button></div>
-      </div>
-    </section>
-  </div>
-
-  <!-- ================= sidebar ================= -->
-  <aside>
-    <div class="card">
-      <h2>Twin state</h2>
-      <div id="gesture">No hand</div>
-      <div class="fingers" id="fingers"></div>
-      <div class="metrics">
-        <div><b id="rate">0</b><span>updates / sec</span></div>
-        <div><b id="age">–</b><span>data age</span></div>
-        <div><b id="phoneFps">–</b><span>phone detections / sec</span></div>
-        <div><b id="rtt">–</b><span>phone ↔ twin round trip</span></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Phone pose twin <span class="tag">second asset</span></h2>
-      <div id="pState">No pose data</div>
-      <div class="pose-stage stale" id="poseStage">
-        <div class="pose-table">
-          <div class="pose-grid"></div>
-          <div class="phone3d" id="phone3d">
-            <div class="face front"><i></i><span>TOP ↑</span><span></span></div>
-            <div class="face back"><i></i><span>back</span></div>
+        <div class="group" title="Brush size">
+          <div class="seg" id="sizes">
+            <button data-size="3" title="Thin"><i style="width:4px;height:4px"></i></button>
+            <button data-size="6" title="Medium" class="sel"><i style="width:8px;height:8px"></i></button>
+            <button data-size="12" title="Thick"><i style="width:12px;height:12px"></i></button>
           </div>
         </div>
+        <span class="sep"></span>
+        <div class="group">
+          <span class="glabel">Canvas</span>
+          <button id="undo" title="Undo last stroke (Ctrl+Z)">↶ Undo</button>
+          <button id="clear">Clear</button>
+          <button id="save">Save PNG</button>
+        </div>
+        <span class="sep"></span>
+        <div class="group">
+          <span class="glabel">Input</span>
+          <button id="simBtn" title="Drive the twin with a virtual hand - no phone needed">▶ Simulate hand</button>
+        </div>
+        <span class="sep"></span>
+        <div class="group">
+          <span class="glabel">History</span>
+          <button id="recBtn">● Record</button>
+          <button id="replayBtn" disabled>▶ Replay</button>
+          <select id="speedSel" title="Replay speed">
+            <option value="1">1×</option><option value="2">2×</option><option value="4">4×</option>
+          </select>
+          <button id="dlBtn" disabled title="Download recording as JSON">⤓</button>
+          <button id="loadBtn" title="Load a recording">⤒ Load</button>
+          <input type="file" id="loadInput" accept="application/json,.json" hidden>
+        </div>
+        <div class="tstatus"><span id="simStatus"></span><span id="recInfo"></span></div>
+        <div class="progress"><i id="replayBar"></i></div>
       </div>
-      <div class="metrics" style="grid-template-columns:repeat(4,1fr)">
-        <div><b id="pAlpha">–</b><span>heading α</span></div>
-        <div><b id="pBeta">–</b><span>front/back β</span></div>
-        <div><b id="pGamma">–</b><span>left/right γ</span></div>
-        <div><b id="pTilt">–</b><span>tilt</span></div>
+
+      <div id="viewport">
+        <canvas id="drawLayer"></canvas>
+        <canvas id="handLayer"></canvas>
       </div>
-      <div class="row" style="margin-top:8px">
-        <button id="poseDemo">▶ Demo</button>
-        <button id="poseRecenter" title="Treat the phone's current heading as straight ahead">Recenter</button>
-        <label style="font-size:12px"><input type="checkbox" id="shakeOn" checked> Shake phone to clear</label>
-      </div>
-      <div class="note">On the phone, tap <b>📱 Share phone pose</b>. Tilt or turn it and the virtual phone follows.</div>
     </div>
 
-    <div class="card">
-      <h2>Analytics <span class="tag">monitoring</span></h2>
-      <div class="metrics">
-        <div><b id="aSpeed">–</b><span>fingertip speed (px/s)</span></div>
-        <div><b id="aSteady">–</b><span>steadiness (0–100)</span></div>
-        <div><b id="aStalls">0</b><span>data stalls (&gt;250 ms)</span></div>
-        <div><b id="aStrokes">0</b><span>strokes on canvas</span></div>
+    <aside>
+      <div class="card">
+        <h2>Twin state</h2>
+        <div id="gesture">No hand</div>
+        <div class="fingers" id="fingers"></div>
+        <div class="metrics">
+          <div><b id="rate">0</b><span>updates / sec</span></div>
+          <div><b id="age">–</b><span>data age</span></div>
+          <div><b id="phoneFps">–</b><span>phone detections / sec</span></div>
+          <div><b id="rtt">–</b><span>phone ↔ twin round trip</span></div>
+        </div>
       </div>
-      <canvas id="chart"></canvas>
-      <div class="legend"><span><i style="background:#4f8cff"></i>speed</span><span><i style="background:#ffd60a"></i>round trip</span><span>last 30 s</span></div>
-      <div class="gbar" id="gBar"></div>
-      <div class="glegend" id="gLegend"></div>
-      <div class="row" style="margin-top:8px"><button id="aReset">Reset stats</button></div>
-    </div>
 
-    <div class="card">
-      <h2>Prediction <span class="tag">predictive twin</span></h2>
-      <label><input type="checkbox" id="predOn" checked> Show predicted fingertip (yellow ghost)</label>
-      <div class="row" style="margin-top:8px">
-        <span style="font-size:12px;color:var(--muted)">Look-ahead</span>
-        <input type="range" id="predH" min="0" max="300" step="25" value="150">
-        <b id="predHVal" style="font-size:13px;width:52px;text-align:right">150 ms</b>
+      <div class="card">
+        <h2>Analytics <span class="tag">monitoring</span></h2>
+        <div class="metrics">
+          <div><b id="aSpeed">–</b><span>fingertip speed (px/s)</span></div>
+          <div><b id="aSteady">–</b><span>steadiness (0–100)</span></div>
+          <div><b id="aStalls">0</b><span>data stalls (&gt;250 ms)</span></div>
+          <div><b id="aStrokes">0</b><span>strokes on canvas</span></div>
+        </div>
+        <canvas class="chart" id="chart"></canvas>
+        <div class="legend"><span><i style="background:#4f8cff"></i>speed</span><span><i style="background:#ffd60a"></i>round trip</span><span>last 30 s</span></div>
+        <div class="gbar" id="gBar"></div>
+        <div class="glegend" id="gLegend"></div>
+        <div class="row" style="margin-top:8px"><button id="aReset">Reset stats</button></div>
       </div>
-      <div class="metrics">
-        <div><b id="predErr">–</b><span>error with prediction</span></div>
-        <div><b id="baseErr">–</b><span>error without</span></div>
-        <div><b id="predGain">–</b><span>improvement</span></div>
+
+      <div class="card">
+        <h2>Prediction <span class="tag">predictive twin</span></h2>
+        <label><input type="checkbox" id="predOn" checked> Show predicted fingertip (yellow ghost)</label>
+        <div class="row" style="margin-top:8px">
+          <span style="font-size:12px;color:var(--muted)">Look-ahead</span>
+          <input type="range" id="predH" min="0" max="300" step="25" value="150">
+          <b id="predHVal" style="font-size:13px;width:52px;text-align:right">150 ms</b>
+        </div>
+        <div class="metrics">
+          <div><b id="predErr">–</b><span>error with prediction</span></div>
+          <div><b id="baseErr">–</b><span>error without</span></div>
+          <div><b id="predGain">–</b><span>improvement</span></div>
+        </div>
+        <div class="note">The twin forecasts where your finger will be, then checks each forecast when that moment arrives.</div>
       </div>
-      <div class="note">The twin forecasts where your finger will be, then checks each forecast when that moment arrives.</div>
+
+      <div class="card">
+        <h2>Gestures</h2>
+        <table>
+          <tr><td>☝️</td><td><b>Index finger up</b> - draw</td></tr>
+          <tr><td>✌️</td><td><b>Two fingers</b> - move without drawing</td></tr>
+          <tr><td>✋</td><td><b>Open palm, hold 1 s</b> - clear</td></tr>
+          <tr><td>✊</td><td><b>Fist</b> - pause</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Event log</h2>
+        <ul class="log" id="log"></ul>
+      </div>
+
+      <div class="card">
+        <details>
+          <summary>Why this is a digital twin</summary>
+          <dl>
+            <dt>1 · Physical entity</dt><dd>Your real hand.</dd>
+            <dt>2 · Sensor</dt><dd>Phone camera + on-device ML turns video into 21 3D joint positions.</dd>
+            <dt>3 · Data link</dt><dd>WebSocket stream, ~30 updates/sec, through a cloud relay in a private room.</dd>
+            <dt>4 · Virtual model</dt><dd>The skeleton: a live copy of the hand's state.</dd>
+            <dt>5 · Intelligence</dt><dd>Fingers up → gesture → action (draw / clear).</dd>
+            <dt>6 · Feedback loop</dt><dd>Gesture, color and vibration sent back to the phone.</dd>
+            <dt>7 · Monitoring</dt><dd>Speed, steadiness, link health and gesture time, live.</dd>
+            <dt>8 · History</dt><dd>Record a session and replay it - the twin re-lives the past.</dd>
+            <dt>9 · Simulation</dt><dd>A virtual hand drives the same twin with no hardware.</dd>
+            <dt>10 · Prediction</dt><dd>Forecasts the fingertip ahead in time and measures its own accuracy.</dd>
+          </dl>
+        </details>
+      </div>
+
+      <div class="card">
+        <details>
+          <summary>Live twin state (raw)</summary>
+          <pre id="state">{}</pre>
+        </details>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ================= section 2: phone pose twin / smart parcel ================= -->
+  <section class="section" id="sec-pose">
+    <div class="stagecol">
+      <div class="toolbar">
+        <div class="group">
+          <span class="glabel">Shipment</span>
+          <button id="pNew" title="Reset the score and incident log">⟲ New shipment</button>
+          <button id="pDemo" title="Play a scripted delivery trip - no phone needed">▶ Simulate delivery trip</button>
+        </div>
+        <span class="sep"></span>
+        <div class="group">
+          <span class="glabel">View</span>
+          <div class="seg" id="pModel">
+            <button data-model="parcel" class="sel">📦 Parcel</button>
+            <button data-model="phone">📱 Phone</button>
+          </div>
+          <button id="pRecenter" title="Treat the phone's current heading as straight ahead">⌖ Recenter</button>
+        </div>
+        <div class="tstatus"><span id="pDemoStatus"></span></div>
+      </div>
+
+      <div class="pose-stage stale ok" id="poseStage">
+        <div class="pose-banner ok" id="pBanner">Waiting for phone sensors…</div>
+        <div class="pose-table">
+          <div class="pose-grid"></div>
+          <div class="model3d parcel" id="parcel3d">
+            <div class="face top"><span class="arrow">▲▲</span><span>THIS SIDE UP</span><span class="fragile">FRAGILE</span></div>
+            <div class="face bottom">BOTTOM</div>
+            <div class="face north"><span class="arrow">▲</span><span class="fragile">FRAGILE</span></div>
+            <div class="face south"><span class="arrow">▲</span><span class="fragile">FRAGILE</span></div>
+            <div class="face east"><span class="arrow">▲</span><span>HANDLE<br>WITH CARE</span></div>
+            <div class="face west"><span class="arrow">▲</span><span>HANDLE<br>WITH CARE</span></div>
+          </div>
+          <div class="model3d phone hidden" id="phone3d">
+            <div class="face front"><i></i><span>TOP ↑</span><span></span></div>
+            <div class="face back">back</div>
+          </div>
+        </div>
+        <div class="pose-flash" id="pFlash"></div>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>Gestures</h2>
-      <table>
-        <tr><td>☝️</td><td><b>Index finger up</b> - draw</td></tr>
-        <tr><td>✌️</td><td><b>Two fingers</b> - move without drawing</td></tr>
-        <tr><td>✋</td><td><b>Open palm, hold 1 s</b> - clear</td></tr>
-        <tr><td>✊</td><td><b>Fist</b> - pause</td></tr>
-      </table>
-    </div>
+    <aside>
+      <div class="card">
+        <h2>Parcel status <span class="tag">live</span></h2>
+        <div id="pStatus" class="ok">–</div>
+        <div class="score"><b id="pScore">100</b><span id="pGrade" style="color:var(--muted)">condition score</span></div>
+        <div class="scorebar"><i id="pScoreBar"></i></div>
+        <div class="metrics" style="grid-template-columns:repeat(3,1fr)">
+          <div><b id="pTilt">–</b><span>tilt now</span></div>
+          <div><b id="pMaxTilt">–</b><span>max tilt</span></div>
+          <div><b id="pMaxG">–</b><span>max shock</span></div>
+          <div><b id="pUpright">–</b><span>time within limits</span></div>
+          <div><b id="pIncCount">0</b><span>incidents</span></div>
+          <div><b id="pDuration">0:00</b><span>trip time</span></div>
+        </div>
+      </div>
 
-    <div class="card">
-      <h2>Event log</h2>
-      <ul id="log"></ul>
-    </div>
+      <div class="card rules">
+        <h2>Shipping rules <span class="tag">set by you</span></h2>
+        <label>Max tilt <span class="row" style="gap:6px"><input type="range" id="pMaxTiltRule" min="15" max="80" step="5" value="45"><b id="pMaxTiltVal" style="width:34px">45°</b></span></label>
+        <label>Shock limit
+          <select id="pShockRule">
+            <option value="1">1.0 g</option><option value="1.5" selected>1.5 g</option><option value="2">2.0 g</option><option value="3">3.0 g</option>
+          </select></label>
+        <label>Upside down <span style="color:var(--bad)">never allowed</span></label>
+        <label>Drop / free fall <span style="color:var(--bad)">always an incident</span></label>
+      </div>
 
-    <div class="card">
-      <details>
-        <summary>Why this is a digital twin</summary>
-        <dl>
-          <dt>1 · Physical entity</dt><dd>Your real hand.</dd>
-          <dt>2 · Sensor</dt><dd>Phone camera + on-device ML turns video into 21 3D joint positions.</dd>
-          <dt>3 · Data link</dt><dd>WebSocket stream, ~30 updates/sec, through a cloud relay in a private room.</dd>
-          <dt>4 · Virtual model</dt><dd>The skeleton: a live copy of the hand's state.</dd>
-          <dt>5 · Intelligence</dt><dd>Fingers up → gesture → action (draw / clear).</dd>
-          <dt>6 · Feedback loop</dt><dd>Gesture, color and vibration sent back to the phone.</dd>
-          <dt>7 · Monitoring</dt><dd>Speed, steadiness, link health and gesture time, live.</dd>
-          <dt>8 · History</dt><dd>Record a session and replay it - the twin re-lives the past.</dd>
-          <dt>9 · Simulation</dt><dd>A virtual hand drives the same twin with no hardware.</dd>
-          <dt>10 · Prediction</dt><dd>Forecasts the fingertip ahead in time and measures its own accuracy.</dd>
-          <dt>11 · Multiple assets</dt><dd>The phone itself has a twin too: its orientation is mirrored in 3D, classified (flat, upright…) and a shake clears the canvas.</dd>
-        </dl>
-      </details>
-    </div>
+      <div class="card">
+        <h2>Live sensors <span class="tag">last 60 s</span></h2>
+        <canvas class="chart" id="pTiltChart"></canvas>
+        <div class="legend"><span><i style="background:#4f8cff"></i>tilt (°)</span><span><i style="background:#ff453a"></i>limit</span></div>
+        <canvas class="chart" id="pShockChart"></canvas>
+        <div class="legend"><span><i style="background:#ffd60a"></i>shock (g)</span><span><i style="background:#ff453a"></i>limit</span></div>
+        <div class="metrics" style="grid-template-columns:repeat(3,1fr)">
+          <div><b id="pAlpha">–</b><span>heading α</span></div>
+          <div><b id="pBeta">–</b><span>front/back β</span></div>
+          <div><b id="pGamma">–</b><span>left/right γ</span></div>
+        </div>
+      </div>
 
-    <div class="card">
-      <details>
-        <summary>Live twin state (raw)</summary>
-        <pre id="state">{}</pre>
-      </details>
-    </div>
-  </aside>
-</main>
+      <div class="card">
+        <h2>Incident timeline</h2>
+        <ul class="log" id="pIncidents"><li style="color:var(--muted)">No incidents - handle with care!</li></ul>
+      </div>
+
+      <div class="card">
+        <h2>Delivery report</h2>
+        <div class="note" style="margin-top:0">Summary of this shipment for the receiver: duration, incidents, worst tilt and shock, and the final condition.</div>
+        <div class="row" style="margin-top:8px"><button id="pReport">⤓ Download report</button></div>
+      </div>
+
+      <div class="card">
+        <details>
+          <summary>Why this is a digital twin</summary>
+          <dl>
+            <dt>Scenario</dt><dd>The phone is the sensor tag on a fragile parcel (lab samples, glassware, electronics) in transit.</dd>
+            <dt>1 · Physical entity</dt><dd>The parcel - represented by your phone.</dd>
+            <dt>2 · Sensors</dt><dd>Gyroscope + accelerometer: orientation (α, β, γ), shocks and free fall, 20×/sec.</dd>
+            <dt>3 · Virtual model</dt><dd>The 3D parcel follows the real one in real time.</dd>
+            <dt>4 · Rules &amp; intelligence</dt><dd>The twin checks every reading against the shipping rules and detects tilts, flips, shocks and drops.</dd>
+            <dt>5 · Monitoring &amp; history</dt><dd>Condition score, live charts and an incident timeline.</dd>
+            <dt>6 · Feedback loop</dt><dd>The phone shows the parcel status and vibrates on every incident.</dd>
+            <dt>7 · Simulation</dt><dd>“Simulate delivery trip” replays a realistic trip with no hardware.</dd>
+            <dt>8 · Reporting</dt><dd>A delivery report proves how the parcel was handled.</dd>
+          </dl>
+        </details>
+      </div>
+    </aside>
+  </section>
+</div>
+
+<!-- ================= connect-phone pop-up ================= -->
+<div id="hint">
+  <div class="dialog">
+    <button id="hintClose" title="Close (open again from 📲 Connect phone)" style="position:absolute;top:12px;right:12px">✕</button>
+    <div style="font-size:16px;font-weight:600">Connect your phone (the sensor)</div>
+    <div id="qr"></div>
+    <div>Scan with your phone's camera, or open<br><a id="phoneUrl" target="_blank" rel="noopener">…</a><br>
+      <span style="color:var(--muted)">Any network works - Wi-Fi or mobile data.<br>
+      Then tap <b>Start camera</b> (hand twin) and/or <b>📱 Share phone pose</b> (pose twin).</span></div>
+    <div style="color:var(--muted);font-size:13px">No phone handy? Use the simulate buttons in each section.
+      · <button id="newRoom" title="Start over with a fresh private room">New room</button></div>
+  </div>
+</div>
 
 <script type="module" src="js/app.js"></script>
 </body>
