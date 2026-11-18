@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hand Digital Twin</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root { --bg:#0f1115; --panel:#1a1d24; --line:#2a2e37; --text:#e8eaed; --muted:#9aa0a6;
+          --ok:#34c759; --warn:#ffd60a; --bad:#ff453a; --accent:#4f8cff; }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 system-ui, -apple-system, sans-serif;
+         display:flex; flex-direction:column; }
+
+  /* ---------- header ---------- */
+  header { display:flex; align-items:center; gap:12px; padding:10px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  header h1 { font-size:17px; margin:0; }
+  header .sub { color:var(--muted); font-size:13px; }
+  .pills { margin-left:auto; display:flex; gap:8px; }
+  .pill { padding:4px 10px; border-radius:999px; background:var(--panel); border:1px solid var(--line); font-size:13px; }
+  .pill b { font-weight:600; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--bad); margin-right:6px; }
+  .dot.on { background:var(--ok); }
+
+  /* ---------- layout ---------- */
+  main { flex:1; display:grid; grid-template-columns:1fr 360px; min-height:0; }
+  .stagecol { display:flex; flex-direction:column; min-width:0; min-height:0; }
+
+  /* ---------- top toolbar ---------- */
+  .toolbar { position:relative; display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; padding:8px 12px;
+             border-bottom:1px solid var(--line); background:var(--panel); }
+  .group { display:flex; align-items:center; gap:6px; }
+  .group > .glabel { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-right:2px; }
+  .sep { width:1px; align-self:stretch; background:var(--line); }
+  .palette { display:flex; gap:5px; }
+  .swatch { width:24px; height:24px; border-radius:6px; border:2px solid transparent; cursor:pointer; }
+  .swatch.sel { border-color:var(--text); box-shadow:0 0 0 2px var(--bg) inset; }
+  .colorpick { position:relative; width:24px; height:24px; border-radius:6px; overflow:hidden; cursor:pointer;
+               background:conic-gradient(red, yellow, lime, cyan, blue, magenta, red); border:2px solid transparent; }
+  .colorpick.sel { border-color:var(--text); }
+  .colorpick input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; border:0; padding:0; }
+  .seg { display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .seg button { border:0; border-radius:0; padding:5px 9px; background:#232731; display:flex; align-items:center; }
+  .seg button + button { border-left:1px solid var(--line); }
+  .seg button.sel { background:rgba(79,140,255,.18); color:var(--accent); }
+  .seg button i { display:block; border-radius:50%; background:currentColor; }
+  .tstatus { flex-basis:100%; display:flex; gap:16px; font-size:12px; color:var(--muted); min-height:0; }
+  .tstatus:empty { display:none; }
+  .progress { position:absolute; left:0; right:0; bottom:-1px; height:2px; }
+  .progress i { display:block; height:100%; width:0; background:var(--accent); }
+
+  button, select { font:inherit; font-size:13px; padding:5px 10px; border-radius:8px; border:1px solid var(--line); background:#232731; color:var(--text); cursor:pointer; }
+  button:hover:not(:disabled) { background:#2b303b; }
+  button:disabled { opacity:.45; cursor:default; }
+  button.sel { border-color:var(--accent); color:var(--accent); }
+  button.active { border-color:var(--accent); background:rgba(79,140,255,.15); }
+  button.rec { border-color:var(--bad); color:var(--bad); background:rgba(255,69,58,.12); }
+
+  /* ---------- canvas ---------- */
+  #viewport { position:relative; flex:1; min-height:320px; }
+  #viewport canvas { position:absolute; inset:0; width:100%; height:100%; }
+  #hint { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; padding:16px; background:rgba(15,17,21,.6); }
+  #hint.hidden { display:none; }
+  #qr { background:#fff; padding:8px; border-radius:8px; }
+  #phoneUrl { font-family:ui-monospace, monospace; color:var(--accent); word-break:break-all; }
+
+  /* ---------- sidebar ---------- */
+  aside { border-left:1px solid var(--line); overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:12px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .card h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 8px; display:flex; align-items:center; }
+  .card h2 .tag { margin-left:auto; text-transform:none; letter-spacing:0; font-weight:400; color:var(--accent); }
+  .note { color:var(--muted); font-size:12px; margin-top:8px; }
+  #gesture { font-size:22px; font-weight:700; }
+  .fingers { display:flex; gap:6px; margin:10px 0 4px; }
+  .finger { flex:1; text-align:center; font-size:11px; color:var(--muted); }
+  .finger i { display:block; height:26px; border-radius:6px; background:var(--line); margin-bottom:3px; transition:background .1s; }
+  .finger.up i { background:var(--accent); }
+  .metrics { display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; margin-top:8px; }
+  .metrics b { display:block; font-size:15px; font-variant-numeric:tabular-nums; }
+  .metrics span { color:var(--muted); font-size:12px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .gbar { display:flex; height:10px; border-radius:5px; overflow:hidden; background:var(--line); margin-top:10px; }
+  .gbar span { display:block; height:100%; }
+  .glegend { display:flex; flex-wrap:wrap; gap:4px 10px; font-size:12px; margin-top:6px; }
+  .glegend i { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:4px; }
+  #chart { width:100%; height:70px; display:block; margin-top:10px; background:#14171d; border-radius:6px; }
+  .legend { display:flex; gap:12px; font-size:12px; color:var(--muted); margin-top:4px; }
+  .legend i { display:inline-block; width:10px; height:2px; vertical-align:middle; margin-right:4px; }
+  input[type=range] { flex:1; accent-color:var(--accent); }
+  label { display:flex; align-items:center; gap:6px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  td { padding:3px 0; vertical-align:top; }
+  td:first-child { width:34px; font-size:16px; }
+  #log { list-style:none; margin:0; padding:0; max-height:170px; overflow:auto; font-size:12px; }
+  #log li { padding:3px 0; border-bottom:1px solid var(--line); }
+  #log time { color:var(--muted); margin-right:8px; font-variant-numeric:tabular-nums; }
+  #log li.ok { color:var(--ok); } #log li.warn { color:var(--bad); }
+  #log li.action { color:var(--warn); } #log li.source { color:var(--accent); }
+  details summary { cursor:pointer; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  details[open] summary { margin-bottom:8px; }
+  pre { margin:0; font:11px/1.4 ui-monospace, monospace; color:var(--muted); max-height:180px; overflow:auto; white-space:pre-wrap; }
+  dl { margin:0; font-size:13px; }
+  dt { font-weight:600; margin-top:6px; }
+  dd { margin:0; color:var(--muted); }
+
+  @media (max-width: 900px) {
+    main { grid-template-columns:1fr; }
+    #viewport { height:60vh; flex:none; }
+    aside { border-left:0; border-top:1px solid var(--line); }
+    .sep { display:none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Digital Twin · Hand</h1>
+    <div class="sub">A live virtual copy of your hand, built from your phone's camera</div>
+  </div>
+  <div class="pills">
+    <span class="pill" title="Your private room - only phones that scan this page's QR code can join">Room: <b id="roomCode">…</b></span>
+    <span class="pill">Source: <b id="source">Live phone</b></span>
+    <span class="pill" id="connPill" style="cursor:pointer" title="Show phone connection help"><i class="dot" id="connDot"></i><span id="conn">Phone: offline</span></span>
+  </div>
+</header>
+
+<main>
+  <div class="stagecol">
+    <!-- ================= top toolbar ================= -->
+    <div class="toolbar">
+      <div class="group" title="Pen color - also sent to the phone">
+        <span class="glabel">Pen</span>
+        <div class="palette" id="palette"></div>
+        <label class="colorpick" id="colorPick" title="Custom color"><input type="color" id="customColor" value="#ff9f0a"></label>
+      </div>
+      <div class="group" title="Brush size">
+        <div class="seg" id="sizes">
+          <button data-size="3" title="Thin"><i style="width:4px;height:4px"></i></button>
+          <button data-size="6" title="Medium" class="sel"><i style="width:8px;height:8px"></i></button>
+          <button data-size="12" title="Thick"><i style="width:12px;height:12px"></i></button>
+        </div>
+      </div>
+      <span class="sep"></span>
+      <div class="group">
+        <span class="glabel">Canvas</span>
+        <button id="undo" title="Undo last stroke (Ctrl+Z)">↶ Undo</button>
+        <button id="clear">Clear</button>
+        <button id="save">Save PNG</button>
+      </div>
+      <span class="sep"></span>
+      <div class="group">
+        <span class="glabel">Input</span>
+        <button id="simBtn" title="Drive the twin with a virtual hand - no phone needed">▶ Simulate hand</button>
+      </div>
+      <span class="sep"></span>
+      <div class="group">
+        <span class="glabel">History</span>
+        <button id="recBtn">● Record</button>
+        <button id="replayBtn" disabled>▶ Replay</button>
+        <select id="speedSel" title="Replay speed">
+          <option value="1">1×</option><option value="2">2×</option><option value="4">4×</option>
+        </select>
+        <button id="dlBtn" disabled title="Download recording as JSON">⤓</button>
+        <button id="loadBtn" title="Load a recording">⤒ Load</button>
+        <input type="file" id="loadInput" accept="application/json,.json" hidden>
+      </div>
+      <div class="tstatus"><span id="simStatus"></span><span id="recInfo"></span></div>
+      <div class="progress"><i id="replayBar"></i></div>
+    </div>
+
+    <!-- ================= canvas ================= -->
+    <section id="viewport">
+      <canvas id="drawLayer"></canvas>
+      <canvas id="handLayer"></canvas>
+      <div id="hint">
+        <button id="hintClose" title="Hide (click the Phone pill to show again)" style="position:absolute;top:12px;right:12px">✕</button>
+        <div style="font-size:16px;font-weight:600">Connect your phone (the sensor)</div>
+        <div id="qr"></div>
+        <div>Scan with your phone's camera, or open<br><a id="phoneUrl" target="_blank" rel="noopener">…</a><br>
+          <span style="color:var(--muted)">Any network works - Wi-Fi or mobile data. Allow the camera, then tap “Start camera”.</span></div>
+        <div style="color:var(--muted);font-size:13px">No phone handy? Use <b>▶ Simulate hand</b> in the toolbar.
+          · <button id="newRoom" title="Start over with a fresh private room">New room</button></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= sidebar ================= -->
+  <aside>
+    <div class="card">
+      <h2>Twin state</h2>
+      <div id="gesture">No hand</div>
+      <div class="fingers" id="fingers"></div>
+      <div class="metrics">
+        <div><b id="rate">0</b><span>updates / sec</span></div>
+        <div><b id="age">–</b><span>data age</span></div>
+        <div><b id="phoneFps">–</b><span>phone detections / sec</span></div>
+        <div><b id="rtt">–</b><span>phone ↔ twin round trip</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Analytics <span class="tag">monitoring</span></h2>
+      <div class="metrics">
+        <div><b id="aSpeed">–</b><span>fingertip speed (px/s)</span></div>
+        <div><b id="aSteady">–</b><span>steadiness (0–100)</span></div>
+        <div><b id="aStalls">0</b><span>data stalls (&gt;250 ms)</span></div>
+        <div><b id="aStrokes">0</b><span>strokes on canvas</span></div>
+      </div>
+      <canvas id="chart"></canvas>
+      <div class="legend"><span><i style="background:#4f8cff"></i>speed</span><span><i style="background:#ffd60a"></i>round trip</span><span>last 30 s</span></div>
+      <div class="gbar" id="gBar"></div>
+      <div class="glegend" id="gLegend"></div>
+      <div class="row" style="margin-top:8px"><button id="aReset">Reset stats</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Prediction <span class="tag">predictive twin</span></h2>
+      <label><input type="checkbox" id="predOn" checked> Show predicted fingertip (yellow ghost)</label>
+      <div class="row" style="margin-top:8px">
+        <span style="font-size:12px;color:var(--muted)">Look-ahead</span>
+        <input type="range" id="predH" min="0" max="300" step="25" value="150">
+        <b id="predHVal" style="font-size:13px;width:52px;text-align:right">150 ms</b>
+      </div>
+      <div class="metrics">
+        <div><b id="predErr">–</b><span>error with prediction</span></div>
+        <div><b id="baseErr">–</b><span>error without</span></div>
+        <div><b id="predGain">–</b><span>improvement</span></div>
+      </div>
+      <div class="note">The twin forecasts where your finger will be, then checks each forecast when that moment arrives.</div>
+    </div>
+
+    <div class="card">
+      <h2>Gestures</h2>
+      <table>
+        <tr><td>☝️</td><td><b>Index finger up</b> - draw</td></tr>
+        <tr><td>✌️</td><td><b>Two fingers</b> - move without drawing</td></tr>
+        <tr><td>✋</td><td><b>Open palm, hold 1 s</b> - clear</td></tr>
+        <tr><td>✊</td><td><b>Fist</b> - pause</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Event log</h2>
+      <ul id="log"></ul>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary>Why this is a digital twin</summary>
+        <dl>
+          <dt>1 · Physical entity</dt><dd>Your real hand.</dd>
+          <dt>2 · Sensor</dt><dd>Phone camera + on-device ML turns video into 21 3D joint positions.</dd>
+          <dt>3 · Data link</dt><dd>WebSocket stream, ~30 updates/sec, through a cloud relay in a private room.</dd>
+          <dt>4 · Virtual model</dt><dd>The skeleton: a live copy of the hand's state.</dd>
+          <dt>5 · Intelligence</dt><dd>Fingers up → gesture → action (draw / clear).</dd>
+          <dt>6 · Feedback loop</dt><dd>Gesture, color and vibration sent back to the phone.</dd>
+          <dt>7 · Monitoring</dt><dd>Speed, steadiness, link health and gesture time, live.</dd>
+          <dt>8 · History</dt><dd>Record a session and replay it - the twin re-lives the past.</dd>
+          <dt>9 · Simulation</dt><dd>A virtual hand drives the same twin with no hardware.</dd>
+          <dt>10 · Prediction</dt><dd>Forecasts the fingertip ahead in time and measures its own accuracy.</dd>
+        </dl>
+      </details>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary>Live twin state (raw)</summary>
+        <pre id="state">{}</pre>
+      </details>
+    </div>
+  </aside>
+</main>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
