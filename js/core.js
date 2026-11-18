@@ -38,6 +38,7 @@ export const twin = {
   pointer: null,         // smoothed index fingertip
   color: PALETTE[0],
   width: 6,              // brush size in px
+  poseState: null,       // what the phone itself is doing (set by pose.js)
   aspect: 4 / 3,        // camera field-of-view shape
   strokes: [],
   lastUpdate: 0,
@@ -56,6 +57,7 @@ let palmStart = null, palmDone = false, msgCount = 0;
 // source (name)             data source switched
 // event  ({text,kind,time}) human-readable log line
 // render ({ctx,rect})       draw overlays on the hand layer
+// message (raw msg)         any other message from the phone (e.g. type "pose")
 const listeners = {};
 export const on = (evt, fn) => (listeners[evt] ??= []).push(fn);
 const emit = (evt, data) => (listeners[evt] || []).forEach(fn => fn(data));
@@ -73,6 +75,7 @@ function connect() {
     phoneSeen();                                  // everything in this room comes from the phone
     if (m.type === "hand") ingest(m, "phone");
     else if (m.type === "ping") send({ type: "pong", ts: m.ts });
+    else emit("message", m);                      // other sensors (e.g. phone pose) -> feature modules
   };
 }
 // Presence: the phone pings every second, so "connected" means "heard from it recently".
@@ -87,7 +90,7 @@ setInterval(() => {
 }, 1000);
 function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
 export function sendFeedback(event) {
-  send({ type: "feedback", gesture: twin.gesture, color: twin.color, event });
+  send({ type: "feedback", gesture: twin.gesture, color: twin.color, poseState: twin.poseState, event });
 }
 let hintDismissed = false;
 function updateConn() {
@@ -346,6 +349,7 @@ setInterval(() => {
     pointer: twin.pointer?.map(v => +v.toFixed(3)) ?? null,
     color: twin.color,
     brush: twin.width,
+    phonePose: twin.poseState,
     strokes: twin.strokes.length,
     points: twin.strokes.reduce((n, s) => n + s.pts.length, 0),
     indexTip_xyz: twin.landmarks?.[8] ?? null,

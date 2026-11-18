@@ -29,6 +29,11 @@ Backend (WebSocket relay): [DigitalTwin-Hand-Backend](https://github.com/Manish2
 
 Without a phone, press **▶ Simulate hand**.
 
+4. **Phone pose twin:** on the phone, tap **📱 Share phone pose** (no camera needed). Tilt and turn
+   the phone, and the 3D phone in the sidebar follows. Shake the phone to clear the drawing.
+   **Recenter** makes the phone's current direction "straight ahead", and **▶ Demo** moves the
+   virtual phone without a real one.
+
 ## Features and the digital twin concepts they show
 
 | Concept | In the app |
@@ -43,6 +48,7 @@ Without a phone, press **▶ Simulate hand**.
 | History | Record, replay (1×/2×/4×), download and load as JSON |
 | Simulation | Virtual hand draws a heart and a star with no hardware |
 | Prediction | Forecasts the fingertip up to 300 ms ahead and scores its own accuracy |
+| Multiple assets | **Phone pose twin**: the phone's own tilt and rotation (motion sensors) mirrored as a 3D phone, classified as flat, upright, landscape, upside down or tilted. A shake clears the canvas, and the verdict is sent back to the phone. |
 
 Toolbar: pen colors and a custom color picker, brush size, undo (Ctrl+Z), clear, save PNG,
 simulate, record and replay.
@@ -80,3 +86,4 @@ use **Simulate hand** or the backend's `tools/fake_phone.py`.
 | `js/recorder.js` | Record and replay |
 | `js/analytics.js` | Metrics, chart, gesture time, event log |
 | `js/predictor.js` | Fingertip forecasting and accuracy |
+| `js/pose.js` | Phone pose twin: 3D phone (CSS 3D), pose states, shake to clear, demo |

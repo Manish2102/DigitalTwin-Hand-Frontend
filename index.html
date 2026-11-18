@@ -97,6 +97,22 @@
   #log time { color:var(--muted); margin-right:8px; font-variant-numeric:tabular-nums; }
   #log li.ok { color:var(--ok); } #log li.warn { color:var(--bad); }
   #log li.action { color:var(--warn); } #log li.source { color:var(--accent); }
+  /* ---------- phone pose twin (CSS 3D, no library) ---------- */
+  .pose-stage { position:relative; height:200px; perspective:700px; overflow:hidden; background:#14171d; border-radius:8px; margin-top:4px; }
+  .pose-stage.stale .pose-table { opacity:.35; }
+  .pose-table { position:absolute; left:50%; top:58%; width:0; height:0; transform-style:preserve-3d; transform:rotateX(55deg); transition:opacity .3s; }
+  .pose-grid { position:absolute; width:240px; height:240px; left:-120px; top:-120px; border:1px solid #2a2e37; border-radius:6px;
+               background-image:linear-gradient(#232731 1px, transparent 1px), linear-gradient(90deg, #232731 1px, transparent 1px); background-size:24px 24px; }
+  .pose-grid::after { content:"N"; position:absolute; top:4px; left:50%; transform:translateX(-50%); font-size:11px; color:var(--muted); }
+  .phone3d { position:absolute; left:0; top:0; width:0; height:0; transform-style:preserve-3d; }
+  .phone3d .face { position:absolute; width:64px; height:128px; left:-32px; top:-64px; border-radius:12px; backface-visibility:hidden;
+                   display:flex; flex-direction:column; align-items:center; justify-content:space-between; padding:6px 0; font-size:10px; color:#fff; }
+  .phone3d .front { transform:translateZ(4px); background:linear-gradient(160deg, #2c4f99, #4f8cff); border:3px solid #0b0d12; }
+  .phone3d .front i { width:14px; height:4px; border-radius:2px; background:#0b0d12; }
+  .phone3d .back { transform:rotateY(180deg) translateZ(4px); background:linear-gradient(160deg, #3a3f4b, #23262e); border:3px solid #0b0d12; }
+  .phone3d .back i { width:16px; height:16px; border-radius:50%; background:#0b0d12; border:2px solid #555; align-self:flex-start; margin-left:8px; }
+  #pState { font-size:17px; font-weight:700; }
+
   details summary { cursor:pointer; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
   details[open] summary { margin-bottom:8px; }
   pre { margin:0; font:11px/1.4 ui-monospace, monospace; color:var(--muted); max-height:180px; overflow:auto; white-space:pre-wrap; }
@@ -200,6 +216,32 @@
     </div>
 
     <div class="card">
+      <h2>Phone pose twin <span class="tag">second asset</span></h2>
+      <div id="pState">No pose data</div>
+      <div class="pose-stage stale" id="poseStage">
+        <div class="pose-table">
+          <div class="pose-grid"></div>
+          <div class="phone3d" id="phone3d">
+            <div class="face front"><i></i><span>TOP ↑</span><span></span></div>
+            <div class="face back"><i></i><span>back</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="metrics" style="grid-template-columns:repeat(4,1fr)">
+        <div><b id="pAlpha">–</b><span>heading α</span></div>
+        <div><b id="pBeta">–</b><span>front/back β</span></div>
+        <div><b id="pGamma">–</b><span>left/right γ</span></div>
+        <div><b id="pTilt">–</b><span>tilt</span></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="poseDemo">▶ Demo</button>
+        <button id="poseRecenter" title="Treat the phone's current heading as straight ahead">Recenter</button>
+        <label style="font-size:12px"><input type="checkbox" id="shakeOn" checked> Shake phone to clear</label>
+      </div>
+      <div class="note">On the phone, tap <b>📱 Share phone pose</b>. Tilt or turn it and the virtual phone follows.</div>
+    </div>
+
+    <div class="card">
       <h2>Analytics <span class="tag">monitoring</span></h2>
       <div class="metrics">
         <div><b id="aSpeed">–</b><span>fingertip speed (px/s)</span></div>
@@ -259,6 +301,7 @@
           <dt>8 · History</dt><dd>Record a session and replay it - the twin re-lives the past.</dd>
           <dt>9 · Simulation</dt><dd>A virtual hand drives the same twin with no hardware.</dd>
           <dt>10 · Prediction</dt><dd>Forecasts the fingertip ahead in time and measures its own accuracy.</dd>
+          <dt>11 · Multiple assets</dt><dd>The phone itself has a twin too: its orientation is mirrored in 3D, classified (flat, upright…) and a shake clears the canvas.</dd>
         </dl>
       </details>
     </div>

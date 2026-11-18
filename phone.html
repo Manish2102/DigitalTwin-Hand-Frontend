@@ -48,12 +48,17 @@
     <div class="stat"><b id="fps">–</b><span>detections / sec</span></div>
     <div class="stat"><b id="rtt">–</b><span>round trip to twin</span></div>
     <div class="stat" style="grid-column:span 2"><b><i id="swatch"></i><span id="twinGesture" style="color:inherit;font-size:16px">waiting…</span></b><span>what the twin says your hand is doing (feedback)</span></div>
+    <div class="stat" style="grid-column:span 2"><b id="twinPose">–</b><span>what the twin says this phone is doing (feedback)</span></div>
   </div>
 
   <div class="row">
     <button id="start">Start camera</button>
     <button id="flip" class="secondary" disabled>Flip camera</button>
   </div>
+  <div class="row" style="margin-top:8px">
+    <button id="poseBtn" class="secondary">📱 Share phone pose</button>
+  </div>
+  <div id="poseInfo" style="color:var(--muted);font-size:13px;margin-top:6px">Streams this phone's tilt and rotation so the twin can mirror it. Works without the camera.</div>
   <div id="status">Tap “Start camera”. The hand model (~8 MB) downloads on first use.</div>
 
 <script type="module">
@@ -100,6 +105,7 @@ function connect() {
     if (m.type === "pong") rtt = Date.now() - m.ts;
     if (m.type === "feedback") {                       // twin -> physical
       $("twinGesture").textContent = LABELS[m.gesture] || m.gesture;
+      if (m.poseState) $("twinPose").textContent = m.poseState;
       $("swatch").style.background = m.color;
       if (m.event === "cleared") navigator.vibrate?.([80, 60, 80]);
       if (m.event === "color") navigator.vibrate?.(40);
@@ -156,6 +162,57 @@ $("start").onclick = async () => {
   }
 };
 $("flip").onclick = async () => { facing = facing === "user" ? "environment" : "user"; await startCamera(); };
+
+// ------------------------------------------------------------ phone pose
+// Second sensor: the phone's own orientation. The phone only reports raw angles
+// and how hard it is being shaken; the twin decides what that means.
+const pose = { alpha: null, beta: null, gamma: null, absolute: false };
+let accPeak = 0, poseOn = false;
+
+function onOrientation(e) {
+  pose.alpha = e.alpha; pose.beta = e.beta; pose.gamma = e.gamma; pose.absolute = !!e.absolute;
+}
+function onMotion(e) {
+  // strongest linear acceleration since the last send (m/s², gravity removed)
+  let a = 0;
+  if (e.acceleration && e.acceleration.x != null) {
+    a = Math.hypot(e.acceleration.x, e.acceleration.y, e.acceleration.z);
+  } else if (e.accelerationIncludingGravity && e.accelerationIncludingGravity.x != null) {
+    const g = e.accelerationIncludingGravity;
+    a = Math.abs(Math.hypot(g.x, g.y, g.z) - 9.81);
+  }
+  accPeak = Math.max(accPeak, a);
+}
+
+$("poseBtn").onclick = async () => {
+  if (poseOn) return;
+  try {
+    // iOS asks for permission; Android Chrome allows it on https pages
+    if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+      if (await DeviceOrientationEvent.requestPermission() !== "granted") throw new Error("motion permission denied");
+      if (typeof DeviceMotionEvent.requestPermission === "function") await DeviceMotionEvent.requestPermission();
+    }
+    addEventListener("deviceorientation", onOrientation);
+    addEventListener("devicemotion", onMotion);
+    poseOn = true;
+    $("poseBtn").textContent = "📱 Sharing phone pose";
+    $("poseBtn").disabled = true;
+    try { await navigator.wakeLock?.request("screen"); } catch {}
+    setTimeout(() => {
+      if (pose.beta == null) $("poseInfo").textContent = "No motion sensor data - this device may not have them.";
+    }, 2000);
+    setInterval(() => {
+      if (pose.beta == null) return;
+      const r = v => v == null ? null : +v.toFixed(1);
+      send({ type: "pose", ts: Date.now(), alpha: r(pose.alpha), beta: r(pose.beta), gamma: r(pose.gamma),
+             absolute: pose.absolute, acc: +accPeak.toFixed(1) });
+      $("poseInfo").textContent = `α ${Math.round(pose.alpha ?? 0)}°  β ${Math.round(pose.beta)}°  γ ${Math.round(pose.gamma)}°  · shake ${accPeak.toFixed(1)} m/s²`;
+      accPeak = 0;
+    }, 50);                                         // 20 updates per second
+  } catch (e) {
+    $("poseInfo").textContent = "Could not start motion sensors: " + e.message;
+  }
+};
 
 function loop() {
   if (!running) return;
