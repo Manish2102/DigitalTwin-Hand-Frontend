@@ -126,7 +126,7 @@ export default {
     hud(1, "SCORE", g.score[1]);
     for (let k = 0; k < 3; k++) circle(W - 36 - k * 28, 40, 9, k < s.lives ? C.bad : null, k < s.lives ? null : C.border2);
     text(`Best ${bestScore("slicer", "solo")}`, W - 24, 76, { size: 12, color: C.text3, align: "right" });
-    if (!i.hand && g.time > 1) text("Show your hand to the phone camera", W / 2, H - 28, { size: 16, color: C.text2, align: "center" });
+    if (!i.hand && g.time > 1) text("Show your hand to the phone or laptop camera", W / 2, H - 28, { size: 16, color: C.text2, align: "center" });
   },
 };
 

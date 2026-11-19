@@ -75,6 +75,6 @@ export default {
     c.restore();
     hud(1, "GAPS", g.score[1]);
     text(`Best ${bestScore("glider", "solo")}`, W - 24, 30, { size: 12, color: C.text3, align: "right" });
-    if (!g.input(1).hand && g.time > 1) text("Show your hand to the phone camera", W / 2, H - 28, { size: 16, color: C.text2, align: "center" });
+    if (!g.input(1).hand && g.time > 1) text("Show your hand to the phone or laptop camera", W / 2, H - 28, { size: 16, color: C.text2, align: "center" });
   },
 };

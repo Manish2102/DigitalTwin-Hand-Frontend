@@ -8,7 +8,7 @@ The app has two twins and an arcade, which you choose in the sidebar. One phone 
 | **Hand drawing** | Your hand | Camera + on-device hand tracking | Mirrors the hand skeleton, recognizes gestures, draws with your finger |
 | **Phone pose twin** | A fragile parcel (the phone is its sensor tag) | Gyroscope + accelerometer | Mirrors the parcel in 3D, enforces shipping rules, scores its condition, writes a delivery report |
 | **Object to 3D** | Any object you hold up | The laptop webcam | Cuts the object out, estimates depth with AI, builds a solid 3D model to rotate, export and save |
-| **Arcade** | You, holding the phone as a game controller | Tilt, camera hand tracking, shaking | Six browser games (marble maze, fruit slicer, glider, rock paper scissors, shake duel, tilt pong), one or two players |
+| **Arcade** | You, with the phone as a controller or your hand in front of the laptop camera | Tilt, shaking, phone camera or laptop webcam hand tracking | Twelve browser games: six for the phone (marble maze, fruit slicer, glider, rock paper scissors, shake duel, tilt pong; one or two players) and six for the laptop camera (air cricket, flick carrom, snooker coach, robot arm twin, air slides, office twin) |
 
 Backend (WebSocket relay): [DigitalTwin-Hand-Backend](https://github.com/Manish2102/DigitalTwin-Hand-Backend)
 
@@ -84,9 +84,10 @@ What you see:
 The phone shows the parcel status and vibrates on each incident.
 **Simulate delivery trip** plays a scripted 32-second trip with no phone.
 
-### Arcade - games with the phone as the controller
+### Arcade - games with the phone or the laptop camera
 
-Pick **Arcade** in the sidebar, choose a game, press **Start**. The phone highlights the sensor the game needs.
+Pick **Arcade** in the sidebar, choose a game, press **Start**. For phone games, the phone highlights the sensor the game needs.
+For laptop camera games, press **Start camera and play**: hand tracking runs in the browser and the picture never leaves the laptop.
 
 | Game | Sensor | Players |
 |---|---|---|
@@ -96,6 +97,12 @@ Pick **Arcade** in the sidebar, choose a game, press **Start**. The phone highli
 | Rock Paper Scissors | Hand camera | 1 vs computer, or 2 |
 | Shake Duel | Accelerometer | 1 or 2 |
 | Tilt Pong | Tilt | 1 vs computer, or 2 |
+| Air Cricket | Laptop camera | 1 |
+| Flick Carrom | Laptop camera | 1 |
+| Snooker Coach | Laptop camera | 1 |
+| Robot Arm Twin | Laptop camera | 1 |
+| Air Slides | Laptop camera | 1 (presenter, not scored) |
+| Office Twin | Laptop camera | 1 (live twin, not scored) |
 
 For two players, press **Add player 2** and scan the second QR code with another phone. Every game also works with the
 keyboard and mouse, and the phone vibrates on hits and scores. Best scores are kept in the browser.
@@ -159,6 +166,6 @@ Locally, use the simulate buttons or the backend's `tools/fake_phone.py`.
 | `js/predictor.js` | Fingertip forecasting and accuracy |
 | `js/pose.js` | Parcel twin: 3D model, shipping rules, incidents, score, charts, report, simulated trip |
 | `js/games.js` | Arcade screen: game menu, toolbar, overlays, side panel, player 2 pairing |
-| `js/games/` | `engine.js` (game runtime), `input.js` (phone data to game input), and one file per game |
+| `js/games/` | `engine.js` (game runtime), `input.js` (phone and camera data to game input), `camera.js` (laptop webcam hand tracking), `physics.js` (ball physics and shot forecast), and one file per game |
 | `js/scan.js` | Object to 3D screen: capture, selection, depth, model, export, library |
 | `js/scan/` | `camera.js`, `segment.js`, `depth.js` + `depth.worker.js`, `mesh.js`, `viewer.js`, `library.js` |

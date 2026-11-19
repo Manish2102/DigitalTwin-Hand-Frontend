@@ -33,7 +33,7 @@ Single column, maximum width 560 px, using the shared [design system](design-sys
 |---|---|
 | Header | Brand, "Sensor · Physical side", room badge |
 | Status tiles | **Link to backend** (online or offline) and **Digital twin** (listening or waiting) |
-| Mode hint | Appears when the twin reports which section is open, and tells the user what to tap. In the Arcade it names the selected game and how to hold the phone. |
+| Mode hint | Appears when the twin reports which section is open, and tells the user what to tap. In the Arcade it names the selected game and how to hold the phone; for a laptop camera game (`sensor: "webcam"`) it says the phone is not needed. |
 | **Game** | Visible only while the Arcade is open: game name, a **Player 1** or **Player 2** badge, the score, and the latest status text |
 | **Hand camera** | Live preview with skeleton overlay, **Start camera**, **Flip**, detections per second, round-trip time |
 | **Motion sensors** | **Share motion sensors** and a live readout of the angles and shock |

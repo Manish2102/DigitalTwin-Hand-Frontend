@@ -6,6 +6,11 @@
 //   hand       true while a hand is visible; hx, hy = palm centre (0..1, un-mirrored, 0,0 = top-left)
 //   tip        index fingertip [x, y] (0..1); tipSeq counts new hand frames
 //   gesture    debounced hand shape: fist | palm | hover (index + middle) | draw (index only) | idle | none
+//   ptr        a pointer for the camera games (see pollPointer): x, y (0..1, mirrored like a selfie view), pinch,
+//              fist, open, pinchStart / pinchEnd (true for one tick), vx, vy, speed, hands, source
+//
+// Hand frames come from the phone camera, or from the laptop camera (camera.js calls feedHand). While the laptop
+// camera is on, it is player 1's hand and the phone's hand frames for player 1 are ignored.
 //
 // Players: 1 = the normal phone, 2 = a second phone that joined with ?p=2.
 // When a player's phone is not sending, the keyboard and mouse fill in so every game can be tried at a desk:
@@ -25,6 +30,9 @@ function blank() {
     hand: false, hx: 0.5, hy: 0.5, tip: [0.5, 0.5], tipSeq: 0, gesture: "none",
     lastPose: 0, lastHand: 0,
     cand: "none", candN: 0,
+    ptr: { x: 0.5, y: 0.5, pinch: false, fist: false, open: false, pinchStart: false, pinchEnd: false,
+           vx: 0, vy: 0, speed: 0, hands: 0, source: "none",
+           tx: 0.5, ty: 0.5, rawPinch: false, rawFist: false, rawOpen: false, relN: 0, seen: 0, lastLive: 0, hist: [] },
   };
 }
 export const inputs = { 1: blank(), 2: blank() };
@@ -62,10 +70,33 @@ function tiltFrom(i) {
 }
 
 // ----------------------------------------------------------------- hand
+const dist2 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+
+// Pinch, fist and open palm from one hand. Distances are divided by the palm length (wrist to middle knuckle),
+// so they do not change when the hand moves closer to the camera. aspect = camera width / height, so that
+// x and y distances are measured in the same units.
+function pointerFrom(q, lm, aspect, hands) {
+  const P = k => [lm[k][0] * aspect, lm[k][1]];
+  const palm = dist2(P(0), P(9)) || 0.1;
+  const pd = dist2(P(4), P(8)) / palm;                       // thumb tip to index tip
+  if (!q.rawPinch) { q.rawPinch = pd < 0.33; q.relN = 0; }
+  else if (pd > 0.55) { if (++q.relN >= 2) q.rawPinch = false; }   // two frames apart before letting go
+  else q.relN = 0;
+  const curl = [8, 12, 16, 20].reduce((t, k) => t + dist2(P(k), P(0)), 0) / 4 / palm;
+  q.rawFist = curl < 1.05 && !q.rawPinch;
+  q.rawOpen = curl > 1.55 && !q.rawPinch;
+  // the pointer sits between the thumb and index tips; the comfortable middle of the camera view covers the whole screen
+  const px = (lm[4][0] + lm[8][0]) / 2, py = (lm[4][1] + lm[8][1]) / 2;
+  q.tx = clamp((px - 0.18) / 0.64, 0, 1);
+  q.ty = clamp((py - 0.12) / 0.62, 0, 1);
+  q.hands = hands; q.seen = performance.now();
+}
+
 function onHand(i, m) {
   i.lastHand = performance.now();
-  if (!m.landmarks) { i.hand = false; i.gesture = "none"; i.cand = "none"; return; }
+  if (!m.landmarks) { i.hand = false; i.gesture = "none"; i.cand = "none"; i.ptr.hands = 0; return; }
   const lm = m.mirrored ? m.landmarks.map(([x, y, z]) => [1 - x, y, z]) : m.landmarks;   // same flip as the hand twin
+  pointerFrom(i.ptr, lm, m.aspect ?? 1, m.hands ?? 1);
   const centre = [(lm[0][0] + lm[9][0]) / 2, (lm[0][1] + lm[9][1]) / 2];
   i.hx += (centre[0] - i.hx) * 0.5; i.hy += (centre[1] - i.hy) * 0.5;
   if (!i.hand) { i.hx = centre[0]; i.hy = centre[1]; }
@@ -87,15 +118,23 @@ function onPose(i, m) {
   i.shakeSeq++;
 }
 
+let camActive = false;
+export const setCameraActive = v => { camActive = v; if (!v) inputs[1].ptr.seen = 0; };
+// the laptop camera's hand (camera.js): landmarks as MediaPipe returns them, or null when no hand is in view
+export function feedHand(p, landmarks, { mirrored = true, aspect = 1, hands = 1 } = {}) {
+  onHand(inputs[p], { landmarks, mirrored, aspect, hands });
+}
+
 on("raw", m => {
   const i = inputs[m.p];
-  if (m.type === "hand") onHand(i, m);
+  if (!i) return;
+  if (m.type === "hand") { if (!(camActive && m.p === 1)) onHand(i, m); }
   else if (m.type === "pose") onPose(i, m);
 });
 
 // -------------------------------------------------- keyboard and mouse fallback
 const KEYS = {
-  1: { left: "a", right: "d", up: "w", down: "s", shake: " ", rock: "1", paper: "2", scissors: "3" },
+  1: { left: "a", right: "d", up: "w", down: "s", shake: " ", rock: "1", paper: "2", scissors: "3", fist: "b" },
   2: { left: "arrowleft", right: "arrowright", up: "arrowup", down: "arrowdown", shake: "enter", rock: "8", paper: "9", scissors: "0" },
 };
 const held = new Set();
@@ -113,12 +152,48 @@ window.addEventListener("keydown", e => {
 window.addEventListener("keyup", e => held.delete(e.key.toLowerCase()));
 window.addEventListener("blur", () => held.clear());
 
-const mouse = { x: 0.5, y: 0.5, seen: 0 };
+const mouse = { x: 0.5, y: 0.5, seen: 0, down: false, downEvt: false };
 export function mouseMove(nx, ny) { mouse.x = clamp(nx, 0, 1); mouse.y = clamp(ny, 0, 1); mouse.seen = performance.now(); }
+export function mouseButton(down) {                  // a mouse click (or touch) is a pinch
+  if (down) { mouse.down = true; mouse.downEvt = true; mouse.seen = performance.now(); } else mouse.down = false;
+}
+
+// ------------------------------------------------------------- pointer
+// One pointer per player for the camera games, from the best source available:
+// a hand seen in the last 350 ms (laptop or phone camera), else the mouse (player 1), else nothing.
+const HAND_HOLD = 350, VEL_MS = 130;
+function pollPointer(p, dt) {
+  const i = inputs[p], q = i.ptr, now = performance.now();
+  let tx = q.x, ty = q.y, pinch = false, fist = false, open = false, src = "none";
+  if (now - q.seen < HAND_HOLD) {
+    src = p === 1 && camActive ? "camera" : "phone";
+    tx = q.tx; ty = q.ty; pinch = q.rawPinch; fist = q.rawFist; open = q.rawOpen;
+  } else if (p === 1 && now - mouse.seen < 3000) {
+    src = "mouse"; tx = mouse.x; ty = mouse.y; pinch = mouse.down || mouse.downEvt; fist = held.has("b");
+  }
+  if (p === 1) mouse.downEvt = false;
+  const jump = src !== q.source || now - q.lastLive > 400;   // new source or hand just came back: no smoothing, no speed
+  const a = jump || src === "mouse" ? 1 : 1 - Math.pow(0.45, dt * 60);
+  q.x += (tx - q.x) * a; q.y += (ty - q.y) * a;
+  if (src !== "none") q.lastLive = now;
+  if (src === "mouse" || src === "none") q.hands = src === "none" && camActive ? q.hands : 0;
+  q.source = src;
+  q.pinchStart = pinch && !q.pinch; q.pinchEnd = !pinch && q.pinch;
+  q.pinch = pinch; q.fist = fist; q.open = open;
+  if (jump || (src === "mouse" && q.pinchStart)) q.hist.length = 0;   // a mouse drag's speed starts at the press
+  q.hist.push({ t: now, x: q.x, y: q.y });
+  while (q.hist.length && now - q.hist[0].t > VEL_MS) q.hist.shift();
+  if (q.hist.length > 1) {
+    const h0 = q.hist[0], h1 = q.hist[q.hist.length - 1], s = Math.max(0.016, (h1.t - h0.t) / 1000);
+    q.vx = (h1.x - h0.x) / s; q.vy = (h1.y - h0.y) / s;
+  } else q.vx = q.vy = 0;
+  q.speed = Math.hypot(q.vx, q.vy * 0.625);            // screen widths per second (the game area is 960 x 600)
+}
 
 // Called once per game tick, before the game updates.
 export function poll(dt) {
   for (const p of [1, 2]) {
+    pollPointer(p, dt);
     const i = inputs[p], K = KEYS[p];
     if (!poseLive(p)) {
       const x = (held.has(K.right) ? 1 : 0) - (held.has(K.left) ? 1 : 0);
@@ -147,6 +222,7 @@ export function reset() {
   for (const p of [1, 2]) {
     const i = inputs[p];
     i.tx = i.ty = 0; i.shake = 0; i.neutral = null;
+    i.ptr.pinch = i.ptr.pinchStart = i.ptr.pinchEnd = false; i.ptr.hist.length = 0;
     if (!handLive(p)) { i.hand = false; i.gesture = "none"; }
   }
 }

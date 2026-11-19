@@ -193,7 +193,13 @@
 
 
   /* ============================== arcade ============================== */
-  .g-menu.hidden, .g-play.hidden, .g-overlay.hidden { display: none !important; }
+  .g-menu.hidden, .g-play.hidden, .g-overlay.hidden, #gCamCard.hidden, .cam-prev.hidden { display: none !important; }
+  .g-group { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s3); margin-top: var(--s2); }
+  .g-group b { font-size: var(--fs-md); font-weight: 600; }
+  .g-group span { font-size: var(--fs-sm); color: var(--text-3); }
+  .cam-prev { display: block; width: 100%; aspect-ratio: 4 / 3; border-radius: var(--radius); background: #000; border: 1px solid var(--border); margin-bottom: var(--s2); }
+  .cam-info { font-size: var(--fs-sm); color: var(--text-2); margin-bottom: var(--s2); }
+  .cam-info.cam-err { color: var(--warning); }
   .g-menu { flex: 1; overflow-y: auto; padding: var(--s6); display: flex; flex-direction: column; gap: var(--s5); }
   .g-intro { display: flex; align-items: flex-start; gap: var(--s4); max-width: 860px; color: var(--text-2); font-size: var(--fs-sm); line-height: 1.6; }
   .g-intro .icon { flex: none; color: var(--accent); margin-top: 2px; }
@@ -333,7 +339,7 @@
     <nav class="nav">
       <button class="nav-item" data-section="games" data-tip="Arcade" data-tip-pos="right">
         <i data-icon="gamepad" data-size="18"></i>
-        <span class="nav-text"><span class="nav-title">Arcade</span><span class="nav-desc">Games · phone as controller</span></span>
+        <span class="nav-text"><span class="nav-title">Arcade</span><span class="nav-desc">Games · phone or laptop camera</span></span>
       </button>
       <button class="nav-item" data-section="scan" data-tip="Object to 3D" data-tip-pos="right">
         <i data-icon="cube" data-size="18"></i>
@@ -653,9 +659,10 @@
       <div class="g-menu" id="gMenu">
         <div class="g-intro">
           <i data-icon="gamepad" data-size="20"></i>
-          <span>The phone is the controller and this page is the game, which is the digital twin idea again: a sensor in the physical world, a live virtual model, and a feedback loop (the phone vibrates when you score or get hit).
-          Tilt games read the phone's orientation, hand games watch your fingers through its camera, and Shake Duel measures acceleration.
-          Each game also works with the keyboard and mouse, so you can try it before pairing a phone. Best scores are kept in this browser.</span>
+          <span>Each game is the digital twin idea again: a sensor in the physical world, a live virtual model, and a feedback loop.
+          The first set uses the phone as the controller (tilt, shake, or its camera). The second set uses this laptop's own webcam:
+          hand tracking runs in the browser, so you can pinch, swipe and swing with no phone at all.
+          Every game also works with the keyboard and mouse. Best scores are kept in this browser.</span>
         </div>
         <div class="g-grid" id="gGrid"></div>
       </div>
@@ -690,6 +697,12 @@
             </div>
           </div>
           <aside class="panel">
+            <div class="card hidden" id="gCamCard">
+              <div class="card-head"><i data-icon="camera"></i><span class="card-title">Laptop camera</span><span class="card-meta" id="gCamState">Off</span></div>
+              <canvas class="cam-prev hidden" id="gCamPrev" width="320" height="240" aria-label="Camera preview with the tracked hand"></canvas>
+              <p class="cam-info" id="gCamInfo"></p>
+              <button class="btn" id="gCamBtn"><i data-icon="camera"></i><span>Start camera</span></button>
+            </div>
             <div class="card">
               <div class="card-head"><i data-icon="info"></i><span class="card-title">How to play</span></div>
               <ol class="howto" id="gHow"></ol>
@@ -707,10 +720,10 @@
               <details class="explain" open>
                 <summary class="card-head" style="cursor:pointer"><i data-icon="layers"></i><span class="card-title">Why this is a digital twin</span></summary>
                 <dl class="dl">
-                  <div><dt>Physical entity</dt><dd>You, holding the phone.</dd></div>
-                  <div><dt>Sensors</dt><dd>Orientation, accelerometer or camera hand tracking, streamed 20 to 30 times a second.</dd></div>
-                  <div><dt>Virtual model</dt><dd>The game world: marble, paddle or glider moves exactly as you move the phone or your hand.</dd></div>
-                  <div><dt>Feedback loop</dt><dd>The phone vibrates on hits and shows your score.</dd></div>
+                  <div><dt>Physical entity</dt><dd id="gTwEntity">You, holding the phone.</dd></div>
+                  <div><dt>Sensors</dt><dd id="gTwSensors">Orientation, accelerometer or camera hand tracking, streamed 20 to 30 times a second.</dd></div>
+                  <div><dt>Virtual model</dt><dd id="gTwModel">The game world: marble, paddle or glider moves exactly as you move the phone or your hand.</dd></div>
+                  <div><dt>Feedback loop</dt><dd id="gTwLoop">The phone vibrates on hits and shows your score.</dd></div>
                 </dl>
               </details>
             </div>

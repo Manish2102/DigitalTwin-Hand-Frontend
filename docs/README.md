@@ -8,7 +8,7 @@ and a scanner that turns a webcam photo into a 3D model:
 |---|---|---|---|
 | **Hand drawing** | Your hand | Camera + on-device hand tracking | Mirrors the hand skeleton, recognizes gestures, draws with your finger |
 | **Phone pose twin** (smart parcel) | A fragile parcel, with the phone as its sensor tag | Gyroscope + accelerometer | Mirrors the parcel in 3D, enforces shipping rules, scores its condition, writes a delivery report |
-| **Arcade** | You, holding the phone as a controller | Tilt, camera hand tracking, shaking | Six browser games for one or two players; the phone vibrates on hits and scores |
+| **Arcade** | You, holding the phone, or your hand in front of the laptop camera | Tilt, shaking, phone camera or laptop webcam hand tracking | Twelve browser games: six for the phone (one or two players, the phone vibrates on hits), six for the laptop camera (cricket, carrom, snooker, robot arm, slides, office twin) |
 | **Object to 3D** | Any object you hold up | The **laptop webcam** (not the phone) | Cuts the object out, estimates its depth with AI, builds a solid 3D model you can rotate, export and save |
 
 ## How the pieces fit
@@ -63,7 +63,7 @@ the virtual model is the game world, and the feedback loop is vibration and the 
 | [architecture.md](architecture.md) | App structure: files, load order, module graph, the event bus, shared state, rooms, data flow, rendering |
 | [hand-twin.md](hand-twin.md) | The hand twin in depth: gesture algorithm, drawing, simulator, recorder, analytics, predictor |
 | [pose-twin.md](pose-twin.md) | The parcel twin in depth: sensor maths, rules, scoring, simulation, report format, tuning constants |
-| [games.md](games.md) | The Arcade: the six games, the game engine, input and tilt maths, two-player mode, how to add a game |
+| [games.md](games.md) | The Arcade: the twelve games, the game engine, input, tilt and pinch maths, the laptop camera, two-player mode, how to add a game |
 | [object-scanner.md](object-scanner.md) | Object to 3D: the models, the mesh algorithm, the viewer, export formats, the library, limits |
 | [phone-page.md](phone-page.md) | The sensor page: camera pipeline, motion sensors, feedback, requirements |
 | [design-system.md](design-system.md) | Tokens, components, icons, accessibility and responsive behaviour |
@@ -85,7 +85,7 @@ Backend documentation: [architecture](https://github.com/Manish2102/DigitalTwin-
 |---|---|---|
 | Hand drawing | **Start camera** | Show one hand. Index finger up draws; two fingers moves; open palm held for 1 s clears; a fist pauses. |
 | Phone pose twin | **Share motion sensors** | Tilt, flip, bump or drop the phone onto a soft surface and watch the parcel twin react. |
-| Arcade | **Share motion sensors** (tilt and shake games) or **Start camera** (hand games) | Pick a game and press Start. For two players, **Add player 2** shows a QR code for the second phone. |
+| Arcade | **Share motion sensors** (tilt and shake games) or **Start camera** (hand games). Laptop camera games need no phone. | Pick a game and press Start (or **Start camera and play**). For two players, **Add player 2** shows a QR code for the second phone. |
 
 No phone to hand? **Simulate hand** and **Simulate delivery trip** drive the twins without one.
 
@@ -105,7 +105,7 @@ No phone to hand? **Simulate hand** and **Simulate delivery trip** drive the twi
 | `js/predictor.js` | Fingertip forecasting |
 | `js/pose.js` | Parcel twin |
 | `js/games.js` | Arcade screen |
-| `js/games/` | Game engine, input, and the six games |
+| `js/games/` | Game engine, input, laptop camera, ball physics, and the twelve games |
 | `js/icons.js` | Line-icon set |
 | `js/ui.js` | Toasts and copy-to-clipboard |
 | `vercel.json` | `/phone` rewrite and camera permission header |

@@ -182,7 +182,7 @@ function connect() {
       if (m.alert) navigator.vibrate?.(m.level === "crit" ? [200, 80, 200, 80, 200] : [150]);
     }
     if (m.type === "mode") {                        // which twin is open on the laptop
-      const games = m.mode === "games", scan = m.mode === "scan";
+      const games = m.mode === "games", scan = m.mode === "scan" || (games && m.sensor === "webcam");
       $("gameCard").classList.toggle("show", games);
       const pose = m.mode === "pose" || (games && (m.sensor === "tilt" || m.sensor === "shake"));
       $("handCard").classList.toggle("recommended", !pose && !scan);
@@ -191,7 +191,8 @@ function connect() {
       $("start").classList.toggle("btn-primary", !pose && !scan && !running);
       $("modeHint").classList.add("show");
       $("modeText").textContent = scan
-        ? "The laptop is in Object to 3D and uses its own webcam, so this phone is not needed there. Switch to another section to use the phone's sensors."
+        ? (games ? `Playing ${m.game}. It uses the laptop's own camera, so this phone is not needed. Pick a phone game to use it again.`
+                 : "The laptop is in Object to 3D and uses its own webcam, so this phone is not needed there. Switch to another section to use the phone's sensors.")
         : games
         ? (m.game ? `Playing ${m.game}. ${m.hint ?? ""}` : (m.hint ?? "Pick a game on the laptop."))
         : pose

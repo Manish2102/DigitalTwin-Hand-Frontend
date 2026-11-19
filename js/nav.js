@@ -9,7 +9,7 @@ import { on, emit, twin, sendToPhone, logEvent, $ } from "./core.js";
 const SECTIONS = {
   hand: { title: "Hand drawing", desc: "A live virtual copy of your hand, built from the phone's camera. Draw with gestures." },
   pose: { title: "Phone pose twin", desc: "Smart parcel monitor: the phone is the sensor tag on a fragile parcel in transit." },
-  games: { title: "Arcade", desc: "Play in the browser with your phone as the controller: tilt, hand gestures and shaking." },
+  games: { title: "Arcade", desc: "Twelve browser games: the phone as the controller (tilt, shake, hand), or the laptop camera tracking your hand." },
   scan: { title: "Object to 3D", desc: "Show an object to the laptop webcam: an AI model estimates its depth and builds a 3D model you can rotate and export." },
 };
 // The games add what the phone needs to know (which sensor, which game); see games.js

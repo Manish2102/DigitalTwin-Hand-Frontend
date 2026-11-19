@@ -30,8 +30,11 @@ app.js
  ├─ nav.js ──────────── core.js                       (app shell navigation)
  └─ games.js ────────── core.js, nav.js, config.js, icons.js, ui.js
      ├─ games/engine.js ── core.js, games/input.js     (loop, scores, sound)
-     ├─ games/input.js ─── core.js                      (phone data -> tilt / hand / shake)
-     └─ games/marble.js, slicer.js, glider.js, rps.js, shake.js, pong.js  (each imports engine.js)
+     ├─ games/input.js ─── core.js                      (phone and camera data -> tilt / hand / shake / pointer)
+     ├─ games/camera.js ── core.js, games/input.js      (laptop webcam + MediaPipe hand tracking in the browser)
+     ├─ games/physics.js                                (ball physics and shot forecast for carrom and snooker)
+     └─ games/marble.js, slicer.js, glider.js, rps.js, shake.js, pong.js,
+        cricket.js, carrom.js, snooker.js, robot.js, slides.js, office.js  (each imports engine.js)
  └─ scan.js ─────────── core.js, icons.js, ui.js     (Object to 3D; no backend, no phone)
      ├─ scan/camera.js, library.js                     (webcam and photo input; IndexedDB)
      ├─ scan/segment.js ─── MediaPipe interactive segmenter (loaded on first use)

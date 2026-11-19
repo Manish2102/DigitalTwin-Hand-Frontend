@@ -96,6 +96,7 @@ page cannot track hands without the MediaPipe resources.
 - [ ] Open the site, confirm the header shows a room code and the connect dialog shows a QR code
 - [ ] Press **Simulate hand** and **Simulate delivery trip** and confirm both twins react
 - [ ] Open **Arcade**, start a game, and play it with the keyboard; then with a phone, confirm the phone vibrates on hits
+- [ ] Open a laptop camera game (for example **Air Cricket**), press **Start camera and play**, allow the camera, and check that the side panel preview shows your hand and the gesture changes when you pinch
 - [ ] (Optional) Add a second phone as player 2 and start **Tilt Pong** in 2-player mode
 - [ ] Open the phone link on a real phone, confirm "Phone connected", then test the camera and the motion sensors
 - [ ] Download a delivery report and a recording

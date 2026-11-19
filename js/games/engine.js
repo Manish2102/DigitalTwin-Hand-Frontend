@@ -1,14 +1,15 @@
 // engine.js - the small runtime every game shares.
 //
 // A game is a plain object (see games.js for the list):
-//   { id, title, desc, icon, sensor, modes:[{id,label,players,scored}], howto:[...],
-//     init(g, mode) -> state, update(g, state, dt), draw(g, state) }
+//   { id, title, desc, icon, sensor, modes:[{id,label,players,scored,quick}], howto:[...],
+//     init(g, mode) -> state, update(g, state, dt), draw(g, state), key?(g, state, event) }
+// sensor: tilt | shake | hand (the phone) or webcam (the laptop camera). quick: start without the 3-2-1 countdown.
 // Games draw on a fixed 960 x 600 canvas; the engine scales it to the screen. The engine provides the
 // 60 Hz loop, a 3-2-1 countdown, pause, per-player scores, best scores in localStorage, sounds, and
 // buzz/score messages back to the phones.
 
 import { twin, sendToPhone } from "../core.js";
-import { inputs, poll, calibrate, reset, setActive, mouseMove } from "./input.js";
+import { inputs, poll, calibrate, reset, setActive, mouseMove, mouseButton } from "./input.js";
 
 export const W = 960, H = 600;
 export const C = { bg: "#0b0d11", surface: "#111419", s2: "#161a20", s3: "#1c2129", border: "#232932", border2: "#2f3641",
@@ -34,6 +35,7 @@ export const g = {
   get time() { return playTime; },
   score: [0, 0, 0],                                  // index = player number
   input: p => inputs[p],
+  ptr: (p = 1) => inputs[p].ptr,                     // camera games: pointer, pinch, fist, speed
   addScore(p, n) { g.score[p] += n; },
   setScore(p, n) { g.score[p] = n; },
   end(r) { if (state === "playing") finish(r); },
@@ -88,6 +90,21 @@ export function mount(canvasEl, frameEl) {
     const r = canvas.getBoundingClientRect();
     mouseMove((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
   });
+  canvas.addEventListener("pointerdown", e => {
+    const r = canvas.getBoundingClientRect();
+    mouseMove((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+    mouseButton(true);
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
+  });
+  canvas.addEventListener("pointermove", e => {
+    if (e.pointerType === "mouse") return;            // touch and pen: drag moves the pointer
+    const r = canvas.getBoundingClientRect();
+    mouseMove((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+  });
+  window.addEventListener("pointerup", () => mouseButton(false));
+  window.addEventListener("keydown", e => {
+    if (running && state === "playing" && game?.key && !e.target.closest?.("input, select, textarea")) game.key(g, st, e);
+  });
   document.addEventListener("visibilitychange", () => { if (document.hidden && state === "playing") pause(); });
   fit();
 }
@@ -116,10 +133,10 @@ export function play() {
   if (!game || (state !== "ready" && state !== "over")) return;
   if (state === "over") load(game, mode);
   reset();
-  countdown = COUNTDOWN;
+  countdown = mode.quick ? 0.001 : COUNTDOWN;
   setState("countdown");
   sfx("tick");
-  say("Get ready - hold the phone in your starting grip");
+  if (game.sensor !== "webcam") say("Get ready - hold the phone in your starting grip");
 }
 export function pause() { if (state === "playing") setState("paused"); }
 export function resume() { if (state === "paused") { setState("playing"); last = performance.now(); } }
@@ -132,6 +149,7 @@ export function suspend() { running = false; cancelAnimationFrame(raf); setActiv
 export function wake() { if (!game) return; setActive(true); fit(); if (!running) start(); }
 export const getState = () => state;
 export const current = () => ({ game, mode });
+export const gameState = () => st;                 // the running game's state object (for the console and tests)
 
 function setState(s) { state = s; emitChange(); }
 function finish(r) {
@@ -199,7 +217,7 @@ function draw() {
     ctx.fillStyle = C.text; ctx.font = "700 150px Inter, system-ui, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(String(Math.ceil(countdown)), W / 2, H / 2 - 10);
     ctx.fillStyle = C.text2; ctx.font = "500 20px Inter, system-ui, sans-serif";
-    ctx.fillText("Hold the phone how you want to play", W / 2, H / 2 + 90);
+    ctx.fillText(game.sensor === "webcam" ? "Show one hand to the laptop camera" : "Hold the phone how you want to play", W / 2, H / 2 + 90);
   }
 }
 
@@ -227,3 +245,14 @@ export function roundRect(x, y, w, h, r, fill, stroke) {
   if (fill) { ctx.fillStyle = fill; ctx.fill(); }
   if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
 }
+
+// the camera games' pointer: a ring, filled while pinching
+export function cursor(q, color = C.accent) {
+  if (q.source === "none") return;
+  const x = q.x * W, y = q.y * H;
+  circle(x, y, q.pinch ? 8 : 14, null, color, 2.5);
+  if (q.source !== "mouse") circle(x, y, 5, q.pinch ? color : "rgba(123,150,255,.3)");
+}
+export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+export const lerp = (a, b, t) => a + (b - a) * t;
+export const rand = (a, b) => a + Math.random() * (b - a);

@@ -63,6 +63,12 @@ const P = {
   vibrate:   '<path d="m2 8 2 4-2 4"/><path d="m22 8-2 4 2 4"/><rect x="7" y="3" width="10" height="18" rx="2"/>',
   marble:    '<circle cx="12" cy="12" r="9"/><path d="M8 9.5A5 5 0 0 1 12 6.5"/>',
   disc:      '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>',
+  presentation: '<path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/>',
+  bat:       '<path d="m14.5 3.5 6 6-9.8 9.8a2 2 0 0 1-2.8 0l-3.2-3.2a2 2 0 0 1 0-2.8z"/><path d="m18 6 3.5-3.5"/><circle cx="5" cy="5" r="2"/>',
+  carrom:    '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/><circle cx="6.5" cy="6.5" r="1"/><circle cx="17.5" cy="6.5" r="1"/><circle cx="6.5" cy="17.5" r="1"/><circle cx="17.5" cy="17.5" r="1"/>',
+  snooker:   '<circle cx="15" cy="15" r="5"/><circle cx="16.5" cy="13.5" r="1.2"/><path d="M3 3l7.5 7.5"/>',
+  bot:       '<path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>',
+  building:  '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M12 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/>',
   link:      '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
 };
 
