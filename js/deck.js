@@ -226,7 +226,7 @@ function renderGestureUi() {
   b.innerHTML = `${icon("hand")}<span>${!gesturesOn ? "Gestures off" : st === "starting" ? "Starting..." : st === "on" ? "Gestures on" : "Gestures off"}</span>`;
   const line = !gesturesOn ? "Off. Turn on to change slides with a swipe."
     : st === "starting" ? vision.message
-    : st === "on" ? `Watching for swipes. ${prefs.reverse ? "Swipe left = next" : "Swipe right = next"}.`
+    : st === "on" ? (vision.fps ? `Watching for swipes. ${prefs.reverse ? "Swipe left = next" : "Swipe right = next"}.` : "Starting hand tracking (a few seconds the first time)...")
     : vision.message;
   $("dkGestState").textContent = line;
   $("dkGestDot").className = `dot ${gesturesOn && st === "on" ? "on" : ""}`;
@@ -238,6 +238,7 @@ function renderGestureUi() {
 setInterval(() => {
   if (!gesturesOn || vision.state !== "on") return;
   $("dkFps").textContent = `${vision.fps} fps, ${vision.ms.toFixed(0)} ms per frame (${vision.delegate})`;
+  if (vision.fps && $("dkGestState").textContent.startsWith("Starting")) renderGestureUi();
   if (deck && startedAt) { const s = Math.floor((Date.now() - startedAt) / 1000); $("dkTimer").textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }
 }, 500);
 

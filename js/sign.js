@@ -39,6 +39,7 @@ vision.onState(st => {
   $("slEmpty").classList.toggle("hidden", st === "on");
   $("slEmptyText").textContent = st === "error" ? vision.message : st === "starting" ? vision.message : "Start the camera, stand back so your hands and shoulders are in view, and sign.";
   if (st !== "on") { $("slState").textContent = "Camera off"; $("slState").className = "badge"; }
+  else { $("slState").textContent = "Starting hand tracking (a few seconds the first time)..."; $("slState").className = "badge badge-accent"; }
   rec?.reset();
 });
 
