@@ -10,6 +10,8 @@ and a scanner that turns a webcam photo into a 3D model:
 | **Phone pose twin** (smart parcel) | A fragile parcel, with the phone as its sensor tag | Gyroscope + accelerometer | Mirrors the parcel in 3D, enforces shipping rules, scores its condition, writes a delivery report |
 | **Arcade** | You, holding the phone, or your hand in front of the laptop camera | Tilt, shaking, phone camera or laptop webcam hand tracking | Twelve browser games: six for the phone (one or two players, the phone vibrates on hits), six for the laptop camera (cricket, carrom, snooker, robot arm, slides, office twin) |
 | **Object to 3D** | Any object you hold up | The **laptop webcam** (not the phone) | Cuts the object out, estimates its depth with AI, builds a solid 3D model you can rotate, export and save |
+| **GestureDeck** | You, presenting | The **laptop webcam** | Shows your .pptx or .pdf; a hand swipe changes the slide |
+| **Sign language** | A person signing Indian Sign Language | The **laptop webcam** | ISL words, letters and numbers to text, with "not sure" instead of guesses |
 
 ## How the pieces fit
 
@@ -64,6 +66,9 @@ the virtual model is the game world, and the feedback loop is vibration and the 
 | [hand-twin.md](hand-twin.md) | The hand twin in depth: gesture algorithm, drawing, simulator, recorder, analytics, predictor |
 | [pose-twin.md](pose-twin.md) | The parcel twin in depth: sensor maths, rules, scoring, simulation, report format, tuning constants |
 | [games.md](games.md) | The Arcade: the twelve games, the game engine, input, tilt and pinch maths, the laptop camera, two-player mode, how to add a game |
+| [gesturedeck.md](gesturedeck.md) | GestureDeck: files and rendering, swipe rules and presets, reliability design, tests, limits |
+| [sign-language.md](sign-language.md) | Sign language: datasets, features, models, accuracy, how recognition decides, how to retrain, limits |
+| [isl-reference.md](isl-reference.md) | Every supported ISL sign with an illustration and a description measured from real signers |
 | [object-scanner.md](object-scanner.md) | Object to 3D: the models, the mesh algorithm, the viewer, export formats, the library, limits |
 | [phone-page.md](phone-page.md) | The sensor page: camera pipeline, motion sensors, feedback, requirements |
 | [design-system.md](design-system.md) | Tokens, components, icons, accessibility and responsive behaviour |

@@ -35,6 +35,14 @@ app.js
      ├─ games/physics.js                                (ball physics and shot forecast for carrom and snooker)
      └─ games/marble.js, slicer.js, glider.js, rps.js, shake.js, pong.js,
         cricket.js, carrom.js, snooker.js, robot.js, slides.js, office.js  (each imports engine.js)
+ ├─ deck.js ─────────── core.js, icons.js, ui.js     (GestureDeck; no backend, no phone)
+ │   ├─ deck/render.js ── Pagus (.pptx) and pdf.js (.pdf), loaded on first use; deck/fonts.js
+ │   └─ deck/swipe.js ─── pure functions, tested in Node (tools/deck/swipe_test.mjs)
+ ├─ sign.js ─────────── core.js, icons.js, ui.js     (Sign language; no backend, no phone)
+ │   ├─ sign/features.js ─ same maths as tools/isl/features.py (checked by tools/isl/check_features.mjs)
+ │   ├─ sign/model.js ──── runs the exported networks (sign/models/*.json), no ML library
+ │   └─ sign/recognizer.js  word segmentation, letter holding, "not sure" decisions
+ ├─ vision/vision.js ── vision/vision.worker.js        (laptop camera; MediaPipe hands + pose in a Web Worker)
  └─ scan.js ─────────── core.js, icons.js, ui.js     (Object to 3D; no backend, no phone)
      ├─ scan/camera.js, library.js                     (webcam and photo input; IndexedDB)
      ├─ scan/segment.js ─── MediaPipe interactive segmenter (loaded on first use)
@@ -49,6 +57,7 @@ app.js
 import { start } from "./core.js";
 import "./simulator.js"; import "./recorder.js"; import "./analytics.js";
 import "./predictor.js"; import "./pose.js"; import "./nav.js"; import "./games.js"; import "./scan.js";
+import "./deck.js"; import "./sign.js";
 start();
 ```
 

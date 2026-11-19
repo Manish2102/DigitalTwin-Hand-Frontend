@@ -8,6 +8,8 @@ The app has two twins and an arcade, which you choose in the sidebar. One phone 
 | **Hand drawing** | Your hand | Camera + on-device hand tracking | Mirrors the hand skeleton, recognizes gestures, draws with your finger |
 | **Phone pose twin** | A fragile parcel (the phone is its sensor tag) | Gyroscope + accelerometer | Mirrors the parcel in 3D, enforces shipping rules, scores its condition, writes a delivery report |
 | **Object to 3D** | Any object you hold up | The laptop webcam | Cuts the object out, estimates depth with AI, builds a solid 3D model to rotate, export and save |
+| **GestureDeck** | You, presenting | The laptop webcam | Opens your own .pptx or .pdf in the browser; a hand swipe changes the slide (right = next, left = previous) |
+| **Sign language** | A person signing Indian Sign Language | The laptop webcam | Recognises ISL words and fingerspelled letters and numbers and writes them as text (and can speak it) |
 | **Arcade** | You, with the phone as a controller or your hand in front of the laptop camera | Tilt, shaking, phone camera or laptop webcam hand tracking | Twelve browser games: six for the phone (marble maze, fruit slicer, glider, rock paper scissors, shake duel, tilt pong; one or two players) and six for the laptop camera (air cricket, flick carrom, snooker coach, robot arm twin, air slides, office twin) |
 
 Backend (WebSocket relay): [DigitalTwin-Hand-Backend](https://github.com/Manish2102/DigitalTwin-Hand-Backend)
@@ -107,6 +109,21 @@ For laptop camera games, press **Start camera and play**: hand tracking runs in 
 For two players, press **Add player 2** and scan the second QR code with another phone. Every game also works with the
 keyboard and mouse, and the phone vibrates on hits and scores. Best scores are kept in the browser.
 
+### GestureDeck - present with a swipe
+
+Pick **GestureDeck**, open a PowerPoint (.pptx) or PDF, press **Present** for full screen and turn **Gestures** on.
+Sweep an open hand to your right for the next slide, to your left for the previous one. A cooldown, a "hand must be
+still first" rule and a return-stroke filter stop accidental changes; keys and clickers always work too.
+Details: [docs/gesturedeck.md](docs/gesturedeck.md).
+
+### Sign language - Indian Sign Language to text
+
+Pick **Sign language**, start the camera, stand back so your hands and shoulders are in view, and sign one word at a
+time (lower your hands between words), or switch to **Fingerspelling** for A to Z and 0 to 9. When it is not sure it
+says so and offers suggestions instead of guessing. Trained on real ISL recordings (INCLUDE and an ISL fingerspelling
+dataset). Details: [docs/sign-language.md](docs/sign-language.md); every supported sign with an illustration:
+[docs/isl-reference.md](docs/isl-reference.md).
+
 ### Object to 3D - webcam to 3D model
 
 Pick **Object to 3D**. This section uses the **laptop webcam** (or an uploaded photo); the phone is not needed.
@@ -169,3 +186,7 @@ Locally, use the simulate buttons or the backend's `tools/fake_phone.py`.
 | `js/games/` | `engine.js` (game runtime), `input.js` (phone and camera data to game input), `camera.js` (laptop webcam hand tracking), `physics.js` (ball physics and shot forecast), and one file per game |
 | `js/scan.js` | Object to 3D screen: capture, selection, depth, model, export, library |
 | `js/scan/` | `camera.js`, `segment.js`, `depth.js` + `depth.worker.js`, `mesh.js`, `viewer.js`, `library.js` |
+| `js/vision/` | Laptop camera + MediaPipe hand and pose tracking in a Web Worker (GestureDeck and Sign language) |
+| `js/deck.js`, `js/deck/` | GestureDeck screen; `render.js` (.pptx via Pagus, .pdf via pdf.js), `fonts.js` (embedded fonts), `swipe.js` |
+| `js/sign.js`, `js/sign/` | Sign language screen; `features.js`, `model.js`, `recognizer.js`, `models/*.json` (trained models) |
+| `tools/isl/` | Python: download and landmark extraction, training, reference generation (see docs/sign-language.md) |

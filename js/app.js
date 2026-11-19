@@ -8,5 +8,7 @@ import "./pose.js";        // second twin: the phone's own orientation (smart pa
 import "./nav.js";         // left navigation between the twins
 import "./games.js";       // Arcade: browser games controlled by the phone
 import "./scan.js";        // Object to 3D: webcam photo -> depth AI -> 3D model
+import "./deck.js";        // GestureDeck: present .pptx / .pdf, swipe to change slides
+import "./sign.js";        // Sign language: Indian Sign Language to text
 
 start();

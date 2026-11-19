@@ -193,6 +193,97 @@
 
 
   /* ============================== arcade ============================== */
+  /* GestureDeck */
+  #sec-deck .workspace, #sec-sign .workspace { min-height: 0; }
+  .dk-stage { position: relative; flex: 1; min-height: 340px; overflow: hidden; background: #050608; outline: none;
+              background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 24px 24px; }
+  .dk-stage.drag { box-shadow: inset 0 0 0 3px var(--accent); }
+  .dk-stage.fs { background: #000; background-image: none; }
+  .dk-slide { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity .18s ease; pointer-events: none; }
+  .dk-slide.on { opacity: 1; }
+  .dk-frame { position: relative; background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,.45); overflow: hidden; }
+  .dk-stage.fs .dk-frame { box-shadow: none; }
+  .dk-frame .deck-svg, .dk-frame .deck-svg svg, .dk-frame canvas { display: block; width: 100%; height: 100%; }
+  .dk-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s3); padding: var(--s5); text-align: center; color: var(--text-2); }
+  .dk-empty h2 { color: var(--text); font-size: var(--fs-xl); }
+  .dk-empty .icon { color: var(--accent); }
+  .dk-error { max-width: 520px; padding: var(--s3) var(--s4); border: 1px solid var(--warning-border); background: var(--warning-weak); border-radius: var(--radius); color: var(--text); text-align: left; }
+  .dk-error b { display: block; margin-bottom: 4px; }
+  .dk-error span { color: var(--text-2); font-size: var(--fs-sm); }
+  .dk-stage > .dk-error { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 6; }
+  .dk-loading { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s3); background: rgba(5,6,8,.78); color: var(--text-2); }
+  .dk-loading .bar { width: min(360px, 70%); height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+  .dk-loading .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  .dk-black { position: absolute; inset: 0; background: #000; z-index: 4; }
+  .dk-flash { position: absolute; left: 50%; top: 50%; z-index: 7; display: flex; align-items: center; gap: var(--s2); padding: 14px 22px 14px 14px; border-radius: 999px;
+              background: rgba(11,13,17,.82); color: #fff; font-weight: 700; font-size: 20px; transform: translate(-50%, -50%) scale(.9); opacity: 0; pointer-events: none; transition: opacity .15s, transform .15s; }
+  .dk-flash.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .dk-flash.next .icon, .dk-flash.prev .icon { color: var(--success, #46c068); }
+  .dk-flash.end .icon, .dk-flash.start .icon { color: var(--warning); }
+  .dk-cam { position: absolute; z-index: 9; width: 220px; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; background: #000; border: 2px solid rgba(255,255,255,.18);
+            box-shadow: 0 8px 28px rgba(0,0,0,.5); cursor: grab; touch-action: none; user-select: none; transition: border-color .2s; }
+  .dk-cam[data-size="s"] { width: 150px; } .dk-cam[data-size="l"] { width: 300px; }
+  .dk-cam.dragging { cursor: grabbing; transition: none; }
+  .dk-cam.hit { animation: dk-hit .6s ease; }
+  @keyframes dk-hit { 0% { border-color: #46c068; } 100% { border-color: rgba(255,255,255,.18); } }
+  .dk-cam[data-corner="tl"] { top: 12px; left: 12px; } .dk-cam[data-corner="tr"] { top: 12px; right: 12px; }
+  .dk-cam[data-corner="bl"] { bottom: 12px; left: 12px; } .dk-cam[data-corner="br"] { bottom: 12px; right: 12px; }
+  .dk-cam.hidden, .dk-black.hidden, .dk-loading.hidden, .dk-empty.hidden, .dk-error.hidden { display: none !important; }
+  .dk-cam video { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .dk-cam canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .dk-cam-bar { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 8px; font-size: 11px; color: #fff;
+                background: linear-gradient(rgba(0,0,0,.6), transparent); }
+  .dk-cam-bar span { flex: 1; }
+  .dk-cam-bar button { background: rgba(0,0,0,.45); border: 0; color: #fff; border-radius: 6px; width: 24px; height: 22px; display: grid; place-items: center; cursor: pointer; }
+  .dk-meter { position: absolute; left: 8px; right: 8px; bottom: 8px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.2); overflow: hidden; }
+  .dk-meter i { display: block; height: 100%; width: 0; background: #46c068; transition: width .08s; }
+  .dk-hud { position: absolute; left: 12px; bottom: 12px; z-index: 5; display: none; gap: 8px; font-size: 12px; color: rgba(255,255,255,.7); background: rgba(0,0,0,.45); padding: 4px 10px; border-radius: 999px; }
+  .dk-stage.fs .dk-hud { display: flex; }
+  .dk-thumbs { display: grid; gap: 8px; max-height: 46vh; overflow-y: auto; padding-right: 4px; }
+  .dk-thumb { display: flex; gap: 8px; align-items: flex-start; padding: 6px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); cursor: pointer; color: var(--text-2); font: inherit; text-align: left; }
+  .dk-thumb.sel { border-color: var(--accent); background: var(--accent-weak); color: var(--text); }
+  .dk-thumb-n { width: 22px; flex: none; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .dk-thumb-img { flex: 1; background: #fff; border-radius: 4px; overflow: hidden; display: block; }
+  .dk-thumb-img > * { display: block; width: 100%; height: 100%; pointer-events: none; }
+  .dk-notes { margin: 0; padding-left: 18px; color: var(--text-2); font-size: var(--fs-sm); display: grid; gap: 6px; }
+  .kbd { display: inline-block; min-width: 20px; padding: 1px 6px; border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 5px; font-size: 11px; text-align: center; color: var(--text); background: var(--surface-2); }
+  /* Sign language */
+  .sl-stage { position: relative; flex: 1; min-height: 340px; background: #050608; overflow: hidden; }
+  .sl-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .sl-stage video { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .sl-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s3); padding: var(--s5); text-align: center; color: var(--text-2); }
+  .sl-empty h2 { color: var(--text); font-size: var(--fs-xl); } .sl-empty .icon { color: var(--accent); }
+  .sl-empty.hidden { display: none; }
+  .sl-top .badge:empty { display: none; }
+  .sl-top { position: absolute; left: 12px; top: 12px; right: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; z-index: 2; pointer-events: none; }
+  .sl-live { position: absolute; left: 12px; bottom: 12px; z-index: 2; font-size: var(--fs-sm); color: #fff; background: rgba(0,0,0,.5); padding: 4px 10px; border-radius: 999px; }
+  .sl-live:empty { display: none; }
+  .sl-flash { position: absolute; left: 50%; top: 18%; transform: translateX(-50%) scale(.95); z-index: 3; padding: 10px 22px; border-radius: 14px; font-size: 30px; font-weight: 700;
+              background: rgba(11,13,17,.85); color: #fff; opacity: 0; transition: opacity .15s, transform .15s; pointer-events: none; }
+  .sl-flash.show { opacity: 1; transform: translateX(-50%) scale(1); }
+  .sl-flash.ok { border: 2px solid #46c068; } .sl-flash.unsure { border: 2px solid var(--warning); color: var(--warning); }
+  .sl-text-wrap { border-top: 1px solid var(--border); background: var(--surface); padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); }
+  .sl-text { min-height: 64px; font-size: 26px; line-height: 1.35; font-weight: 600; color: var(--text); word-break: break-word; }
+  .sl-text.empty::before { content: "Recognised signs appear here as text."; color: var(--text-3); font-weight: 400; font-size: var(--fs-md); }
+  .sl-text-tools { display: flex; gap: var(--s2); flex-wrap: wrap; }
+  .sl-res { display: flex; flex-direction: column; gap: 6px; }
+  .sl-res.ok { flex-direction: row; align-items: center; justify-content: space-between; }
+  .sl-res b { font-size: var(--fs-lg); }
+  .sl-res.unsure b { color: var(--warning); }
+  .sl-sugg { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sl-hist { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: var(--fs-sm); }
+  .sl-hist-w { flex: 1; min-width: 0; }
+  .sl-cat { margin-bottom: var(--s3); } .sl-cat b { font-size: var(--fs-sm); }
+  .sl-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+  .sl-chips .chip.hit { border-color: var(--accent); color: var(--text); }
+  .sl-vocab { max-height: 40vh; overflow-y: auto; }
+  .sl-vocab .chip { cursor: pointer; } .sl-vocab .chip:hover { border-color: var(--accent-border); color: var(--text); }
+  .sl-detail { border: 1px solid var(--accent-border); border-radius: var(--radius); padding: var(--s3); margin-bottom: var(--s3); background: var(--surface-2); display: grid; gap: 8px; }
+  .sl-detail.hidden { display: none; }
+  .sl-detail-head { display: flex; align-items: center; gap: 8px; } .sl-detail-head b { font-size: var(--fs-lg); flex: 1; }
+  .sl-detail img { width: 100%; border-radius: 8px; background: #fff; }
+  .sl-detail p { margin: 0; font-size: var(--fs-sm); }
+  #sec-sign .stage-col { display: flex; flex-direction: column; }
   .g-menu.hidden, .g-play.hidden, .g-overlay.hidden, #gCamCard.hidden, .cam-prev.hidden { display: none !important; }
   .g-group { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s3); margin-top: var(--s2); }
   .g-group b { font-size: var(--fs-md); font-weight: 600; }
@@ -291,6 +382,8 @@
     .sc-stage { flex: none; height: 62vh; }
     #sec-scan .workspace { flex: none; }
     .g-stage { flex: none; height: 62vh; }
+    .dk-stage, .sl-stage { flex: none; height: 62vh; }
+    #sec-deck .workspace, #sec-sign .workspace { flex: none; }
     .g-play, .g-play .workspace { flex: none; }
     .section.active { overflow-y: auto; }
   }
@@ -344,6 +437,18 @@
       <button class="nav-item" data-section="scan" data-tip="Object to 3D" data-tip-pos="right">
         <i data-icon="cube" data-size="18"></i>
         <span class="nav-text"><span class="nav-title">Object to 3D</span><span class="nav-desc">Webcam · depth AI · 3D model</span></span>
+      </button>
+    </nav>
+
+    <div class="nav-label">Communicate</div>
+    <nav class="nav">
+      <button class="nav-item" data-section="deck" data-tip="GestureDeck" data-tip-pos="right">
+        <i data-icon="presentation" data-size="18"></i>
+        <span class="nav-text"><span class="nav-title">GestureDeck</span><span class="nav-desc">Present slides · swipe to change</span></span>
+      </button>
+      <button class="nav-item" data-section="sign" data-tip="Sign language" data-tip-pos="right">
+        <i data-icon="signs" data-size="18"></i>
+        <span class="nav-text"><span class="nav-title">Sign language</span><span class="nav-desc">Indian Sign Language to text</span></span>
       </button>
     </nav>
 
@@ -733,6 +838,158 @@
     </section>
 
     <!-- ======================= section: object to 3D ======================= -->
+    <section class="section" id="sec-deck" aria-label="GestureDeck">
+      <div class="toolbar">
+        <div class="tool-group">
+          <button class="btn btn-primary" id="dkOpen" data-tip="Open a .pptx or .pdf from this computer"><i data-icon="upload"></i><span>Open presentation</span></button>
+          <input type="file" id="dkFile" accept=".pptx,.pdf,.ppt,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint" hidden>
+          <span class="tool-label dk-name" id="dkName" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        </div>
+        <span class="divider"></span>
+        <div class="tool-group" aria-label="Slides">
+          <button class="btn btn-icon" id="dkPrev" aria-label="Previous slide" data-tip="Previous slide (Left arrow)"><i data-icon="chevronLeft"></i></button>
+          <span class="badge num" id="dkCount">0 / 0</span>
+          <button class="btn btn-icon" id="dkNext" aria-label="Next slide" data-tip="Next slide (Right arrow)"><i data-icon="chevronRight"></i></button>
+        </div>
+        <span class="divider"></span>
+        <div class="tool-group" aria-label="Gestures">
+          <button class="btn" id="dkGest" aria-pressed="false" data-tip="Change slides with a hand swipe (G)"><i data-icon="hand"></i><span>Gestures off</span></button>
+          <select class="select" id="dkSens" aria-label="Gesture sensitivity" data-tip="How deliberate a swipe must be">
+            <option value="strict">Careful</option><option value="normal">Normal</option><option value="easy">Easy</option>
+          </select>
+          <button class="btn btn-icon" id="dkCamToggle" aria-label="Hide the camera preview" data-tip="Show or hide the camera preview (C)"><i data-icon="eye"></i></button>
+        </div>
+        <span class="divider"></span>
+        <div class="tool-group">
+          <button class="btn" id="dkFull" data-tip="Full screen (F). Esc to leave."><i data-icon="maximize"></i><span>Present</span></button>
+        </div>
+      </div>
+      <div class="workspace">
+        <div class="stage-col">
+          <div class="dk-stage" id="dkStage" tabindex="0" aria-label="Slide">
+            <div class="dk-empty" id="dkEmpty">
+              <i data-icon="presentation" data-size="40"></i>
+              <h2>Present with a swipe of your hand</h2>
+              <p>Open your PowerPoint (.pptx) or PDF, or drop it here. It stays on this computer: nothing is uploaded.</p>
+              <button class="btn btn-primary btn-lg" id="dkEmptyOpen"><i data-icon="upload"></i><span>Open presentation</span></button>
+            </div>
+            <div class="dk-error hidden" id="dkError" role="alert"><b id="dkErrorText"></b><span id="dkErrorHint"></span></div>
+            <div class="dk-slide on" id="dkSlideA"></div>
+            <div class="dk-slide" id="dkSlideB"></div>
+            <div class="dk-black hidden" id="dkBlack"></div>
+            <div class="dk-flash" id="dkFlash" aria-live="polite"></div>
+            <div class="dk-hud"><span id="dkHudCount">0 / 0</span><span>·</span><span id="dkHudGest">Gestures off</span></div>
+            <div class="dk-cam hidden" id="dkCam" data-corner="br" title="Drag to move. It snaps to the nearest corner.">
+              <video id="dkVideo" muted playsinline></video>
+              <canvas id="dkCamCv"></canvas>
+              <div class="dk-cam-bar"><span id="dkCamStatus">Camera</span>
+                <button id="dkCamSize" aria-label="Change the preview size" title="Size"><i data-icon="maximize" data-size="13"></i></button>
+                <button id="dkCamHide" aria-label="Hide the camera preview" title="Hide (C)"><i data-icon="x" data-size="13"></i></button></div>
+              <div class="dk-meter" title="How close the current movement is to a swipe"><i id="dkMeter"></i></div>
+            </div>
+            <div class="dk-loading hidden" id="dkLoading"><div class="bar"><i id="dkLoadBar"></i></div><span id="dkLoadText"></span></div>
+          </div>
+        </div>
+        <aside class="panel">
+          <div class="card">
+            <div class="card-head"><i data-icon="hand"></i><span class="card-title">Gesture control</span><span class="card-meta"><span class="dot" id="dkGestDot"></span></span></div>
+            <p class="cam-info" id="dkGestState"></p>
+            <div class="field"><span class="field-label">Last swipe</span><span id="dkLast" class="subtle">None yet</span></div>
+            <div class="field"><span class="field-label">Tracking</span><span id="dkFps" class="subtle">-</span></div>
+            <div class="field"><span class="field-label">Timer</span><span id="dkTimer" class="num">0:00</span></div>
+            <label class="field" style="cursor:pointer"><span class="field-label">Reverse direction</span><input type="checkbox" id="dkReverse"></label>
+          </div>
+          <div class="card">
+            <div class="card-head"><i data-icon="list"></i><span class="card-title">Slides</span><span class="card-meta" id="dkKind"></span></div>
+            <div class="dk-thumbs" id="dkThumbs"><p class="subtle">Open a presentation to see its slides.</p></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><i data-icon="info"></i><span class="card-title">How to present</span></div>
+            <ol class="howto">
+              <li>Turn <b>Gestures</b> on and allow the camera. Stand where the preview shows your hand.</li>
+              <li>Open your hand and move it sideways in one quick, deliberate sweep: <b>right</b> for the next slide, <b>left</b> for the previous one. Wait for the green flash before the next swipe.</li>
+              <li>Normal talking movements, a closed hand, slow drifts and up-down movements are ignored. If slides still change by accident, choose <b>Careful</b>.</li>
+              <li>Keys always work: <span class="kbd">→</span> <span class="kbd">←</span> <span class="kbd">Space</span> change slides, <span class="kbd">F</span> full screen, <span class="kbd">B</span> black screen, <span class="kbd">G</span> gestures, <span class="kbd">C</span> camera preview.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <div class="card-head"><i data-icon="file"></i><span class="card-title">About this file</span></div>
+            <ul class="dk-notes" id="dkNotes"><li>Supported: PowerPoint .pptx and PDF. Old .ppt files must be saved as .pptx or PDF first.</li></ul>
+          </div>
+        </aside>
+      </div>
+    </section>
+    <section class="section" id="sec-sign" aria-label="Sign language">
+      <div class="toolbar">
+        <div class="tool-group">
+          <button class="btn btn-primary" id="slCam"><i data-icon="camera"></i><span>Start camera</span></button>
+        </div>
+        <span class="divider"></span>
+        <div class="tool-group" aria-label="What to recognise">
+          <div class="seg" id="slModes">
+            <button data-mode="words" class="sel"><i data-icon="signs" data-size="14"></i>Words</button>
+            <button data-mode="letters"><i data-icon="type" data-size="14"></i>Fingerspelling A-Z, 0-9</button>
+          </div>
+        </div>
+        <span class="divider"></span>
+        <div class="tool-group">
+          <a class="btn" href="https://github.com/Manish2102/DigitalTwin-Hand-Frontend/blob/main/docs/isl-reference.md" target="_blank" rel="noopener" data-tip="Every supported sign with an illustration and a description"><i data-icon="book"></i><span>Sign reference</span></a>
+        </div>
+      </div>
+      <div class="workspace">
+        <div class="stage-col">
+          <div class="sl-stage" id="slStage">
+            <video id="slVideo" muted playsinline></video>
+            <canvas id="slCanvas" aria-label="Camera with the tracked hands and body"></canvas>
+            <div class="sl-top"><span class="badge" id="slState">Camera off</span><span class="badge" id="slFps"></span></div>
+            <div class="sl-live" id="slLive"></div>
+            <div class="sl-flash" id="slFlash" aria-live="polite"></div>
+            <div class="sl-empty" id="slEmpty">
+              <i data-icon="signs" data-size="40"></i>
+              <h2>Indian Sign Language to text</h2>
+              <p id="slEmptyText">Start the camera, stand back so your hands and shoulders are in view, and sign.</p>
+            </div>
+          </div>
+          <div class="sl-text-wrap">
+            <div class="sl-text empty" id="slText" aria-live="polite"></div>
+            <div class="sl-text-tools">
+              <button class="btn" id="slSpeak" disabled><i data-icon="volume"></i><span>Speak</span></button>
+              <button class="btn" id="slCopy" disabled><i data-icon="copy"></i><span>Copy</span></button>
+              <button class="btn" id="slUndo" disabled><i data-icon="undo"></i><span>Undo</span></button>
+              <button class="btn btn-ghost" id="slClear" disabled><i data-icon="trash"></i><span>Clear</span></button>
+              <span class="subtle" id="slHint" style="align-self:center">Sign one word at a time and lower your hands below the rest line after each word.</span>
+            </div>
+          </div>
+        </div>
+        <aside class="panel">
+          <div class="card">
+            <div class="card-head"><i data-icon="checkCircle"></i><span class="card-title">Last sign</span></div>
+            <div id="slResult"><p class="subtle">Nothing yet.</p></div>
+            <ul class="list" id="slHistory" style="margin-top:8px"></ul>
+          </div>
+          <div class="card">
+            <div class="card-head"><i data-icon="info"></i><span class="card-title">For good recognition</span></div>
+            <ol class="howto">
+              <li>Sit or stand about 1 to 1.5 m from the camera so your head, shoulders and both hands are in view.</li>
+              <li>Use even light on your face and hands; avoid a bright window behind you.</li>
+              <li>Words: start with your hands down, sign one word, then lower your hands. Letters: hold each one still.</li>
+              <li>If it is not sure, it says so and offers suggestions. Tap one to add it, or sign again.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <div class="card-head"><i data-icon="list"></i><span class="card-title">Signs it knows</span><span class="card-meta" id="slVocabCount"></span></div>
+            <input class="input" id="slSearch" placeholder="Search a word" aria-label="Search the vocabulary" style="margin-bottom:8px">
+            <div class="sl-detail hidden" id="slDetail"></div>
+            <div class="sl-vocab" id="slVocab"><p class="subtle">Loading...</p></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><i data-icon="chart"></i><span class="card-title">Measured accuracy</span></div>
+            <div id="slAccuracy"><p class="subtle">Loading...</p></div>
+            <p class="subtle" style="margin-top:8px">Trained on INCLUDE (AI4Bharat, IIT Madras) and an ISL fingerspelling dataset from Mendeley Data, both CC BY 4.0. Facial expressions and full ISL grammar are not recognised yet; see the reference for details.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
     <section class="section" id="sec-scan" aria-label="Object to 3D">
       <div class="toolbar">
         <div class="tool-group" aria-label="Capture">

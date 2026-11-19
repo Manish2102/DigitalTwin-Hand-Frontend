@@ -1,0 +1,1106 @@
+{
+ "letters": [
+  {
+   "label": "A",
+   "svg": "isl/letter-a.svg",
+   "text": "Two hands. Right hand: thumb and index and middle and ring extended, at chest level. Left hand: fist with the thumb out, at waist level.",
+   "samples": 360,
+   "accuracy": 0.8367346938775511
+  },
+  {
+   "label": "B",
+   "svg": "isl/letter-b.svg",
+   "text": "Two hands. Right hand: closed fist, at chest level. Left hand: little finger raised, at chest level.",
+   "samples": 360,
+   "accuracy": 1.0
+  },
+  {
+   "label": "C",
+   "svg": "isl/letter-c.svg",
+   "text": "One hand. Right hand: L shape (thumb and index), at chest level.",
+   "samples": 360,
+   "accuracy": 0.7547169811320755
+  },
+  {
+   "label": "D",
+   "svg": "isl/letter-d.svg",
+   "text": "Two hands. Right hand: index finger pointing, at chest level. Left hand: index finger pointing, at chest level.",
+   "samples": 360,
+   "accuracy": 0.42
+  },
+  {
+   "label": "E",
+   "svg": "isl/letter-e.svg",
+   "text": "One hand. Right hand: index finger pointing, at waist level.",
+   "samples": 720,
+   "accuracy": 0.6610169491525424
+  },
+  {
+   "label": "F",
+   "svg": "isl/letter-f.svg",
+   "text": "Two hands. Right hand: thumb and index and middle extended, at chest level. Left hand: thumb and index and middle extended, at chest level.",
+   "samples": 360,
+   "accuracy": 0.85
+  },
+  {
+   "label": "G",
+   "svg": "isl/letter-g.svg",
+   "text": "Two hands. Right hand: fist with the thumb out, at chest level. Left hand: fist with the thumb out, at waist level.",
+   "samples": 360,
+   "accuracy": 0.8596491228070176
+  },
+  {
+   "label": "H",
+   "svg": "isl/letter-h.svg",
+   "text": "One hand. Left hand: flat hand, thumb folded, at waist level.",
+   "samples": 360,
+   "accuracy": 0.7755102040816326
+  },
+  {
+   "label": "I",
+   "svg": "isl/letter-i.svg",
+   "text": "One hand. Right hand: index finger pointing, at chest level.",
+   "samples": 360,
+   "accuracy": 0.8392857142857143
+  },
+  {
+   "label": "J",
+   "svg": "isl/letter-j.svg",
+   "text": "Two hands. Right hand: index finger pointing, at chest level. Left hand: L shape (thumb and index), at waist level.",
+   "samples": 360,
+   "accuracy": 0.9038461538461539
+  },
+  {
+   "label": "K",
+   "svg": "isl/letter-k.svg",
+   "text": "Two hands. Right hand: fist with the thumb out, at chest level. Left hand: index finger pointing, at waist level.",
+   "samples": 360,
+   "accuracy": 0.9
+  },
+  {
+   "label": "L",
+   "svg": "isl/letter-l.svg",
+   "text": "One hand. Right hand: L shape (thumb and index), at chest level.",
+   "samples": 360,
+   "accuracy": 0.7818181818181819
+  },
+  {
+   "label": "M",
+   "svg": "isl/letter-m.svg",
+   "text": "Two hands. Right hand: flat hand, thumb folded, at waist level. Left hand: open flat hand, at chest level. The hands touch or overlap.",
+   "samples": 360,
+   "accuracy": 0.5
+  },
+  {
+   "label": "N",
+   "svg": "isl/letter-n.svg",
+   "text": "Two hands. Right hand: index finger pointing, at waist level. Left hand: flat hand, thumb folded, at chest level.",
+   "samples": 360,
+   "accuracy": 0.5862068965517241
+  },
+  {
+   "label": "O",
+   "svg": "isl/letter-o.svg",
+   "text": "One hand. Right hand: closed fist, at chest level.",
+   "samples": 360,
+   "accuracy": 0.5614035087719298
+  },
+  {
+   "label": "P",
+   "svg": "isl/letter-p.svg",
+   "text": "Two hands. Right hand: index finger pointing, at chest level. Left hand: L shape (thumb and index), at waist level.",
+   "samples": 360,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Q",
+   "svg": "isl/letter-q.svg",
+   "text": "Two hands. Right hand: L shape (thumb and index), at waist level. Left hand: closed fist, at chest level.",
+   "samples": 360,
+   "accuracy": 0.9454545454545454
+  },
+  {
+   "label": "R",
+   "svg": "isl/letter-r.svg",
+   "text": "One hand. Left hand: flat hand, thumb folded, at chest level.",
+   "samples": 360,
+   "accuracy": 0.921875
+  },
+  {
+   "label": "S",
+   "svg": "isl/letter-s.svg",
+   "text": "Two hands. Right hand: closed fist, at waist level. Left hand: fist with the thumb out, at chest level.",
+   "samples": 360,
+   "accuracy": 0.8909090909090909
+  },
+  {
+   "label": "T",
+   "svg": "isl/letter-t.svg",
+   "text": "Two hands. Right hand: index finger pointing, at chest level. Left hand: index finger pointing, at waist level.",
+   "samples": 360,
+   "accuracy": 0.37735849056603776
+  },
+  {
+   "label": "U",
+   "svg": "isl/letter-u.svg",
+   "text": "One hand. Right hand: L shape (thumb and index), at waist level.",
+   "samples": 360,
+   "accuracy": 0.7843137254901961
+  },
+  {
+   "label": "V",
+   "svg": "isl/letter-v.svg",
+   "text": "One hand. Right hand: index and middle finger (V), at chest level.",
+   "samples": 360,
+   "accuracy": 0.7307692307692307
+  },
+  {
+   "label": "W",
+   "svg": "isl/letter-w.svg",
+   "text": "Two hands. Right hand: flat hand, thumb folded, at chest level. Left hand: open flat hand, at chest level.",
+   "samples": 360,
+   "accuracy": 0.9285714285714286
+  },
+  {
+   "label": "X",
+   "svg": "isl/letter-x.svg",
+   "text": "Two hands. Right hand: L shape (thumb and index), at chest level. Left hand: L shape (thumb and index), at waist level.",
+   "samples": 360,
+   "accuracy": 0.4727272727272727
+  },
+  {
+   "label": "Y",
+   "svg": "isl/letter-y.svg",
+   "text": "One hand. Right hand: index finger pointing, at chest level.",
+   "samples": 360,
+   "accuracy": 0.813953488372093
+  },
+  {
+   "label": "Z",
+   "svg": "isl/letter-z.svg",
+   "text": "Two hands. Right hand: flat hand, thumb folded, at chest level. Left hand: open flat hand, at chest level.",
+   "samples": 360,
+   "accuracy": 0.9636363636363636
+  },
+  {
+   "label": "0",
+   "svg": "isl/letter-0.svg",
+   "text": "One hand. Right hand: closed fist, at chest level.",
+   "samples": 360,
+   "accuracy": 0.6341463414634146
+  },
+  {
+   "label": "1",
+   "svg": "isl/letter-1.svg",
+   "text": "One hand. Right hand: index finger pointing, at chest level.",
+   "samples": 360,
+   "accuracy": 0.8983050847457628
+  },
+  {
+   "label": "2",
+   "svg": "isl/letter-2.svg",
+   "text": "One hand. Right hand: index and middle finger (V), at chest level.",
+   "samples": 360,
+   "accuracy": 0.8863636363636364
+  },
+  {
+   "label": "3",
+   "svg": "isl/letter-3.svg",
+   "text": "One hand. Right hand: index and middle and ring extended, at chest level.",
+   "samples": 360,
+   "accuracy": 0.9649122807017544
+  },
+  {
+   "label": "4",
+   "svg": "isl/letter-4.svg",
+   "text": "One hand. Right hand: flat hand, thumb folded, at chest level.",
+   "samples": 360,
+   "accuracy": 1.0
+  },
+  {
+   "label": "5",
+   "svg": "isl/letter-5.svg",
+   "text": "One hand. Right hand: open flat hand, at chest level.",
+   "samples": 360,
+   "accuracy": 1.0
+  },
+  {
+   "label": "6",
+   "svg": "isl/letter-6.svg",
+   "text": "One hand. Right hand: little finger raised, at chest level.",
+   "samples": 360,
+   "accuracy": 1.0
+  },
+  {
+   "label": "7",
+   "svg": "isl/letter-7.svg",
+   "text": "One hand. Right hand: index finger pointing, at chest level.",
+   "samples": 360,
+   "accuracy": 0.9423076923076923
+  },
+  {
+   "label": "8",
+   "svg": "isl/letter-8.svg",
+   "text": "One hand. Right hand: thumb and index and middle extended, at chest level.",
+   "samples": 360,
+   "accuracy": 0.8148148148148148
+  },
+  {
+   "label": "9",
+   "svg": "isl/letter-9.svg",
+   "text": "One hand. Right hand: fist with the thumb out, at chest level.",
+   "samples": 720,
+   "accuracy": 1.0
+  }
+ ],
+ "words": [
+  {
+   "label": "Adult",
+   "category": "People",
+   "svg": "isl/word-adult.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: index and middle finger (V), at chest level, moves towards the signer's right and upwards.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Afternoon",
+   "category": "Days and Time",
+   "svg": "isl/word-afternoon.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, near the face, moves and comes back.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Alright",
+   "category": "Greetings",
+   "svg": "isl/word-alright.svg",
+   "text": "Two hands. Right hand: thumb and little finger out (Y), at chest level, moves and comes back. Left hand: fist with the thumb out, at chest level, moves downwards.",
+   "samples": 21,
+   "accuracy": 0.75
+  },
+  {
+   "label": "Attack",
+   "category": "Society",
+   "svg": "isl/word-attack.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: index finger pointing, at chest level, moves towards the signer's left and upwards.",
+   "samples": 15,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Baby",
+   "category": "People",
+   "svg": "isl/word-baby.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves and comes back. Left hand: flat hand, thumb folded, at waist level, moves and comes back.",
+   "samples": 20,
+   "accuracy": 0.5
+  },
+  {
+   "label": "Ball",
+   "category": "Society",
+   "svg": "isl/word-ball.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, stays in place.",
+   "samples": 15,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Bank",
+   "category": "Places",
+   "svg": "isl/word-bank.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves and comes back.",
+   "samples": 22,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Bill",
+   "category": "Society",
+   "svg": "isl/word-bill.svg",
+   "text": "Two hands. Right hand: flat hand, thumb folded, at chest level, moves downwards. Left hand: flat hand, thumb folded, at chest level, moves downwards.",
+   "samples": 14,
+   "accuracy": 0.0
+  },
+  {
+   "label": "Boy",
+   "category": "People",
+   "svg": "isl/word-boy.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: flat hand, thumb folded, at chest level, moves towards the signer's right.",
+   "samples": 21,
+   "accuracy": 0.75
+  },
+  {
+   "label": "Brother",
+   "category": "People",
+   "svg": "isl/word-brother.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves towards the signer's left.",
+   "samples": 21,
+   "accuracy": 0.75
+  },
+  {
+   "label": "Child",
+   "category": "People",
+   "svg": "isl/word-child.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: closed fist, at chest level, stays in place.",
+   "samples": 20,
+   "accuracy": 0.75
+  },
+  {
+   "label": "City",
+   "category": "Places",
+   "svg": "isl/word-city.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: middle and ring and little extended, at chest level, moves and comes back.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Court",
+   "category": "Places",
+   "svg": "isl/word-court.svg",
+   "text": "Two hands. Right hand: thumb and index and middle extended, at chest level, moves and comes back. Left hand: thumb and index and middle extended, at chest level, moves downwards.",
+   "samples": 23,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Crowd",
+   "category": "People",
+   "svg": "isl/word-crowd.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, stays in place. Left hand: thumb and index and middle extended, at chest level, moves and comes back.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Daughter",
+   "category": "People",
+   "svg": "isl/word-daughter.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves downwards.",
+   "samples": 20,
+   "accuracy": 0.75
+  },
+  {
+   "label": "Death",
+   "category": "Society",
+   "svg": "isl/word-death.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves towards the signer's right and downwards, repeated. Left hand: open flat hand, at chest level, moves towards the signer's right.",
+   "samples": 14,
+   "accuracy": 0.6666666666666666
+  },
+  {
+   "label": "Election",
+   "category": "Society",
+   "svg": "isl/word-election.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves downwards, repeated. Left hand: open flat hand, at chest level, moves and comes back.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Energy",
+   "category": "Society",
+   "svg": "isl/word-energy.svg",
+   "text": "Two hands. Right hand: closed fist, at chest level, stays in place. Left hand: closed fist, at chest level, moves downwards.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Evening",
+   "category": "Days and Time",
+   "svg": "isl/word-evening.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: index and middle and ring extended, at chest level, moves towards the signer's right.",
+   "samples": 14,
+   "accuracy": 0.0
+  },
+  {
+   "label": "Exercise",
+   "category": "Society",
+   "svg": "isl/word-exercise.svg",
+   "text": "Two hands. Right hand: closed fist, at chest level, moves and comes back, repeated. Left hand: closed fist, at chest level, moves towards the signer's right.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Family",
+   "category": "People",
+   "svg": "isl/word-family.svg",
+   "text": "Two hands. Right hand: index and middle finger (V), at waist level, moves and comes back. Left hand: index and middle finger (V), at waist level, moves and comes back.",
+   "samples": 17,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Father",
+   "category": "People",
+   "svg": "isl/word-father.svg",
+   "text": "Two hands. Right hand: index and middle finger (V), at chest level, moves downwards. Left hand: index and middle finger (V), at chest level, moves upwards.",
+   "samples": 20,
+   "accuracy": 0.5
+  },
+  {
+   "label": "Friday",
+   "category": "Days and Time",
+   "svg": "isl/word-friday.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: closed fist, at chest level, stays in place.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Friend",
+   "category": "People",
+   "svg": "isl/word-friend.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: thumb and index and middle and ring extended, at chest level, stays in place.",
+   "samples": 20,
+   "accuracy": 0.6666666666666666
+  },
+  {
+   "label": "Girl",
+   "category": "People",
+   "svg": "isl/word-girl.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: index finger pointing, at chest level, moves towards the signer's right and downwards.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "God",
+   "category": "Society",
+   "svg": "isl/word-god.svg",
+   "text": "Two hands. Right hand: fist with the thumb out, at chest level, moves and comes back. Left hand: fist with the thumb out, at chest level, moves towards the signer's left and downwards.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Good Morning",
+   "category": "Greetings",
+   "svg": "isl/word-good-morning.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: middle and ring and little extended, at chest level, moves upwards.",
+   "samples": 21,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Good afternoon",
+   "category": "Greetings",
+   "svg": "isl/word-good-afternoon.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: flat hand, thumb folded, at chest level, moves towards the signer's left.",
+   "samples": 22,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Good evening",
+   "category": "Greetings",
+   "svg": "isl/word-good-evening.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: flat hand, thumb folded, at chest level, moves towards the signer's right, repeated.",
+   "samples": 21,
+   "accuracy": 0.5714285714285714
+  },
+  {
+   "label": "Good night",
+   "category": "Greetings",
+   "svg": "isl/word-good-night.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: thumb and middle and ring and little extended, at chest level, moves downwards.",
+   "samples": 21,
+   "accuracy": 0.75
+  },
+  {
+   "label": "Grandfather",
+   "category": "People",
+   "svg": "isl/word-grandfather.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves downwards, repeated. Left hand: closed fist, at waist level, moves towards the signer's right.",
+   "samples": 17,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Grandmother",
+   "category": "People",
+   "svg": "isl/word-grandmother.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves downwards.",
+   "samples": 17,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Ground",
+   "category": "Places",
+   "svg": "isl/word-ground.svg",
+   "text": "Two hands. Right hand: index and middle finger (V), at chest level, moves and comes back. Left hand: thumb and index and middle extended, at chest level, moves and comes back.",
+   "samples": 21,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Gun",
+   "category": "Society",
+   "svg": "isl/word-gun.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: thumb and index and middle extended, at chest level, stays in place.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Hello",
+   "category": "Greetings",
+   "svg": "isl/word-hello.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves and comes back.",
+   "samples": 21,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Hospital",
+   "category": "Places",
+   "svg": "isl/word-hospital.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves towards the signer's right and upwards.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Hour",
+   "category": "Days and Time",
+   "svg": "isl/word-hour.svg",
+   "text": "Two hands. Right hand: fist with the thumb out, at chest level, moves towards the signer's right and downwards. Left hand: closed fist, at waist level, moves and comes back.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "House",
+   "category": "Places",
+   "svg": "isl/word-house.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves towards the signer's right and downwards. Left hand: open flat hand, at chest level, moves and comes back.",
+   "samples": 21,
+   "accuracy": 0.75
+  },
+  {
+   "label": "How are you",
+   "category": "Greetings",
+   "svg": "isl/word-how-are-you.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves downwards, repeated. Left hand: thumb and middle and ring and little extended, at chest level, moves and comes back, repeated.",
+   "samples": 21,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Husband",
+   "category": "People",
+   "svg": "isl/word-husband.svg",
+   "text": "Two hands. Right hand: flat hand, thumb folded, at chest level, moves downwards. Left hand: flat hand, thumb folded, at chest level, stays in place.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "I",
+   "category": "Pronouns",
+   "svg": "isl/word-i.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: fist with the thumb out, at chest level, stays in place.",
+   "samples": 21,
+   "accuracy": 1.0
+  },
+  {
+   "label": "India",
+   "category": "Places",
+   "svg": "isl/word-india.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: closed fist, near the face, moves upwards.",
+   "samples": 21,
+   "accuracy": 1.0
+  },
+  {
+   "label": "King",
+   "category": "People",
+   "svg": "isl/word-king.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: flat hand, thumb folded, near the face, moves upwards.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Library",
+   "category": "Places",
+   "svg": "isl/word-library.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: flat hand, thumb folded, at chest level, moves and comes back, repeated.",
+   "samples": 20,
+   "accuracy": 0.25
+  },
+  {
+   "label": "Location",
+   "category": "Places",
+   "svg": "isl/word-location.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: thumb and index and little extended, at chest level, moves and comes back.",
+   "samples": 22,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Man",
+   "category": "People",
+   "svg": "isl/word-man.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: closed fist, at chest level, moves and comes back.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Market",
+   "category": "Places",
+   "svg": "isl/word-market.svg",
+   "text": "Two hands. Right hand: thumb and index and middle and ring extended, at chest level, moves and comes back. Left hand: open flat hand, at chest level, moves and comes back.",
+   "samples": 21,
+   "accuracy": 0.6666666666666666
+  },
+  {
+   "label": "Marriage",
+   "category": "Society",
+   "svg": "isl/word-marriage.svg",
+   "text": "Two hands. Right hand: flat hand, thumb folded, at chest level, moves downwards. Left hand: flat hand, thumb folded, at chest level, moves downwards.",
+   "samples": 14,
+   "accuracy": 0.6666666666666666
+  },
+  {
+   "label": "Medicine",
+   "category": "Society",
+   "svg": "isl/word-medicine.svg",
+   "text": "Two hands. Right hand: thumb and index and middle extended, at chest level, moves towards the signer's right and downwards. Left hand: index and ring and little extended, at chest level, moves towards the signer's left.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Minute",
+   "category": "Days and Time",
+   "svg": "isl/word-minute.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: L shape (thumb and index), at chest level, stays in place.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Monday",
+   "category": "Days and Time",
+   "svg": "isl/word-monday.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves and comes back.",
+   "samples": 14,
+   "accuracy": 0.0
+  },
+  {
+   "label": "Money",
+   "category": "Society",
+   "svg": "isl/word-money.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: fist with the thumb out, at chest level, stays in place.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Month",
+   "category": "Days and Time",
+   "svg": "isl/word-month.svg",
+   "text": "Two hands. Right hand: fist with the thumb out, at chest level, moves and comes back. Left hand: open flat hand, at chest level, stays in place.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Morning",
+   "category": "Days and Time",
+   "svg": "isl/word-morning.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves and comes back.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Mother",
+   "category": "People",
+   "svg": "isl/word-mother.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: closed fist, at chest level, stays in place.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Neighbour",
+   "category": "People",
+   "svg": "isl/word-neighbour.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves downwards. Left hand: open flat hand, at chest level, moves downwards.",
+   "samples": 20,
+   "accuracy": 0.75
+  },
+  {
+   "label": "Newspaper",
+   "category": "Society",
+   "svg": "isl/word-newspaper.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves and comes back. Left hand: index and middle finger (V), at chest level, moves towards the signer's left.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Night",
+   "category": "Days and Time",
+   "svg": "isl/word-night.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, stays in place.",
+   "samples": 15,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Office",
+   "category": "Places",
+   "svg": "isl/word-office.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: middle and ring and little extended, at chest level, moves and comes back.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Parent",
+   "category": "People",
+   "svg": "isl/word-parent.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves and comes back.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Park",
+   "category": "Places",
+   "svg": "isl/word-park.svg",
+   "text": "Two hands. Right hand: L shape (thumb and index), at chest level, moves and comes back, repeated. Left hand: L shape (thumb and index), at chest level, moves downwards.",
+   "samples": 22,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Peace",
+   "category": "Society",
+   "svg": "isl/word-peace.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves downwards. Left hand: open flat hand, at chest level, moves towards the signer's left.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Player",
+   "category": "People",
+   "svg": "isl/word-player.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: L shape (thumb and index), at chest level, moves and comes back.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Pleased",
+   "category": "Greetings",
+   "svg": "isl/word-pleased.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves upwards.",
+   "samples": 21,
+   "accuracy": 1.0
+  },
+  {
+   "label": "President",
+   "category": "People",
+   "svg": "isl/word-president.svg",
+   "text": "Two hands. Right hand: fist with the thumb out, at chest level, moves towards the signer's left and downwards. Left hand: open flat hand, at chest level, moves and comes back.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Price",
+   "category": "Society",
+   "svg": "isl/word-price.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: closed fist, at chest level, moves towards the signer's right and downwards.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Queen",
+   "category": "People",
+   "svg": "isl/word-queen.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: flat hand, thumb folded, near the face, moves upwards.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Race (ethnicity)",
+   "category": "Society",
+   "svg": "isl/word-race-ethnicity.svg",
+   "text": "Two hands. Right hand: fist with the thumb out, at chest level, moves and comes back, repeated. Left hand: fist with the thumb out, at chest level, moves downwards, repeated.",
+   "samples": 14,
+   "accuracy": 0.3333333333333333
+  },
+  {
+   "label": "Religion",
+   "category": "Society",
+   "svg": "isl/word-religion.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: flat hand, thumb folded, at chest level, moves towards the signer's right and downwards.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Restaurant",
+   "category": "Places",
+   "svg": "isl/word-restaurant.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: thumb and ring and little extended, at chest level, stays in place.",
+   "samples": 20,
+   "accuracy": 0.75
+  },
+  {
+   "label": "Saturday",
+   "category": "Days and Time",
+   "svg": "isl/word-saturday.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: thumb and index and middle extended, at chest level, moves and comes back.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "School",
+   "category": "Places",
+   "svg": "isl/word-school.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves upwards. Left hand: open flat hand, at chest level, moves and comes back.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Science",
+   "category": "Society",
+   "svg": "isl/word-science.svg",
+   "text": "Two hands. Right hand: fist with the thumb out, at chest level, moves downwards, repeated. Left hand: index finger pointing, at chest level, moves towards the signer's left and downwards, repeated.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Second",
+   "category": "Days and Time",
+   "svg": "isl/word-second.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: index finger pointing, at chest level, stays in place.",
+   "samples": 15,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Sign",
+   "category": "Society",
+   "svg": "isl/word-sign.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: L shape (thumb and index), at chest level, moves towards the signer's right and downwards, repeated.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Sister",
+   "category": "People",
+   "svg": "isl/word-sister.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves towards the signer's left and downwards.",
+   "samples": 20,
+   "accuracy": 0.5
+  },
+  {
+   "label": "Son",
+   "category": "People",
+   "svg": "isl/word-son.svg",
+   "text": "Two hands. Right hand: flat hand, thumb folded, at chest level, moves downwards. Left hand: flat hand, thumb folded, at waist level, stays in place.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Sport",
+   "category": "Society",
+   "svg": "isl/word-sport.svg",
+   "text": "Two hands. Right hand: index and middle finger (V), at chest level, moves towards the signer's right and downwards, repeated. Left hand: thumb and index and middle extended, at chest level, moves towards the signer's left and downwards, repeated.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Store or Shop",
+   "category": "Places",
+   "svg": "isl/word-store-or-shop.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: flat hand, thumb folded, at waist level, stays in place.",
+   "samples": 22,
+   "accuracy": 0.5
+  },
+  {
+   "label": "Street or Road",
+   "category": "Places",
+   "svg": "isl/word-street-or-road.svg",
+   "text": "One hand (the signer's left); the other hand rests. Left hand: index finger pointing, at waist level, moves and comes back.",
+   "samples": 20,
+   "accuracy": 0.5
+  },
+  {
+   "label": "Sunday",
+   "category": "Days and Time",
+   "svg": "isl/word-sunday.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: fist with the thumb out, at chest level, stays in place.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Team",
+   "category": "Society",
+   "svg": "isl/word-team.svg",
+   "text": "Two hands. Right hand: closed fist, at chest level, moves and comes back. Left hand: index finger pointing, at chest level, moves upwards.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Technology",
+   "category": "Society",
+   "svg": "isl/word-technology.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves and comes back. Left hand: open flat hand, at chest level, stays in place.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Temple",
+   "category": "Places",
+   "svg": "isl/word-temple.svg",
+   "text": "Two hands. Right hand: fist with the thumb out, at chest level, moves towards the signer's right and downwards. Left hand: closed fist, at chest level, moves upwards.",
+   "samples": 21,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Thank you",
+   "category": "Greetings",
+   "svg": "isl/word-thank-you.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves downwards. Left hand: open flat hand, at chest level, moves downwards.",
+   "samples": 21,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Thursday",
+   "category": "Days and Time",
+   "svg": "isl/word-thursday.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: L shape (thumb and index), at chest level, moves and comes back.",
+   "samples": 14,
+   "accuracy": 0.0
+  },
+  {
+   "label": "Time",
+   "category": "Days and Time",
+   "svg": "isl/word-time.svg",
+   "text": "Two hands. Right hand: index finger pointing, at chest level, stays in place. Left hand: closed fist, at chest level, moves upwards.",
+   "samples": 15,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Today",
+   "category": "Days and Time",
+   "svg": "isl/word-today.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves downwards.",
+   "samples": 14,
+   "accuracy": null
+  },
+  {
+   "label": "Tomorrow",
+   "category": "Days and Time",
+   "svg": "isl/word-tomorrow.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: closed fist, at chest level, moves downwards.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Train Station",
+   "category": "Places",
+   "svg": "isl/word-train-station.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves towards the signer's right and downwards, repeated. Left hand: index finger pointing, at waist level, moves downwards.",
+   "samples": 22,
+   "accuracy": 0.75
+  },
+  {
+   "label": "Tuesday",
+   "category": "Days and Time",
+   "svg": "isl/word-tuesday.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: closed fist, at chest level, moves and comes back.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "University",
+   "category": "Places",
+   "svg": "isl/word-university.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: L shape (thumb and index), at chest level, moves and comes back.",
+   "samples": 21,
+   "accuracy": 0.75
+  },
+  {
+   "label": "War",
+   "category": "Society",
+   "svg": "isl/word-war.svg",
+   "text": "Two hands. Right hand: flat hand, thumb folded, at chest level, moves towards the signer's left. Left hand: flat hand, thumb folded, at chest level, moves towards the signer's right.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Wednesday",
+   "category": "Days and Time",
+   "svg": "isl/word-wednesday.svg",
+   "text": "Two hands. Right hand: open flat hand, at chest level, moves upwards. Left hand: open flat hand, at chest level, moves and comes back.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Week",
+   "category": "Days and Time",
+   "svg": "isl/word-week.svg",
+   "text": "Two hands. Right hand: flat hand, thumb folded, at chest level, moves and comes back. Left hand: open flat hand, at chest level, stays in place.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Wife",
+   "category": "People",
+   "svg": "isl/word-wife.svg",
+   "text": "Two hands. Right hand: flat hand, thumb folded, at chest level, moves downwards. Left hand: open flat hand, at chest level, stays in place.",
+   "samples": 20,
+   "accuracy": 0.25
+  },
+  {
+   "label": "Woman",
+   "category": "People",
+   "svg": "isl/word-woman.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: index finger pointing, at chest level, stays in place.",
+   "samples": 20,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Year",
+   "category": "Days and Time",
+   "svg": "isl/word-year.svg",
+   "text": "Two hands. Right hand: thumb and middle and ring and little extended, at chest level, moves downwards. Left hand: flat hand, thumb folded, at chest level, moves and comes back.",
+   "samples": 15,
+   "accuracy": 1.0
+  },
+  {
+   "label": "Yesterday",
+   "category": "Days and Time",
+   "svg": "isl/word-yesterday.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: index finger pointing, at chest level, moves and comes back.",
+   "samples": 14,
+   "accuracy": 1.0
+  },
+  {
+   "label": "he",
+   "category": "Pronouns",
+   "svg": "isl/word-he.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves downwards.",
+   "samples": 21,
+   "accuracy": 0.75
+  },
+  {
+   "label": "it",
+   "category": "Pronouns",
+   "svg": "isl/word-it.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: index finger pointing, at waist level, moves downwards.",
+   "samples": 21,
+   "accuracy": 1.0
+  },
+  {
+   "label": "she",
+   "category": "Pronouns",
+   "svg": "isl/word-she.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, at chest level, moves towards the signer's right.",
+   "samples": 21,
+   "accuracy": 0.75
+  },
+  {
+   "label": "they",
+   "category": "Pronouns",
+   "svg": "isl/word-they.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: open flat hand, near the face, moves towards the signer's right and downwards, repeated.",
+   "samples": 21,
+   "accuracy": 1.0
+  },
+  {
+   "label": "we",
+   "category": "Pronouns",
+   "svg": "isl/word-we.svg",
+   "text": "Two hands. Right hand: flat hand, thumb folded, at chest level, moves towards the signer's left and downwards. Left hand: thumb and ring and little extended, at chest level, moves towards the signer's right and upwards.",
+   "samples": 21,
+   "accuracy": 0.5
+  },
+  {
+   "label": "you",
+   "category": "Pronouns",
+   "svg": "isl/word-you.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: L shape (thumb and index), at chest level, stays in place.",
+   "samples": 21,
+   "accuracy": 1.0
+  },
+  {
+   "label": "you (plural)",
+   "category": "Pronouns",
+   "svg": "isl/word-you-plural.svg",
+   "text": "One hand (the signer's right); the other hand rests. Right hand: index finger pointing, at chest level, moves towards the signer's right.",
+   "samples": 21,
+   "accuracy": 1.0
+  }
+ ]
+}

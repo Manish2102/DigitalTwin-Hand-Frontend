@@ -11,6 +11,8 @@ const SECTIONS = {
   pose: { title: "Phone pose twin", desc: "Smart parcel monitor: the phone is the sensor tag on a fragile parcel in transit." },
   games: { title: "Arcade", desc: "Twelve browser games: the phone as the controller (tilt, shake, hand), or the laptop camera tracking your hand." },
   scan: { title: "Object to 3D", desc: "Show an object to the laptop webcam: an AI model estimates its depth and builds a 3D model you can rotate and export." },
+  deck: { title: "GestureDeck", desc: "Present your own PowerPoint or PDF and change slides with a swipe of your hand, seen by the laptop camera." },
+  sign: { title: "Sign language", desc: "Indian Sign Language to text: sign to the laptop camera and read the words as you sign." },
 };
 // The games add what the phone needs to know (which sensor, which game); see games.js
 let modeExtra = () => ({});
