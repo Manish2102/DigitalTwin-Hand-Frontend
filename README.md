@@ -10,6 +10,19 @@ The app has two twins, which you choose in the sidebar. One phone can feed both 
 
 Backend (WebSocket relay): [DigitalTwin-Hand-Backend](https://github.com/Manish2102/DigitalTwin-Hand-Backend)
 
+## Documentation
+
+Full documentation is in [`docs/`](docs/README.md):
+[architecture](docs/architecture.md) ·
+[hand twin](docs/hand-twin.md) ·
+[phone pose twin](docs/pose-twin.md) ·
+[phone page](docs/phone-page.md) ·
+[design system](docs/design-system.md) ·
+[deployment](docs/deployment.md) ·
+[extending](docs/extending.md).
+The wire protocol and relay design are documented in the
+[backend repository](https://github.com/Manish2102/DigitalTwin-Hand-Backend/tree/main/docs).
+
 ```
  Physical side: phone (phone.html)                        Virtual side: laptop (index.html)
    camera -> MediaPipe -> 21 hand joints --+              +--> Hand twin: skeleton, gestures, drawing
