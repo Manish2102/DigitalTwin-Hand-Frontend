@@ -44,7 +44,7 @@ on("render", ({ ctx, rect, age }) => {
   if (!$("predOn").checked || !predicted || !twin.pointer || age > 300 || horizonMs === 0) return;
   const [x0, y0] = toPx(twin.pointer, rect), [x1, y1] = toPx(predicted, rect);
   ctx.save();
-  ctx.setLineDash([4, 4]); ctx.strokeStyle = "#ffd60a"; ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]); ctx.strokeStyle = "#e0a83a"; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
   ctx.beginPath(); ctx.arc(x1, y1, 12, 0, Math.PI * 2); ctx.stroke();
   ctx.restore();

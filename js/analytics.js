@@ -5,6 +5,8 @@
 // plus a live chart and an event log.
 
 import { twin, on, GESTURES, viewRect, $ } from "./core.js";
+import { icon } from "./icons.js";
+import { toast } from "./ui.js";
 
 const SAMPLE_MS = 250, HISTORY = 120;           // chart keeps 30 s
 let last = null, speed = 0, tips = [], stalls = 0;
@@ -68,17 +70,25 @@ function drawGestureBar() {
     ? keys.map(k => `<span style="width:${(gestureMs[k] / total) * 100}%;background:${GESTURES[k].color}"></span>`).join("")
     : "";
   $("gLegend").innerHTML = total
-    ? keys.map(k => `<span><i style="background:${GESTURES[k].color}"></i>${GESTURES[k].label.split(" ").slice(1).join(" ")} ${(gestureMs[k] / 1000).toFixed(1)}s</span>`).join("")
-    : `<span style="color:var(--muted)">No gestures yet</span>`;
+    ? keys.map(k => `<span><i style="background:${GESTURES[k].color}"></i>${GESTURES[k].label} ${(gestureMs[k] / 1000).toFixed(1)}s</span>`).join("")
+    : `<span class="subtle">Time per gesture appears here once a hand is tracked</span>`;
 }
 
 function drawChart() {
   const c = $("chart"), dpr = window.devicePixelRatio || 1;
   const W = c.clientWidth, H = c.clientHeight;
+  if (!W) return;                                 // section hidden
   if (c.width !== W * dpr) { c.width = W * dpr; c.height = H * dpr; }
   const ctx = c.getContext("2d");
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
+  ctx.strokeStyle = "#232932"; ctx.lineWidth = 1;           // light horizontal grid
+  for (const f of [0.25, 0.5, 0.75]) { ctx.beginPath(); ctx.moveTo(0, Math.round(H * f) + .5); ctx.lineTo(W, Math.round(H * f) + .5); ctx.stroke(); }
+  if (!series.speed.some(v => v > 0) && !series.rtt.some(v => v > 0)) {
+    ctx.fillStyle = "#727a86"; ctx.font = "12px Inter, system-ui, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("No data yet", W / 2, H / 2 + 4);
+    return;
+  }
   const line = (data, max, color) => {
     if (data.length < 2) return;
     ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.beginPath();
@@ -89,21 +99,27 @@ function drawChart() {
     });
     ctx.stroke();
   };
-  line(series.speed, Math.max(400, ...series.speed), "#4f8cff");
-  line(series.rtt, Math.max(100, ...series.rtt), "#ffd60a");
+  line(series.speed, Math.max(400, ...series.speed), "#7b96ff");
+  line(series.rtt, Math.max(100, ...series.rtt), "#e0a83a");
 }
 
 $("aReset").onclick = () => {
   gestureMs = {}; stalls = 0; series.speed.length = 0; series.rtt.length = 0;
+  toast("Analytics reset", "info");
 };
 
 // ------------------------------------------------------------------ event log
+const EMPTY_LOG = `<li class="empty">${icon("list", 22)}<span class="empty-title">No activity yet</span>
+  <span class="empty-desc">Connections, gestures and actions will appear here.</span></li>`;
+$("log").innerHTML = EMPTY_LOG;
 on("event", ({ text, kind, time }) => {
-  const li = document.createElement("li");
-  li.className = kind;
-  li.innerHTML = `<time>${time.toLocaleTimeString()}</time>`;
-  li.append(text);
   const log = $("log");
+  log.querySelector(".empty")?.remove();
+  const li = document.createElement("li");
+  li.className = `log-item ${kind}`;
+  const t = time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+  li.innerHTML = `<time>${t}</time><span class="dot"></span><span></span>`;
+  li.lastChild.textContent = text;
   log.prepend(li);
-  while (log.children.length > 40) log.lastChild.remove();
+  while (log.children.length > 60) log.lastChild.remove();
 });

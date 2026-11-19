@@ -5,6 +5,7 @@
 // train people and run demos before (or without) touching the real asset.
 
 import { ingest, setSource, on, $ } from "./core.js";
+import { setButton } from "./icons.js";
 
 // joint offsets from the wrist (normalized image units) for each pose
 const CURLED = {
@@ -89,12 +90,12 @@ function startSim() {
     $("simStatus").textContent = `Virtual hand is ${caption}`;
     ingest(msg, "simulation");
   }, 33);
-  $("simBtn").textContent = "■ Stop simulation";
+  setButton($("simBtn"), "stop", "Stop simulation");
   $("simBtn").classList.add("active");
 }
 function stopSim() {
   clearInterval(timer); timer = null;
-  $("simBtn").textContent = "▶ Simulate hand";
+  setButton($("simBtn"), "play", "Simulate hand");
   $("simBtn").classList.remove("active");
   $("simStatus").textContent = "";
 }

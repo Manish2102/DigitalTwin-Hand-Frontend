@@ -4,477 +4,582 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Digital Twin Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/design.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-  :root { --bg:#0f1115; --panel:#1a1d24; --line:#2a2e37; --text:#e8eaed; --muted:#9aa0a6;
-          --ok:#34c759; --warn:#ffd60a; --bad:#ff453a; --accent:#4f8cff; }
-  * { box-sizing:border-box; }
-  html, body { height:100%; }
-  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 system-ui, -apple-system, sans-serif;
-         display:flex; flex-direction:column; }
+  /* ============================ app shell ============================ */
+  .shell { display: grid; grid-template-columns: 248px 1fr; height: 100vh; transition: grid-template-columns .2s var(--ease); }
+  .shell.collapsed { grid-template-columns: 68px 1fr; }
 
-  /* ---------- header ---------- */
-  header { display:flex; align-items:center; gap:12px; padding:10px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
-  header h1 { font-size:17px; margin:0; }
-  header .sub { color:var(--muted); font-size:13px; }
-  .pills { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
-  .pill { padding:4px 10px; border-radius:999px; background:var(--panel); border:1px solid var(--line); font-size:13px; }
-  .pill b { font-weight:600; }
-  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--bad); margin-right:6px; }
-  .dot.on { background:var(--ok); }
+  /* sidebar */
+  .sidebar { display: flex; flex-direction: column; gap: var(--s1); min-height: 0; padding: var(--s3); background: var(--surface);
+             border-right: 1px solid var(--border); overflow: hidden auto; }
+  .brand { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 6px; margin-bottom: var(--s3); }
+  .brand-mark { display: grid; place-items: center; width: 30px; height: 30px; flex: none; border-radius: var(--radius);
+                background: var(--accent-weak); color: var(--accent); border: 1px solid var(--accent-border); }
+  .brand-name { font-weight: 600; font-size: var(--fs-md); letter-spacing: -0.01em; white-space: nowrap; }
+  .nav-label { padding: var(--s2) 8px var(--s1); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+  .nav-item { display: flex; align-items: center; gap: var(--s3); width: 100%; padding: 9px 10px; border: 1px solid transparent; border-radius: var(--radius);
+              background: transparent; color: var(--text-2); font: inherit; text-align: left; cursor: pointer;
+              transition: background .15s var(--ease), color .15s var(--ease), border-color .15s; }
+  .nav-item:hover { background: var(--surface-3); color: var(--text); }
+  .nav-item.active { background: var(--accent-weak); border-color: var(--accent-border); color: var(--text); }
+  .nav-item.active .icon { color: var(--accent); }
+  .nav-text { display: flex; flex-direction: column; min-width: 0; }
+  .nav-title { font-size: var(--fs-sm); font-weight: 600; white-space: nowrap; }
+  .nav-desc { font-size: var(--fs-xs); color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: var(--s2); padding-top: var(--s3); }
+  .conn-card { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); }
+  .conn-row { display: flex; align-items: center; gap: 8px; font-size: var(--fs-sm); font-weight: 500; }
+  .conn-sub { font-size: var(--fs-xs); color: var(--text-3); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .shell.collapsed .brand-name, .shell.collapsed .nav-text, .shell.collapsed .nav-label,
+  .shell.collapsed .conn-card, .shell.collapsed .btn-label { display: none; }
+  .shell.collapsed .nav-item { justify-content: center; padding: 10px 0; }
+  .shell.collapsed .sidebar-foot .btn { padding: 0; }
+  .shell:not(.collapsed) [data-tip-pos="right"]::after { display: none; }   /* tooltips only when collapsed */
+  .scrim { display: none; }                  /* only used as the mobile drawer backdrop */
+  .collapse-btn .icon { transition: transform .2s var(--ease); }
+  .shell.collapsed .collapse-btn .icon { transform: scaleX(-1); }
 
-  /* ---------- app layout: left nav + active section ---------- */
-  .app { flex:1; display:grid; grid-template-columns:210px 1fr; min-height:0; }
-  nav.sections { border-right:1px solid var(--line); padding:12px 10px; display:flex; flex-direction:column; gap:6px; background:#13151a; }
-  nav.sections .navlabel { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); padding:4px 8px; }
-  .navbtn { display:flex; gap:10px; align-items:flex-start; text-align:left; width:100%; padding:10px; border-radius:10px;
-            border:1px solid transparent; background:transparent; }
-  .navbtn:hover:not(:disabled) { background:#1d2027; }
-  .navbtn.active { background:rgba(79,140,255,.12); border-color:rgba(79,140,255,.45); }
-  .navbtn .ico { font-size:20px; line-height:1.1; }
-  .navbtn b { display:block; font-size:14px; }
-  .navbtn small { display:block; color:var(--muted); font-size:12px; }
-  .navfoot { margin-top:auto; display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--muted); padding:0 4px; }
-  .navfoot button { width:100%; }
+  /* main column */
+  .main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .page-header { display: flex; align-items: center; gap: var(--s4); padding: var(--s4) var(--s6); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .menu-btn { display: none; }
+  .crumbs { display: flex; align-items: center; gap: 4px; font-size: var(--fs-xs); color: var(--text-3); }
+  .crumbs .icon { color: var(--text-3); }
+  .page-title { font-size: var(--fs-xl); margin-top: 2px; }
+  .page-desc { font-size: var(--fs-sm); color: var(--text-2); margin-top: 2px; }
+  .header-chips { margin-left: auto; display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+  .chip-copy { display: grid; place-items: center; width: 22px; height: 22px; margin-right: -4px; border: 0; border-radius: var(--radius-sm);
+               background: transparent; color: var(--text-3); cursor: pointer; }
+  .chip-copy:hover { background: var(--surface-3); color: var(--text); }
 
-  .section { display:none; grid-template-columns:1fr 360px; min-height:0; min-width:0; }
-  .section.active { display:grid; }
-  .stagecol { display:flex; flex-direction:column; min-width:0; min-height:0; }
+  /* sections */
+  .section { display: none; flex: 1; flex-direction: column; min-height: 0; }
+  .section.active { display: flex; }
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s4); padding: 10px var(--s6);
+             border-bottom: 1px solid var(--border); background: var(--surface); position: relative; }
+  .tool-group { display: flex; align-items: center; gap: 6px; }
+  .tool-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); margin-right: 4px; }
+  .divider { width: 1px; height: 22px; background: var(--border-strong); }
+  .toolbar-status { flex-basis: 100%; display: flex; gap: var(--s4); font-size: var(--fs-xs); color: var(--text-2); }
+  .toolbar-status:empty, .toolbar-status:has(> span:empty:only-child) { display: none; }
+  .progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; }
+  .progress i { display: block; height: 100%; width: 0; background: var(--accent-solid); transition: width .1s linear; }
+  .workspace { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 360px; min-height: 0; }
+  .panel { border-left: 1px solid var(--border); background: var(--bg); overflow-y: auto; padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); }
 
-  /* ---------- toolbar ---------- */
-  .toolbar { position:relative; display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; padding:8px 12px;
-             border-bottom:1px solid var(--line); background:var(--panel); }
-  .group { display:flex; align-items:center; gap:6px; }
-  .group > .glabel { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-right:2px; }
-  .sep { width:1px; align-self:stretch; background:var(--line); }
-  .palette { display:flex; gap:5px; }
-  .swatch { width:24px; height:24px; border-radius:6px; border:2px solid transparent; cursor:pointer; }
-  .swatch.sel { border-color:var(--text); box-shadow:0 0 0 2px var(--bg) inset; }
-  .colorpick { position:relative; width:24px; height:24px; border-radius:6px; overflow:hidden; cursor:pointer;
-               background:conic-gradient(red, yellow, lime, cyan, blue, magenta, red); border:2px solid transparent; }
-  .colorpick.sel { border-color:var(--text); }
-  .colorpick input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; border:0; padding:0; }
-  .seg { display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
-  .seg button { border:0; border-radius:0; padding:5px 9px; background:#232731; display:flex; align-items:center; }
-  .seg button + button { border-left:1px solid var(--line); }
-  .seg button.sel { background:rgba(79,140,255,.18); color:var(--accent); }
-  .seg button i { display:block; border-radius:50%; background:currentColor; }
-  .tstatus { flex-basis:100%; display:flex; gap:16px; font-size:12px; color:var(--muted); min-height:0; }
-  .tstatus:empty { display:none; }
-  .progress { position:absolute; left:0; right:0; bottom:-1px; height:2px; }
-  .progress i { display:block; height:100%; width:0; background:var(--accent); }
+  /* pen controls */
+  .swatches { display: flex; gap: 6px; }
+  .swatch { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--border-strong);
+            transition: box-shadow .15s, transform .1s; }
+  .swatch:hover { transform: scale(1.08); }
+  .swatch.sel { box-shadow: 0 0 0 2px var(--text); }
+  .colorpick { position: relative; width: 22px; height: 22px; border-radius: 50%; overflow: hidden; cursor: pointer; border: 2px solid var(--surface);
+               box-shadow: 0 0 0 1px var(--border-strong); background: conic-gradient(#f2665e, #e0a83a, #46c068, #4fc3f7, #7b96ff, #c47dff, #f2665e); }
+  .colorpick.sel { box-shadow: 0 0 0 2px var(--text); }
+  .colorpick input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; border: 0; padding: 0; cursor: pointer; }
+  .size-dot { display: block; border-radius: 50%; background: currentColor; }
 
-  button, select { font:inherit; font-size:13px; padding:5px 10px; border-radius:8px; border:1px solid var(--line); background:#232731; color:var(--text); cursor:pointer; }
-  button:hover:not(:disabled) { background:#2b303b; }
-  button:disabled { opacity:.45; cursor:default; }
-  button.sel { border-color:var(--accent); color:var(--accent); }
-  button.active { border-color:var(--accent); background:rgba(79,140,255,.15); }
-  button.rec { border-color:var(--bad); color:var(--bad); background:rgba(255,69,58,.12); }
+  /* hand stage */
+  #viewport { position: relative; flex: 1; min-height: 320px;
+              background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 24px 24px; }
+  #viewport canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .stage-empty { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; transition: opacity .2s; }
+  .stage-empty.hidden { opacity: 0; }
+  .stage-empty .empty { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--s5) var(--s6); }
+  .stage-col { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 
-  /* ---------- hand canvas ---------- */
-  #viewport { position:relative; flex:1; min-height:320px; }
-  #viewport canvas { position:absolute; inset:0; width:100%; height:100%; }
+  /* twin state */
+  .gesture-now { display: flex; align-items: center; gap: var(--s3); }
+  .gesture-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--surface-3); color: var(--text-2); border: 1px solid var(--border-strong); }
+  .gesture-icon.live { background: var(--accent-weak); color: var(--accent); border-color: var(--accent-border); }
+  #gesture { font-size: var(--fs-lg); font-weight: 600; }
+  .gesture-sub { font-size: var(--fs-xs); color: var(--text-3); }
+  .fingers { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: var(--s3) 0; }
+  .finger { text-align: center; font-size: 11px; color: var(--text-3); }
+  .finger i { display: block; height: 22px; border-radius: var(--radius-sm); background: var(--surface-3); border: 1px solid var(--border); margin-bottom: 4px; transition: background .12s, border-color .12s; }
+  .finger.up i { background: var(--accent-solid); border-color: var(--accent-solid); }
+  .finger.up { color: var(--text); }
 
-  /* ---------- connect-phone pop-up (shared by both sections) ---------- */
-  #hint { position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; background:rgba(8,9,12,.72); padding:16px; }
-  #hint.hidden { display:none; }
-  #hint .dialog { position:relative; background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px;
-                  max-width:440px; display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; }
-  #qr { background:#fff; padding:8px; border-radius:8px; }
-  #phoneUrl { font-family:ui-monospace, monospace; color:var(--accent); word-break:break-all; }
+  /* charts */
+  canvas.chart { width: 100%; height: 76px; display: block; margin-top: var(--s3); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); }
+  .legend { display: flex; gap: var(--s3); font-size: var(--fs-xs); color: var(--text-3); margin-top: 6px; }
+  .legend i { display: inline-block; width: 10px; height: 2px; border-radius: 1px; vertical-align: middle; margin-right: 5px; }
+  .gbar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--surface-3); margin-top: var(--s3); }
+  .gbar span { display: block; height: 100%; transition: width .3s var(--ease); }
+  .glegend { display: flex; flex-wrap: wrap; gap: 4px var(--s3); font-size: var(--fs-xs); color: var(--text-2); margin-top: 8px; }
+  .glegend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
 
-  /* ---------- sidebars ---------- */
-  aside { border-left:1px solid var(--line); overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:12px; }
-  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px; }
-  .card h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 8px; display:flex; align-items:center; }
-  .card h2 .tag { margin-left:auto; text-transform:none; letter-spacing:0; font-weight:400; color:var(--accent); }
-  .note { color:var(--muted); font-size:12px; margin-top:8px; }
-  #gesture { font-size:22px; font-weight:700; }
-  .fingers { display:flex; gap:6px; margin:10px 0 4px; }
-  .finger { flex:1; text-align:center; font-size:11px; color:var(--muted); }
-  .finger i { display:block; height:26px; border-radius:6px; background:var(--line); margin-bottom:3px; transition:background .1s; }
-  .finger.up i { background:var(--accent); }
-  .metrics { display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; margin-top:8px; }
-  .metrics b { display:block; font-size:15px; font-variant-numeric:tabular-nums; }
-  .metrics span { color:var(--muted); font-size:12px; }
-  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-  .gbar { display:flex; height:10px; border-radius:5px; overflow:hidden; background:var(--line); margin-top:10px; }
-  .gbar span { display:block; height:100%; }
-  .glegend { display:flex; flex-wrap:wrap; gap:4px 10px; font-size:12px; margin-top:6px; }
-  .glegend i { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:4px; }
-  canvas.chart { width:100%; height:70px; display:block; margin-top:10px; background:#14171d; border-radius:6px; }
-  .legend { display:flex; gap:12px; font-size:12px; color:var(--muted); margin-top:4px; }
-  .legend i { display:inline-block; width:10px; height:2px; vertical-align:middle; margin-right:4px; }
-  input[type=range] { flex:1; accent-color:var(--accent); }
-  label { display:flex; align-items:center; gap:6px; }
-  table { width:100%; border-collapse:collapse; font-size:13px; }
-  td { padding:3px 0; vertical-align:top; }
-  td:first-child { width:34px; font-size:16px; }
-  .log { list-style:none; margin:0; padding:0; max-height:170px; overflow:auto; font-size:12px; }
-  .log li { padding:3px 0; border-bottom:1px solid var(--line); }
-  .log time { color:var(--muted); margin-right:8px; font-variant-numeric:tabular-nums; }
-  .log li.ok { color:var(--ok); } .log li.warn { color:var(--bad); }
-  .log li.action { color:var(--warn); } .log li.source { color:var(--accent); }
-  details summary { cursor:pointer; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
-  details[open] summary { margin-bottom:8px; }
-  pre { margin:0; font:11px/1.4 ui-monospace, monospace; color:var(--muted); max-height:180px; overflow:auto; white-space:pre-wrap; }
-  dl { margin:0; font-size:13px; }
-  dt { font-weight:600; margin-top:6px; }
-  dd { margin:0; color:var(--muted); }
+  /* gesture guide */
+  .guide { display: grid; gap: 8px; }
+  .guide-row { display: flex; align-items: center; gap: var(--s3); font-size: var(--fs-sm); }
+  .guide-row .gi { display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); }
+  .guide-row b { font-weight: 500; }
+  .guide-row span.subtle { margin-left: auto; font-size: var(--fs-xs); }
 
-  /* ---------- parcel monitor (CSS 3D, no library) ---------- */
-  .pose-stage { position:relative; flex:1; min-height:360px; perspective:1000px; overflow:hidden;
-                background:radial-gradient(ellipse at 50% 40%, #1a1e27 0%, #0f1115 70%); }
-  .pose-stage::after { content:""; position:absolute; inset:0; pointer-events:none; border:3px solid transparent; transition:border-color .2s; }
-  .pose-stage.ok::after { border-color:rgba(52,199,89,.35); }
-  .pose-stage.warn::after { border-color:rgba(255,214,10,.75); }
-  .pose-stage.crit::after { border-color:rgba(255,69,58,.9); }
-  .pose-stage.stale .pose-table { opacity:.35; }
-  .pose-banner { position:absolute; top:14px; left:50%; transform:translateX(-50%); padding:6px 16px; border-radius:18px; font-weight:700;
-                 background:var(--panel); border:1px solid var(--line); z-index:2; width:max-content; max-width:calc(100% - 32px); text-align:center; }
-  .pose-banner.ok { color:var(--ok); } .pose-banner.warn { color:var(--warn); } .pose-banner.crit { color:var(--bad); }
-  .pose-flash { position:absolute; inset:0; background:rgba(255,69,58,.25); opacity:0; pointer-events:none; transition:opacity .5s; }
-  .pose-flash.on { opacity:1; transition:none; }
-  .pose-table { position:absolute; left:50%; top:60%; width:0; height:0; transform-style:preserve-3d; transform:rotateX(58deg); transition:opacity .3s; }
-  .pose-grid { position:absolute; width:520px; height:520px; left:-260px; top:-260px; border:1px solid #2a2e37; border-radius:10px;
-               background-image:linear-gradient(#20242c 1px, transparent 1px), linear-gradient(90deg, #20242c 1px, transparent 1px); background-size:40px 40px; }
-  .pose-grid::after { content:"N"; position:absolute; top:6px; left:50%; transform:translateX(-50%); font-size:13px; color:var(--muted); }
-  .model3d { position:absolute; left:0; top:0; width:0; height:0; transform-style:preserve-3d; }
-  .model3d.hidden { display:none; }
-  .model3d .face { position:absolute; backface-visibility:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center;
-                   gap:4px; font-weight:800; letter-spacing:.04em; color:#3b2a18; text-align:center; }
-  /* parcel: 140 (x) × 190 (y) × 100 (z) */
-  .parcel .face { background:linear-gradient(135deg, #c99a68, #a8784a); border:2px solid #7a5532; }
-  .parcel .top    { width:140px; height:190px; left:-70px; top:-95px; transform:translateZ(50px); }
-  .parcel .top::before { content:""; position:absolute; left:58px; top:0; width:24px; height:100%; background:rgba(255,255,255,.18); }
-  .parcel .bottom { width:140px; height:190px; left:-70px; top:-95px; transform:rotateY(180deg) translateZ(50px); color:#5a3d22; }
-  .parcel .north  { width:140px; height:100px; left:-70px; top:-50px; transform:rotateX(90deg) translateZ(95px); }
-  .parcel .south  { width:140px; height:100px; left:-70px; top:-50px; transform:rotateX(-90deg) translateZ(95px); }
-  .parcel .east   { width:100px; height:190px; left:-50px; top:-95px; transform:rotateY(90deg) translateZ(70px); }
-  .parcel .west   { width:100px; height:190px; left:-50px; top:-95px; transform:rotateY(-90deg) translateZ(70px); }
-  .parcel .arrow { font-size:30px; line-height:1; color:#3b2a18; }
-  .parcel .fragile { color:#b3261e; font-size:12px; border:2px solid #b3261e; padding:1px 5px; border-radius:4px; }
-  /* phone: 76 × 156 × 10 */
-  .phone .face { width:76px; height:156px; left:-38px; top:-78px; border-radius:14px; border:3px solid #0b0d12; color:#fff; font-size:11px; }
-  .phone .front { transform:translateZ(5px); background:linear-gradient(160deg, #2c4f99, #4f8cff); justify-content:space-between; padding:8px 0; }
-  .phone .front i { width:16px; height:4px; border-radius:2px; background:#0b0d12; }
-  .phone .back { transform:rotateY(180deg) translateZ(5px); background:linear-gradient(160deg, #3a3f4b, #23262e); }
-  #pStatus { font-size:20px; font-weight:800; }
-  #pStatus.ok { color:var(--ok); } #pStatus.warn { color:var(--warn); } #pStatus.crit { color:var(--bad); }
-  .score { display:flex; align-items:baseline; gap:8px; margin-top:6px; }
-  .score b { font-size:34px; font-variant-numeric:tabular-nums; }
-  .scorebar { height:8px; border-radius:4px; background:var(--line); overflow:hidden; margin-top:4px; }
-  .scorebar i { display:block; height:100%; width:100%; background:var(--ok); transition:width .3s, background .3s; }
-  .rules label { justify-content:space-between; font-size:13px; margin-top:6px; }
-  .rules input[type=range] { max-width:140px; }
+  pre.raw { margin: 0; font: 11px/1.5 var(--mono); color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: var(--s3); max-height: 200px; overflow: auto; white-space: pre-wrap; }
+  .range-row { display: flex; align-items: center; gap: var(--s3); }
+  .range-row input { flex: 1; }
+  .range-row b { width: 52px; text-align: right; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
 
-  @media (max-width: 1000px) {
-    .app { grid-template-columns:1fr; }
-    nav.sections { flex-direction:row; border-right:0; border-bottom:1px solid var(--line); overflow-x:auto; }
-    nav.sections .navlabel, .navfoot { display:none; }
-    .navbtn { width:auto; flex:1; }
-    .section.active { grid-template-columns:1fr; }
-    #viewport { height:60vh; flex:none; }
-    .pose-stage { height:55vh; flex:none; }
-    aside { border-left:0; border-top:1px solid var(--line); }
-    .sep { display:none; }
+  /* ========================= parcel monitor ========================= */
+  .pose-stage { position: relative; flex: 1; min-height: 360px; perspective: 1100px; overflow: hidden; background: var(--bg);
+                box-shadow: inset 0 0 0 1px transparent; transition: box-shadow .25s var(--ease); }
+  .pose-stage.warn { box-shadow: inset 0 0 0 2px var(--warning-border); }
+  .pose-stage.crit { box-shadow: inset 0 0 0 2px var(--danger-border); }
+  /* fade the leaves, not the 3D group: opacity on a preserve-3d parent would flatten the parcel */
+  .pose-stage.stale .face, .pose-stage.stale .pose-floor, .pose-stage.stale .pose-north { opacity: .35; }
+  .stage-top { position: absolute; top: var(--s4); left: var(--s4); right: var(--s4); display: flex; align-items: center; gap: var(--s2); z-index: 2; flex-wrap: wrap; }
+  .stage-foot { position: absolute; left: var(--s4); bottom: var(--s4); z-index: 2; display: flex; gap: var(--s2); flex-wrap: wrap; }
+  .pose-flash { position: absolute; inset: 0; background: var(--danger-weak); opacity: 0; pointer-events: none; transition: opacity .6s; }
+  .pose-flash.on { opacity: 1; transition: none; }
+  .pose-table { position: absolute; left: 50%; top: 58%; width: 0; height: 0; transform-style: preserve-3d; transform: rotateX(58deg); transition: opacity .3s; }
+  .pose-floor { position: absolute; width: 540px; height: 540px; left: -270px; top: -270px; border-radius: 50%;
+                background-image: radial-gradient(circle, transparent 0 32%, var(--border) 32% calc(32% + 1px), transparent calc(32% + 1px) 49%, var(--border-strong) 49% calc(49% + 1px), transparent calc(49% + 1px)),
+                                  linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+                background-size: 100% 100%, 45px 45px, 45px 45px; background-position: center; mask-image: radial-gradient(circle, #000 55%, transparent 71%); }
+  .pose-north { position: absolute; left: -12px; top: -262px; width: 24px; text-align: center; font: 600 13px var(--font); color: var(--text-3); }
+  .model3d { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d; }
+  .model3d.hidden { display: none; }
+  .model3d .face { position: absolute; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; }
+  /* parcel 150 (x) × 200 (y) × 100 (z), flat colours shaded per face */
+  .parcel .face { color: #4a3420; font: 700 11px/1.15 var(--font); letter-spacing: .08em; border: 1px solid #7d5a38; }
+  .parcel .top    { width: 150px; height: 200px; left: -75px; top: -100px; transform: translateZ(50px); background: #c79f72; }
+  .parcel .top::before { content: ""; position: absolute; left: 62px; top: -1px; bottom: -1px; width: 26px; background: rgba(240,226,200,.32); }
+  .parcel .bottom { width: 150px; height: 200px; left: -75px; top: -100px; transform: rotateY(180deg) translateZ(50px); background: #9c774f; color: #3c2a19; }
+  .parcel .north  { width: 150px; height: 100px; left: -75px; top: -50px; transform: rotateX(90deg) translateZ(100px); background: #b88f62; }
+  .parcel .south  { width: 150px; height: 100px; left: -75px; top: -50px; transform: rotateX(-90deg) translateZ(100px); background: #ae8659; }
+  .parcel .east   { width: 100px; height: 200px; left: -50px; top: -100px; transform: rotateY(90deg) translateZ(75px); background: #a57e53; }
+  .parcel .west   { width: 100px; height: 200px; left: -50px; top: -100px; transform: rotateY(-90deg) translateZ(75px); background: #a98256; }
+  .parcel .label-box { position: relative; padding: 4px 6px; border: 1.5px solid currentColor; border-radius: 3px; }
+  .parcel .fragile { color: #a3302a; }
+  .parcel svg.upright { width: 46px; height: 38px; }
+  /* phone 78 × 158 × 10 */
+  .phone .face { width: 78px; height: 158px; left: -39px; top: -79px; border-radius: 14px; border: 3px solid #05070a; color: #dfe4ee; font: 600 10px var(--font); }
+  .phone .front { transform: translateZ(5px); background: #1d2b4f; justify-content: space-between; padding: 8px 0; }
+  .phone .front i { width: 18px; height: 4px; border-radius: 2px; background: #05070a; }
+  .phone .back { transform: rotateY(180deg) translateZ(5px); background: #2a2f38; }
+
+  /* parcel panel */
+  .status-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
+  .score-row { display: flex; align-items: flex-end; gap: var(--s3); margin: var(--s4) 0 6px; }
+  .score-row .big { font-size: 34px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+  .score-row .of { font-size: var(--fs-sm); color: var(--text-3); padding-bottom: 3px; }
+  .score-row .badge { margin-left: auto; }
+  .scorebar { height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+  .scorebar i { display: block; height: 100%; width: 100%; background: var(--success); transition: width .35s var(--ease), background .35s; }
+  .incident { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .incident:last-child { border-bottom: 0; }
+  .incident .ii { display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--radius); }
+  .incident.warn .ii { background: var(--warning-weak); color: var(--warning); }
+  .incident.crit .ii { background: var(--danger-weak); color: var(--danger); }
+  .incident-title { font-size: var(--fs-sm); font-weight: 500; }
+  .incident-meta { font-size: var(--fs-xs); color: var(--text-3); font-variant-numeric: tabular-nums; }
+  .penalty { font: 600 var(--fs-xs) var(--font); color: var(--danger); font-variant-numeric: tabular-nums; }
+
+  /* modal QR */
+  .qr-wrap { display: flex; gap: var(--s5); align-items: center; }
+  #qr { flex: none; background: #fff; padding: 8px; border-radius: var(--radius); }
+  #qr img, #qr canvas { display: block; }
+  .steps { margin: 0; padding-left: 18px; font-size: var(--fs-sm); color: var(--text-2); display: grid; gap: 6px; }
+  .url-box { display: flex; align-items: center; gap: var(--s2); margin-top: var(--s4); padding: 6px 6px 6px 10px; border: 1px solid var(--border-strong);
+             border-radius: var(--radius); background: var(--surface-2); }
+  .url-box a { flex: 1; min-width: 0; font: 12px var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ============================ responsive ============================ */
+  @media (max-width: 1100px) {
+    .workspace { grid-template-columns: 1fr; overflow-y: auto; }
+    .panel { border-left: 0; border-top: 1px solid var(--border); overflow: visible; }
+    #viewport { flex: none; height: 62vh; }
+    .pose-stage { flex: none; height: 62vh; }
+    .section.active { overflow-y: auto; }
+  }
+  @media (max-width: 760px) {
+    .shell, .shell.collapsed { grid-template-columns: 1fr; }
+    .sidebar { position: fixed; z-index: 50; inset: 0 auto 0 0; width: 264px; transform: translateX(-100%); transition: transform .22s var(--ease); box-shadow: var(--shadow); }
+    .shell.nav-open .sidebar { transform: none; }
+    .shell.collapsed .brand-name, .shell.collapsed .nav-text, .shell.collapsed .nav-label, .shell.collapsed .conn-card, .shell.collapsed .btn-label { display: revert; }
+    .collapse-btn { display: none; }
+    .scrim { display: block; position: fixed; inset: 0; z-index: 45; background: rgba(0,0,0,.5); opacity: 0; pointer-events: none; transition: opacity .2s; }
+    .shell.nav-open .scrim { opacity: 1; pointer-events: auto; }
+    .menu-btn { display: inline-flex; }
+    .page-header { padding: var(--s3) var(--s4); }
+    .page-desc { display: none; }
+    .header-chips { margin-left: 0; width: 100%; }
+    .toolbar { padding: 10px var(--s4); }
+    .divider { display: none; }
+    .panel { padding: var(--s3); }
+    .qr-wrap { flex-direction: column; }
   }
 </style>
 </head>
 <body>
-<header>
-  <div>
-    <h1>Digital Twin Lab</h1>
-    <div class="sub">Your phone is the sensor - this page is the live virtual copy</div>
-  </div>
-  <div class="pills">
-    <span class="pill" title="Your private room - only phones that scan this page's QR code can join">Room: <b id="roomCode">…</b></span>
-    <span class="pill">Hand source: <b id="source">Live phone</b></span>
-    <span class="pill" id="connPill" style="cursor:pointer" title="Show how to connect the phone"><i class="dot" id="connDot"></i><span id="conn">Phone: offline</span></span>
-  </div>
-</header>
+<div class="shell" id="shell">
 
-<div class="app">
-  <!-- ================= left navigation ================= -->
-  <nav class="sections">
-    <div class="navlabel">Twins</div>
-    <button class="navbtn active" data-section="hand">
-      <span class="ico">✍️</span>
-      <span><b>Hand drawing</b><small>Camera · gestures · drawing</small></span>
-    </button>
-    <button class="navbtn" data-section="pose">
-      <span class="ico">📦</span>
-      <span><b>Phone pose twin</b><small>Motion sensors · smart parcel</small></span>
-    </button>
-    <div class="navfoot">
-      <button id="connectBtn">📲 Connect phone</button>
-      <span>One phone can feed both twins at the same time.</span>
+  <!-- ============================== sidebar ============================== -->
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="brand">
+      <span class="brand-mark"><i data-icon="logo" data-size="18"></i></span>
+      <span class="brand-name">Digital Twin Lab</span>
     </div>
-  </nav>
 
-  <!-- ================= section 1: hand drawing ================= -->
-  <section class="section active" id="sec-hand">
-    <div class="stagecol">
+    <div class="nav-label">Twins</div>
+    <nav class="nav">
+      <button class="nav-item active" data-section="hand" data-tip="Hand drawing" data-tip-pos="right">
+        <i data-icon="hand" data-size="18"></i>
+        <span class="nav-text"><span class="nav-title">Hand drawing</span><span class="nav-desc">Camera · gestures · drawing</span></span>
+      </button>
+      <button class="nav-item" data-section="pose" data-tip="Phone pose twin" data-tip-pos="right">
+        <i data-icon="package" data-size="18"></i>
+        <span class="nav-text"><span class="nav-title">Phone pose twin</span><span class="nav-desc">Motion sensors · smart parcel</span></span>
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="conn-card">
+        <div class="conn-row"><span class="dot" id="connDot"></span><span id="conn">Phone offline</span></div>
+        <div class="conn-sub">One phone can feed both twins</div>
+      </div>
+      <button class="btn btn-primary btn-block" id="connectBtn" data-tip="Connect phone" data-tip-pos="right">
+        <i data-icon="qr"></i><span class="btn-label">Connect phone</span>
+      </button>
+      <button class="btn btn-ghost btn-block collapse-btn" id="collapseBtn" data-tip="Expand sidebar" data-tip-pos="right" aria-label="Collapse sidebar">
+        <i data-icon="panel"></i><span class="btn-label">Collapse</span>
+      </button>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <!-- ============================== main ============================== -->
+  <div class="main">
+    <header class="page-header">
+      <button class="btn btn-ghost btn-icon menu-btn" id="menuBtn" aria-label="Open navigation"><i data-icon="menu" data-size="18"></i></button>
+      <div>
+        <div class="crumbs">Twins <i data-icon="chevronRight" data-size="12"></i> <span id="crumb">Hand drawing</span></div>
+        <h1 class="page-title" id="pageTitle">Hand drawing</h1>
+        <p class="page-desc" id="pageDesc">A live virtual copy of your hand, built from the phone's camera.</p>
+      </div>
+      <div class="header-chips">
+        <span class="chip" data-tip="Private room - only phones that scan this page's QR code can join">
+          <i data-icon="link" data-size="14"></i>Room <b class="mono" id="roomCode">…</b>
+          <button class="chip-copy" id="copyRoom" aria-label="Copy room code"><i data-icon="copy" data-size="13"></i></button>
+        </span>
+        <span class="chip" id="sourceChip" data-tip="Where the hand data comes from"><i data-icon="radio" data-size="14"></i>Source <b id="source">Live phone</b></span>
+        <button class="chip" id="connPill" data-tip="How to connect the phone"><span class="dot" id="connDot2"></span><span id="conn2">Phone offline</span></button>
+      </div>
+    </header>
+
+    <!-- ======================= section: hand drawing ======================= -->
+    <section class="section active" id="sec-hand" aria-label="Hand drawing">
       <div class="toolbar">
-        <div class="group" title="Pen color - also sent to the phone">
-          <span class="glabel">Pen</span>
-          <div class="palette" id="palette"></div>
-          <label class="colorpick" id="colorPick" title="Custom color"><input type="color" id="customColor" value="#ff9f0a"></label>
-        </div>
-        <div class="group" title="Brush size">
-          <div class="seg" id="sizes">
-            <button data-size="3" title="Thin"><i style="width:4px;height:4px"></i></button>
-            <button data-size="6" title="Medium" class="sel"><i style="width:8px;height:8px"></i></button>
-            <button data-size="12" title="Thick"><i style="width:12px;height:12px"></i></button>
+        <div class="tool-group" aria-label="Pen">
+          <span class="tool-label">Pen</span>
+          <div class="swatches" id="palette"></div>
+          <label class="colorpick" id="colorPick" data-tip="Custom colour"><input type="color" id="customColor" value="#ff9f0a" aria-label="Custom colour"></label>
+          <div class="seg" id="sizes" aria-label="Brush size">
+            <button data-size="3" data-tip="Thin"><span class="size-dot" style="width:4px;height:4px"></span></button>
+            <button data-size="6" data-tip="Medium" class="sel"><span class="size-dot" style="width:7px;height:7px"></span></button>
+            <button data-size="12" data-tip="Thick"><span class="size-dot" style="width:11px;height:11px"></span></button>
           </div>
         </div>
-        <span class="sep"></span>
-        <div class="group">
-          <span class="glabel">Canvas</span>
-          <button id="undo" title="Undo last stroke (Ctrl+Z)">↶ Undo</button>
-          <button id="clear">Clear</button>
-          <button id="save">Save PNG</button>
+        <span class="divider"></span>
+        <div class="tool-group" aria-label="Canvas">
+          <button class="btn btn-icon" id="undo" data-tip="Undo (Ctrl+Z)" aria-label="Undo"><i data-icon="undo"></i></button>
+          <button class="btn btn-icon" id="clear" data-tip="Clear canvas" aria-label="Clear canvas"><i data-icon="trash"></i></button>
+          <button class="btn btn-icon" id="save" data-tip="Save as PNG" aria-label="Save as PNG"><i data-icon="image"></i></button>
         </div>
-        <span class="sep"></span>
-        <div class="group">
-          <span class="glabel">Input</span>
-          <button id="simBtn" title="Drive the twin with a virtual hand - no phone needed">▶ Simulate hand</button>
+        <span class="divider"></span>
+        <div class="tool-group">
+          <button class="btn" id="simBtn" data-tip="Drive the twin with a virtual hand"><i data-icon="play"></i><span>Simulate hand</span></button>
         </div>
-        <span class="sep"></span>
-        <div class="group">
-          <span class="glabel">History</span>
-          <button id="recBtn">● Record</button>
-          <button id="replayBtn" disabled>▶ Replay</button>
-          <select id="speedSel" title="Replay speed">
+        <span class="divider"></span>
+        <div class="tool-group" aria-label="History">
+          <span class="tool-label">History</span>
+          <button class="btn" id="recBtn"><i data-icon="record"></i><span>Record</span></button>
+          <button class="btn" id="replayBtn" disabled><i data-icon="play"></i><span>Replay</span></button>
+          <select class="select" id="speedSel" aria-label="Replay speed" data-tip="Replay speed">
             <option value="1">1×</option><option value="2">2×</option><option value="4">4×</option>
           </select>
-          <button id="dlBtn" disabled title="Download recording as JSON">⤓</button>
-          <button id="loadBtn" title="Load a recording">⤒ Load</button>
+          <button class="btn btn-icon" id="dlBtn" disabled data-tip="Download recording" aria-label="Download recording"><i data-icon="download"></i></button>
+          <button class="btn btn-icon" id="loadBtn" data-tip="Load a recording" aria-label="Load a recording"><i data-icon="upload"></i></button>
           <input type="file" id="loadInput" accept="application/json,.json" hidden>
         </div>
-        <div class="tstatus"><span id="simStatus"></span><span id="recInfo"></span></div>
+        <div class="toolbar-status"><span id="simStatus"></span><span id="recInfo"></span></div>
         <div class="progress"><i id="replayBar"></i></div>
       </div>
 
-      <div id="viewport">
-        <canvas id="drawLayer"></canvas>
-        <canvas id="handLayer"></canvas>
-      </div>
-    </div>
+      <div class="workspace">
+        <div class="stage-col">
+          <div id="viewport">
+            <canvas id="drawLayer"></canvas>
+            <canvas id="handLayer"></canvas>
+            <div class="stage-empty" id="handEmpty">
+              <div class="empty">
+                <i data-icon="hand" data-size="28"></i>
+                <div class="empty-title">No hand detected</div>
+                <div class="empty-desc">Connect your phone and tap <b>Start camera</b>, or press <b>Simulate hand</b> in the toolbar.</div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-    <aside>
-      <div class="card">
-        <h2>Twin state</h2>
-        <div id="gesture">No hand</div>
-        <div class="fingers" id="fingers"></div>
-        <div class="metrics">
-          <div><b id="rate">0</b><span>updates / sec</span></div>
-          <div><b id="age">–</b><span>data age</span></div>
-          <div><b id="phoneFps">–</b><span>phone detections / sec</span></div>
-          <div><b id="rtt">–</b><span>phone ↔ twin round trip</span></div>
+        <div class="panel">
+          <div class="card">
+            <div class="card-head"><i data-icon="activity"></i><span class="card-title">Twin state</span><span class="card-meta">live</span></div>
+            <div class="gesture-now">
+              <span class="gesture-icon" id="gestureIcon"></span>
+              <div><div id="gesture">No hand</div><div class="gesture-sub">Current gesture</div></div>
+            </div>
+            <div class="fingers" id="fingers"></div>
+            <div class="metrics">
+              <div class="metric"><span class="metric-label">Updates / sec</span><span class="metric-value" id="rate">0</span></div>
+              <div class="metric"><span class="metric-label">Data age</span><span class="metric-value" id="age">–</span></div>
+              <div class="metric"><span class="metric-label">Phone detections/s</span><span class="metric-value" id="phoneFps">–</span></div>
+              <div class="metric"><span class="metric-label">Round trip</span><span class="metric-value" id="rtt">–</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><i data-icon="chart"></i><span class="card-title">Analytics</span>
+              <button class="btn btn-ghost btn-sm" id="aReset" style="margin-left:auto" data-tip="Reset statistics"><i data-icon="rotateCcw" data-size="14"></i>Reset</button></div>
+            <div class="metrics">
+              <div class="metric"><span class="metric-label">Fingertip speed</span><span class="metric-value"><span id="aSpeed">–</span> <span class="subtle" style="font-size:12px;font-weight:400">px/s</span></span></div>
+              <div class="metric"><span class="metric-label">Steadiness</span><span class="metric-value"><span id="aSteady">–</span> <span class="subtle" style="font-size:12px;font-weight:400">/ 100</span></span></div>
+              <div class="metric"><span class="metric-label">Data stalls &gt; 250 ms</span><span class="metric-value" id="aStalls">0</span></div>
+              <div class="metric"><span class="metric-label">Strokes on canvas</span><span class="metric-value" id="aStrokes">0</span></div>
+            </div>
+            <canvas class="chart" id="chart"></canvas>
+            <div class="legend"><span><i style="background:var(--accent)"></i>Speed</span><span><i style="background:var(--warning)"></i>Round trip</span><span style="margin-left:auto">Last 30 s</span></div>
+            <div class="gbar" id="gBar"></div>
+            <div class="glegend" id="gLegend"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><i data-icon="target"></i><span class="card-title">Prediction</span><span class="card-meta">Predictive twin</span></div>
+            <label class="check"><input type="checkbox" id="predOn" checked> Show predicted fingertip</label>
+            <div class="range-row" style="margin-top:12px">
+              <span class="subtle" style="font-size:12px">Look-ahead</span>
+              <input type="range" id="predH" min="0" max="300" step="25" value="150" aria-label="Look-ahead">
+              <b id="predHVal">150 ms</b>
+            </div>
+            <div class="metrics cols-3" style="margin-top:12px">
+              <div class="metric"><span class="metric-label">With prediction</span><span class="metric-value" id="predErr">–</span></div>
+              <div class="metric"><span class="metric-label">Without</span><span class="metric-value" id="baseErr">–</span></div>
+              <div class="metric"><span class="metric-label">Improvement</span><span class="metric-value" id="predGain">–</span></div>
+            </div>
+            <p class="card-desc">The twin forecasts where your fingertip will be and checks each forecast when that moment arrives.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><i data-icon="hand"></i><span class="card-title">Gesture guide</span></div>
+            <div class="guide">
+              <div class="guide-row"><span class="gi"><i data-icon="pencil"></i></span><b>Index finger up</b><span class="subtle">Draw</span></div>
+              <div class="guide-row"><span class="gi"><i data-icon="move"></i></span><b>Index + middle up</b><span class="subtle">Move, pen up</span></div>
+              <div class="guide-row"><span class="gi"><i data-icon="eraser"></i></span><b>Open palm, hold 1 s</b><span class="subtle">Clear</span></div>
+              <div class="guide-row"><span class="gi"><i data-icon="pause"></i></span><b>Fist</b><span class="subtle">Pause</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><i data-icon="list"></i><span class="card-title">Activity</span><span class="card-meta">Latest first</span></div>
+            <ul class="list list-scroll" id="log"></ul>
+          </div>
+
+          <div class="card">
+            <details>
+              <summary><i data-icon="info"></i>Why this is a digital twin</summary>
+              <dl class="dl">
+                <div><dt>Physical entity</dt><dd>Your real hand.</dd></div>
+                <div><dt>Sensor</dt><dd>Phone camera + on-device ML turns video into 21 3D joint positions. No video leaves the phone.</dd></div>
+                <div><dt>Data link</dt><dd>WebSocket stream, about 30 updates per second, through a cloud relay in a private room.</dd></div>
+                <div><dt>Virtual model</dt><dd>The skeleton: a live copy of the hand's state.</dd></div>
+                <div><dt>Intelligence</dt><dd>Fingers up → gesture → action (draw, clear, pause).</dd></div>
+                <div><dt>Feedback loop</dt><dd>Gesture, colour and vibration are sent back to the phone.</dd></div>
+                <div><dt>Monitoring, history, simulation, prediction</dt><dd>Live analytics, record and replay, a virtual hand, and fingertip forecasting.</dd></div>
+              </dl>
+            </details>
+          </div>
+
+          <div class="card">
+            <details>
+              <summary><i data-icon="layers"></i>Raw twin state</summary>
+              <pre class="raw" id="state">{}</pre>
+            </details>
+          </div>
         </div>
       </div>
+    </section>
 
-      <div class="card">
-        <h2>Analytics <span class="tag">monitoring</span></h2>
-        <div class="metrics">
-          <div><b id="aSpeed">–</b><span>fingertip speed (px/s)</span></div>
-          <div><b id="aSteady">–</b><span>steadiness (0–100)</span></div>
-          <div><b id="aStalls">0</b><span>data stalls (&gt;250 ms)</span></div>
-          <div><b id="aStrokes">0</b><span>strokes on canvas</span></div>
-        </div>
-        <canvas class="chart" id="chart"></canvas>
-        <div class="legend"><span><i style="background:#4f8cff"></i>speed</span><span><i style="background:#ffd60a"></i>round trip</span><span>last 30 s</span></div>
-        <div class="gbar" id="gBar"></div>
-        <div class="glegend" id="gLegend"></div>
-        <div class="row" style="margin-top:8px"><button id="aReset">Reset stats</button></div>
-      </div>
-
-      <div class="card">
-        <h2>Prediction <span class="tag">predictive twin</span></h2>
-        <label><input type="checkbox" id="predOn" checked> Show predicted fingertip (yellow ghost)</label>
-        <div class="row" style="margin-top:8px">
-          <span style="font-size:12px;color:var(--muted)">Look-ahead</span>
-          <input type="range" id="predH" min="0" max="300" step="25" value="150">
-          <b id="predHVal" style="font-size:13px;width:52px;text-align:right">150 ms</b>
-        </div>
-        <div class="metrics">
-          <div><b id="predErr">–</b><span>error with prediction</span></div>
-          <div><b id="baseErr">–</b><span>error without</span></div>
-          <div><b id="predGain">–</b><span>improvement</span></div>
-        </div>
-        <div class="note">The twin forecasts where your finger will be, then checks each forecast when that moment arrives.</div>
-      </div>
-
-      <div class="card">
-        <h2>Gestures</h2>
-        <table>
-          <tr><td>☝️</td><td><b>Index finger up</b> - draw</td></tr>
-          <tr><td>✌️</td><td><b>Two fingers</b> - move without drawing</td></tr>
-          <tr><td>✋</td><td><b>Open palm, hold 1 s</b> - clear</td></tr>
-          <tr><td>✊</td><td><b>Fist</b> - pause</td></tr>
-        </table>
-      </div>
-
-      <div class="card">
-        <h2>Event log</h2>
-        <ul class="log" id="log"></ul>
-      </div>
-
-      <div class="card">
-        <details>
-          <summary>Why this is a digital twin</summary>
-          <dl>
-            <dt>1 · Physical entity</dt><dd>Your real hand.</dd>
-            <dt>2 · Sensor</dt><dd>Phone camera + on-device ML turns video into 21 3D joint positions.</dd>
-            <dt>3 · Data link</dt><dd>WebSocket stream, ~30 updates/sec, through a cloud relay in a private room.</dd>
-            <dt>4 · Virtual model</dt><dd>The skeleton: a live copy of the hand's state.</dd>
-            <dt>5 · Intelligence</dt><dd>Fingers up → gesture → action (draw / clear).</dd>
-            <dt>6 · Feedback loop</dt><dd>Gesture, color and vibration sent back to the phone.</dd>
-            <dt>7 · Monitoring</dt><dd>Speed, steadiness, link health and gesture time, live.</dd>
-            <dt>8 · History</dt><dd>Record a session and replay it - the twin re-lives the past.</dd>
-            <dt>9 · Simulation</dt><dd>A virtual hand drives the same twin with no hardware.</dd>
-            <dt>10 · Prediction</dt><dd>Forecasts the fingertip ahead in time and measures its own accuracy.</dd>
-          </dl>
-        </details>
-      </div>
-
-      <div class="card">
-        <details>
-          <summary>Live twin state (raw)</summary>
-          <pre id="state">{}</pre>
-        </details>
-      </div>
-    </aside>
-  </section>
-
-  <!-- ================= section 2: phone pose twin / smart parcel ================= -->
-  <section class="section" id="sec-pose">
-    <div class="stagecol">
+    <!-- ===================== section: phone pose twin ===================== -->
+    <section class="section" id="sec-pose" aria-label="Phone pose twin">
       <div class="toolbar">
-        <div class="group">
-          <span class="glabel">Shipment</span>
-          <button id="pNew" title="Reset the score and incident log">⟲ New shipment</button>
-          <button id="pDemo" title="Play a scripted delivery trip - no phone needed">▶ Simulate delivery trip</button>
+        <div class="tool-group" aria-label="Shipment">
+          <button class="btn btn-primary" id="pDemo" data-tip="Play a scripted delivery trip - no phone needed"><i data-icon="play"></i><span>Simulate delivery trip</span></button>
+          <button class="btn" id="pNew" data-tip="Reset the score and incidents"><i data-icon="rotateCcw"></i><span>New shipment</span></button>
         </div>
-        <span class="sep"></span>
-        <div class="group">
-          <span class="glabel">View</span>
+        <span class="divider"></span>
+        <div class="tool-group" aria-label="View">
+          <span class="tool-label">View</span>
           <div class="seg" id="pModel">
-            <button data-model="parcel" class="sel">📦 Parcel</button>
-            <button data-model="phone">📱 Phone</button>
+            <button data-model="parcel" class="sel"><i data-icon="package" data-size="14"></i>Parcel</button>
+            <button data-model="phone"><i data-icon="phone" data-size="14"></i>Phone</button>
           </div>
-          <button id="pRecenter" title="Treat the phone's current heading as straight ahead">⌖ Recenter</button>
+          <button class="btn btn-icon" id="pRecenter" data-tip="Recenter heading" aria-label="Recenter heading"><i data-icon="crosshair"></i></button>
         </div>
-        <div class="tstatus"><span id="pDemoStatus"></span></div>
+        <span class="divider"></span>
+        <div class="tool-group">
+          <button class="btn" id="pReport" data-tip="Download the delivery report (JSON)"><i data-icon="file"></i><span>Delivery report</span></button>
+        </div>
+        <div class="toolbar-status"><span id="pDemoStatus"></span></div>
       </div>
 
-      <div class="pose-stage stale ok" id="poseStage">
-        <div class="pose-banner ok" id="pBanner">Waiting for phone sensors…</div>
-        <div class="pose-table">
-          <div class="pose-grid"></div>
-          <div class="model3d parcel" id="parcel3d">
-            <div class="face top"><span class="arrow">▲▲</span><span>THIS SIDE UP</span><span class="fragile">FRAGILE</span></div>
-            <div class="face bottom">BOTTOM</div>
-            <div class="face north"><span class="arrow">▲</span><span class="fragile">FRAGILE</span></div>
-            <div class="face south"><span class="arrow">▲</span><span class="fragile">FRAGILE</span></div>
-            <div class="face east"><span class="arrow">▲</span><span>HANDLE<br>WITH CARE</span></div>
-            <div class="face west"><span class="arrow">▲</span><span>HANDLE<br>WITH CARE</span></div>
+      <div class="workspace">
+        <div class="stage-col">
+          <div class="pose-stage stale" id="poseStage">
+            <div class="stage-top">
+              <span class="badge badge-lg" id="pBanner"></span>
+              <span class="badge" id="pLive"><span class="dot"></span><span>No sensor data</span></span>
+            </div>
+            <div class="pose-table">
+              <div class="pose-floor"></div>
+              <div class="pose-north">N</div>
+              <div class="model3d parcel" id="parcel3d">
+                <div class="face top">
+                  <svg class="upright" viewBox="0 0 48 40" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M13 32V10M6 17l7-8 7 8M35 32V10M28 17l7-8 7 8M5 37h38"/></svg>
+                  <span>THIS SIDE UP</span>
+                  <span class="label-box fragile">FRAGILE</span>
+                </div>
+                <div class="face bottom">BOTTOM</div>
+                <div class="face north"><span class="label-box fragile">FRAGILE</span></div>
+                <div class="face south"><span>HANDLE WITH CARE</span></div>
+                <div class="face east"><span>THIS<br>SIDE<br>UP</span></div>
+                <div class="face west"><span>THIS<br>SIDE<br>UP</span></div>
+              </div>
+              <div class="model3d phone hidden" id="phone3d">
+                <div class="face front"><i></i><span>TOP</span><span></span></div>
+                <div class="face back">BACK</div>
+              </div>
+            </div>
+            <div class="stage-foot">
+              <span class="badge"><i data-icon="radio" data-size="13"></i>Gyroscope + accelerometer · 20 Hz</span>
+            </div>
+            <div class="pose-flash" id="pFlash"></div>
           </div>
-          <div class="model3d phone hidden" id="phone3d">
-            <div class="face front"><i></i><span>TOP ↑</span><span></span></div>
-            <div class="face back">back</div>
+        </div>
+
+        <div class="panel">
+          <div class="card">
+            <div class="card-head"><i data-icon="package"></i><span class="card-title">Parcel condition</span><span class="card-meta">Whole trip</span></div>
+            <div class="status-row">
+              <span class="subtle" style="font-size:12px">Current state</span>
+              <span class="badge" id="pStatus">No sensor data</span>
+            </div>
+            <div class="score-row">
+              <span class="big" id="pScore">100</span><span class="of">/ 100</span>
+              <span class="badge badge-success" id="pGrade">Excellent</span>
+            </div>
+            <div class="scorebar"><i id="pScoreBar"></i></div>
+            <div class="metrics cols-3" style="margin-top:14px">
+              <div class="metric"><span class="metric-label">Tilt now</span><span class="metric-value" id="pTilt">–</span></div>
+              <div class="metric"><span class="metric-label">Max tilt</span><span class="metric-value" id="pMaxTilt">–</span></div>
+              <div class="metric"><span class="metric-label">Max shock</span><span class="metric-value" id="pMaxG">–</span></div>
+              <div class="metric"><span class="metric-label">Within limits</span><span class="metric-value" id="pUpright">–</span></div>
+              <div class="metric"><span class="metric-label">Incidents</span><span class="metric-value" id="pIncCount">0</span></div>
+              <div class="metric"><span class="metric-label">Trip time</span><span class="metric-value" id="pDuration">0:00</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><i data-icon="sliders"></i><span class="card-title">Shipping rules</span><span class="card-meta">Editable</span></div>
+            <div class="field">
+              <span class="field-label">Max tilt</span>
+              <span class="range-row" style="width:170px"><input type="range" id="pMaxTiltRule" min="15" max="80" step="5" value="45" aria-label="Max tilt"><b id="pMaxTiltVal" style="width:36px">45°</b></span>
+            </div>
+            <div class="field">
+              <span class="field-label">Shock limit</span>
+              <select class="select" id="pShockRule" aria-label="Shock limit">
+                <option value="1.5">1.5 g</option><option value="2" selected>2.0 g</option><option value="2.5">2.5 g</option><option value="3">3.0 g</option>
+              </select>
+            </div>
+            <div class="field"><span class="field-label">Upside down</span><span class="badge badge-danger">Never allowed</span></div>
+            <div class="field"><span class="field-label">Drop (free fall)</span><span class="badge badge-danger">Always an incident</span></div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><i data-icon="chart"></i><span class="card-title">Live sensors</span><span class="card-meta">Last 60 s</span></div>
+            <canvas class="chart" id="pTiltChart"></canvas>
+            <div class="legend"><span><i style="background:var(--accent)"></i>Tilt (°)</span><span><i style="background:var(--danger)"></i>Limit</span></div>
+            <canvas class="chart" id="pShockChart"></canvas>
+            <div class="legend"><span><i style="background:var(--warning)"></i>Shock (g)</span><span><i style="background:var(--danger)"></i>Limit</span></div>
+            <div class="metrics cols-3" style="margin-top:12px">
+              <div class="metric"><span class="metric-label">Heading α</span><span class="metric-value" id="pAlpha">–</span></div>
+              <div class="metric"><span class="metric-label">Front/back β</span><span class="metric-value" id="pBeta">–</span></div>
+              <div class="metric"><span class="metric-label">Left/right γ</span><span class="metric-value" id="pGamma">–</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><i data-icon="history"></i><span class="card-title">Incident timeline</span><span class="card-meta" id="pIncMeta"></span></div>
+            <ul class="list list-scroll" id="pIncidents"></ul>
+          </div>
+
+          <div class="card">
+            <details>
+              <summary><i data-icon="info"></i>Why this is a digital twin</summary>
+              <dl class="dl">
+                <div><dt>Scenario</dt><dd>The phone is the sensor tag on a fragile parcel (lab samples, glassware, electronics) in transit.</dd></div>
+                <div><dt>Sensors</dt><dd>Gyroscope and accelerometer: orientation, shocks and free fall, 20 times per second.</dd></div>
+                <div><dt>Virtual model</dt><dd>The 3D parcel follows the real one in real time.</dd></div>
+                <div><dt>Rules &amp; intelligence</dt><dd>Every reading is checked against the shipping rules to detect tilts, flips, shocks and drops.</dd></div>
+                <div><dt>Monitoring &amp; history</dt><dd>Condition score, live charts and an incident timeline.</dd></div>
+                <div><dt>Feedback loop</dt><dd>The phone shows the parcel status and vibrates on every incident.</dd></div>
+                <div><dt>Simulation &amp; reporting</dt><dd>A scripted trip runs without hardware; the delivery report proves how the parcel was handled.</dd></div>
+              </dl>
+            </details>
           </div>
         </div>
-        <div class="pose-flash" id="pFlash"></div>
       </div>
-    </div>
-
-    <aside>
-      <div class="card">
-        <h2>Parcel status <span class="tag">live</span></h2>
-        <div id="pStatus" class="ok">–</div>
-        <div class="score"><b id="pScore">100</b><span id="pGrade" style="color:var(--muted)">condition score</span></div>
-        <div class="scorebar"><i id="pScoreBar"></i></div>
-        <div class="metrics" style="grid-template-columns:repeat(3,1fr)">
-          <div><b id="pTilt">–</b><span>tilt now</span></div>
-          <div><b id="pMaxTilt">–</b><span>max tilt</span></div>
-          <div><b id="pMaxG">–</b><span>max shock</span></div>
-          <div><b id="pUpright">–</b><span>time within limits</span></div>
-          <div><b id="pIncCount">0</b><span>incidents</span></div>
-          <div><b id="pDuration">0:00</b><span>trip time</span></div>
-        </div>
-      </div>
-
-      <div class="card rules">
-        <h2>Shipping rules <span class="tag">set by you</span></h2>
-        <label>Max tilt <span class="row" style="gap:6px"><input type="range" id="pMaxTiltRule" min="15" max="80" step="5" value="45"><b id="pMaxTiltVal" style="width:34px">45°</b></span></label>
-        <label>Shock limit
-          <select id="pShockRule">
-            <option value="1">1.0 g</option><option value="1.5" selected>1.5 g</option><option value="2">2.0 g</option><option value="3">3.0 g</option>
-          </select></label>
-        <label>Upside down <span style="color:var(--bad)">never allowed</span></label>
-        <label>Drop / free fall <span style="color:var(--bad)">always an incident</span></label>
-      </div>
-
-      <div class="card">
-        <h2>Live sensors <span class="tag">last 60 s</span></h2>
-        <canvas class="chart" id="pTiltChart"></canvas>
-        <div class="legend"><span><i style="background:#4f8cff"></i>tilt (°)</span><span><i style="background:#ff453a"></i>limit</span></div>
-        <canvas class="chart" id="pShockChart"></canvas>
-        <div class="legend"><span><i style="background:#ffd60a"></i>shock (g)</span><span><i style="background:#ff453a"></i>limit</span></div>
-        <div class="metrics" style="grid-template-columns:repeat(3,1fr)">
-          <div><b id="pAlpha">–</b><span>heading α</span></div>
-          <div><b id="pBeta">–</b><span>front/back β</span></div>
-          <div><b id="pGamma">–</b><span>left/right γ</span></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Incident timeline</h2>
-        <ul class="log" id="pIncidents"><li style="color:var(--muted)">No incidents - handle with care!</li></ul>
-      </div>
-
-      <div class="card">
-        <h2>Delivery report</h2>
-        <div class="note" style="margin-top:0">Summary of this shipment for the receiver: duration, incidents, worst tilt and shock, and the final condition.</div>
-        <div class="row" style="margin-top:8px"><button id="pReport">⤓ Download report</button></div>
-      </div>
-
-      <div class="card">
-        <details>
-          <summary>Why this is a digital twin</summary>
-          <dl>
-            <dt>Scenario</dt><dd>The phone is the sensor tag on a fragile parcel (lab samples, glassware, electronics) in transit.</dd>
-            <dt>1 · Physical entity</dt><dd>The parcel - represented by your phone.</dd>
-            <dt>2 · Sensors</dt><dd>Gyroscope + accelerometer: orientation (α, β, γ), shocks and free fall, 20×/sec.</dd>
-            <dt>3 · Virtual model</dt><dd>The 3D parcel follows the real one in real time.</dd>
-            <dt>4 · Rules &amp; intelligence</dt><dd>The twin checks every reading against the shipping rules and detects tilts, flips, shocks and drops.</dd>
-            <dt>5 · Monitoring &amp; history</dt><dd>Condition score, live charts and an incident timeline.</dd>
-            <dt>6 · Feedback loop</dt><dd>The phone shows the parcel status and vibrates on every incident.</dd>
-            <dt>7 · Simulation</dt><dd>“Simulate delivery trip” replays a realistic trip with no hardware.</dd>
-            <dt>8 · Reporting</dt><dd>A delivery report proves how the parcel was handled.</dd>
-          </dl>
-        </details>
-      </div>
-    </aside>
-  </section>
-</div>
-
-<!-- ================= connect-phone pop-up ================= -->
-<div id="hint">
-  <div class="dialog">
-    <button id="hintClose" title="Close (open again from 📲 Connect phone)" style="position:absolute;top:12px;right:12px">✕</button>
-    <div style="font-size:16px;font-weight:600">Connect your phone (the sensor)</div>
-    <div id="qr"></div>
-    <div>Scan with your phone's camera, or open<br><a id="phoneUrl" target="_blank" rel="noopener">…</a><br>
-      <span style="color:var(--muted)">Any network works - Wi-Fi or mobile data.<br>
-      Then tap <b>Start camera</b> (hand twin) and/or <b>📱 Share phone pose</b> (pose twin).</span></div>
-    <div style="color:var(--muted);font-size:13px">No phone handy? Use the simulate buttons in each section.
-      · <button id="newRoom" title="Start over with a fresh private room">New room</button></div>
+    </section>
   </div>
 </div>
 
+<!-- ============================ connect-phone modal ============================ -->
+<div class="modal-backdrop" id="hint" role="dialog" aria-modal="true" aria-labelledby="hintTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div style="flex:1">
+        <h2 id="hintTitle">Connect your phone</h2>
+        <p>Your phone is the sensor. Any network works - Wi-Fi or mobile data.</p>
+      </div>
+      <button class="btn btn-ghost btn-icon" id="hintClose" aria-label="Close"><i data-icon="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="qr-wrap">
+        <div id="qr"></div>
+        <ol class="steps">
+          <li>Scan the code with the phone's camera.</li>
+          <li>For <b>Hand drawing</b>, tap <b>Start camera</b>.</li>
+          <li>For <b>Phone pose twin</b>, tap <b>Share motion sensors</b>.</li>
+        </ol>
+      </div>
+      <div class="url-box">
+        <a id="phoneUrl" target="_blank" rel="noopener">…</a>
+        <button class="btn btn-sm" id="copyLink"><i data-icon="copy" data-size="14"></i>Copy</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="newRoom" data-tip="Start over with a fresh private room"><i data-icon="rotateCcw"></i>New room</button>
+      <button class="btn btn-primary" id="hintDone">Done</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/icons.js"></script>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

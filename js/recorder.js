@@ -5,6 +5,8 @@
 // Recordings can be downloaded and loaded as JSON.
 
 import { ingest, setSource, clearDrawing, logEvent, on, $ } from "./core.js";
+import { setButton } from "./icons.js";
+import { toast } from "./ui.js";
 
 let frames = [];          // [msSinceStart, message]
 let recording = false, recStart = 0;
@@ -12,11 +14,14 @@ let replay = null;        // { i, start, speed }
 
 const duration = () => (frames.length ? frames[frames.length - 1][0] / 1000 : 0);
 function info(text) {
-  $("recInfo").textContent = text ?? (frames.length
-    ? `${frames.length} frames · ${duration().toFixed(1)} s stored`
-    : "Nothing recorded yet");
+  $("recInfo").textContent = text ?? (frames.length ? `Recording ready: ${duration().toFixed(1)} s, ${frames.length} frames` : "");
   $("replayBtn").disabled = !frames.length || recording;
   $("dlBtn").disabled = !frames.length || recording;
+}
+function resetReplayButton() {
+  setButton($("replayBtn"), "play", "Replay");
+  $("replayBtn").classList.remove("active");
+  $("replayBar").style.width = "0%";
 }
 
 on("frame", m => { if (recording) frames.push([Math.round(performance.now() - recStart), m]); });
@@ -24,15 +29,17 @@ on("frame", m => { if (recording) frames.push([Math.round(performance.now() - re
 function toggleRecord() {
   if (recording) {
     recording = false;
-    $("recBtn").textContent = "● Record"; $("recBtn").classList.remove("rec");
+    setButton($("recBtn"), "record", "Record"); $("recBtn").classList.remove("is-recording");
     logEvent(`Recorded ${frames.length} frames (${duration().toFixed(1)} s)`, "action");
+    toast(frames.length ? `Recording saved (${duration().toFixed(1)} s)` : "Recording stopped - no hand data was captured",
+          frames.length ? "success" : "warning");
     info();
   } else {
     if (replay) stopReplay();
     frames = []; recStart = performance.now(); recording = true;
-    $("recBtn").textContent = "■ Stop recording"; $("recBtn").classList.add("rec");
+    setButton($("recBtn"), "stop", "Stop recording"); $("recBtn").classList.add("is-recording");
     logEvent("Recording started", "action");
-    info("Recording… move your hand");
+    info("Recording - move your hand");
   }
 }
 
@@ -42,7 +49,8 @@ function startReplay() {
   setSource("replay");
   clearDrawing("replay start");
   replay = { i: 0, start: performance.now(), speed: +$("speedSel").value };
-  $("replayBtn").textContent = "■ Stop replay";
+  setButton($("replayBtn"), "stop", "Stop replay");
+  $("replayBtn").classList.add("active");
   logEvent(`Replaying ${duration().toFixed(1)} s at ${replay.speed}×`, "action");
   requestAnimationFrame(step);
 }
@@ -62,9 +70,8 @@ function step() {
 function stopReplay(finished = false) {
   if (!replay) return;
   replay = null;
-  $("replayBtn").textContent = "▶ Replay";
-  $("replayBar").style.width = "0%";
-  if (finished) logEvent("Replay finished", "action");
+  resetReplayButton();
+  if (finished) { logEvent("Replay finished", "action"); toast("Replay finished", "success"); }
   setSource("phone");
 }
 
@@ -76,6 +83,7 @@ $("dlBtn").onclick = () => {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob); a.download = "hand-twin-recording.json"; a.click();
   URL.revokeObjectURL(a.href);
+  toast("Recording downloaded", "success");
 };
 $("loadBtn").onclick = () => $("loadInput").click();
 $("loadInput").onchange = async e => {
@@ -87,12 +95,13 @@ $("loadInput").onchange = async e => {
     if (recording) toggleRecord();
     frames = data.frames;
     logEvent(`Loaded recording "${file.name}"`, "action");
+    toast(`Loaded "${file.name}" - press Replay`, "success");
     info();
   } catch {
-    info("That file is not a hand-twin recording");
+    toast("That file is not a hand-twin recording", "danger");
   }
   e.target.value = "";
 };
-on("source", s => { if (s !== "replay" && replay) { replay = null; $("replayBtn").textContent = "▶ Replay"; $("replayBar").style.width = "0%"; } });
+on("source", s => { if (s !== "replay" && replay) { replay = null; resetReplayButton(); } });
 
 info();

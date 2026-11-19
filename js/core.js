@@ -6,18 +6,20 @@
 // small event bus below, so the core never needs to know about them.
 
 import { WS_BASE, BACKEND_URL, BACKEND_OVERRIDE, ensureRoom } from "./config.js";
+import { icon } from "./icons.js";
+import { toast, copyText } from "./ui.js";
 export const ROOM = ensureRoom();
 
-export const PALETTE = ["#4f8cff", "#ff453a", "#34c759", "#ffd60a", "#bf5af2", "#ffffff"];
+export const PALETTE = ["#7b96ff", "#f2665e", "#46c068", "#e0a83a", "#c47dff", "#e7e9ec"];
 export const BONES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
                       [9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
 export const GESTURES = {
-  draw:  { label: "☝️ Drawing",   color: "#4f8cff" },
-  hover: { label: "✌️ Hover",     color: "#64d2ff" },
-  palm:  { label: "✋ Clearing…", color: "#ffd60a" },
-  fist:  { label: "✊ Paused",    color: "#bf5af2" },
-  idle:  { label: "Unknown pose", color: "#8e8e93" },
-  none:  { label: "No hand",      color: "#3a3f4b" },
+  draw:  { label: "Drawing",      icon: "pencil", color: "#7b96ff" },
+  hover: { label: "Hover",        icon: "move",   color: "#4fc3f7" },
+  palm:  { label: "Clearing",     icon: "eraser", color: "#e0a83a" },
+  fist:  { label: "Paused",       icon: "pause",  color: "#c47dff" },
+  idle:  { label: "Unknown pose", icon: "help",   color: "#727a86" },
+  none:  { label: "No hand",      icon: "scan",   color: "#2f3641" },
 };
 export const SOURCES = { phone: "Live phone", simulation: "Simulation", replay: "Replay" };
 export const FINGER_NAMES = ["Thumb", "Index", "Middle", "Ring", "Pinky"];
@@ -84,12 +86,14 @@ function phoneSeen() {
   if (!twin.phones) {
     twin.phones = 1; logEvent("Phone connected", "ok"); sendFeedback(); updateConn();
     showHint(false);
+    toast("Phone connected", "success");
     emit("phoneConnected");
   }
 }
 setInterval(() => {
   if (twin.phones && performance.now() - lastPhoneMsg > 3000) {
     twin.phones = 0; logEvent("Phone disconnected", "warn"); updateConn();
+    toast("Phone disconnected", "warning");
   }
 }, 1000);
 function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
@@ -99,15 +103,21 @@ export function sendFeedback(event) {
 }
 function updateConn() {
   const on = twin.phones > 0;
-  $("connDot").classList.toggle("on", on);
-  $("conn").textContent = on ? "Phone: connected" : "Phone: offline";
+  for (const id of ["connDot", "connDot2"]) $(id).classList.toggle("on", on);
+  for (const id of ["conn", "conn2"]) $(id).textContent = on ? "Phone connected" : "Phone offline";
 }
-// Connect-phone pop-up: shown on first load, hidden once a phone connects or the user closes it.
-export function showHint(show) { $("hint").classList.toggle("hidden", !show); }
-$("hintClose").onclick = () => showHint(false);
+// Connect-phone modal: shown on first load, hidden once a phone connects or the user closes it.
+export function showHint(show) {
+  $("hint").classList.toggle("hidden", !show);
+  if (show) setTimeout(() => $("hintDone").focus(), 50);
+}
+$("hintClose").onclick = $("hintDone").onclick = () => showHint(false);
 $("hint").onclick = e => { if (e.target === $("hint")) showHint(false); };   // click outside the dialog
+window.addEventListener("keydown", e => { if (e.key === "Escape") showHint(false); });
 $("connPill").onclick = () => showHint(true);
 $("connectBtn").onclick = () => showHint(true);
+$("copyRoom").onclick = () => copyText(ROOM, "Room code copied");
+$("copyLink").onclick = () => copyText($("phoneUrl").href, "Phone link copied");
 
 // ------------------------------------------- sync: physical -> virtual
 // Single entry point for ALL inputs. The phone, the simulator and the replayer
@@ -168,7 +178,11 @@ function setGesture(g) {
   if (g !== "palm") { palmStart = null; palmDone = false; }
   sendFeedback();
   emit("gesture", { from, to: g });
-  if (g !== "idle") logEvent(`Gesture → ${GESTURES[g].label}`, "gesture");
+  if (g !== "idle") logEvent(`Gesture: ${GESTURES[g].label}`, "gesture");
+  // twin state card: icon + label (updated only on change)
+  $("gestureIcon").innerHTML = icon(GESTURES[g].icon, 20);
+  $("gestureIcon").classList.toggle("live", g !== "none");
+  $("gesture").textContent = GESTURES[g].label;
 }
 
 export function setSource(src) {
@@ -178,7 +192,7 @@ export function setSource(src) {
   twin.lastUpdate = 0; twin.rtt = null; twin.phoneFps = null;
   $("source").textContent = SOURCES[src];
   updateConn();
-  logEvent(`Data source → ${SOURCES[src]}`, "source");
+  logEvent(`Data source: ${SOURCES[src]}`, "source");
   emit("source", src);
 }
 
@@ -237,13 +251,17 @@ window.addEventListener("keydown", e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
 });
 $("save").onclick = () => {
+  if (!twin.strokes.length) return toast("Nothing to save yet - draw something first", "info");
   const a = document.createElement("a");
   a.download = "hand-twin-drawing.png"; a.href = drawC.toDataURL("image/png"); a.click();
+  toast("Drawing saved as PNG", "success");
 };
 for (const c of PALETTE) {
   const s = document.createElement("div");
   s.className = "swatch" + (c === twin.color ? " sel" : "");
   s.dataset.color = c;
+  s.setAttribute("role", "button");
+  s.setAttribute("aria-label", `Pen colour ${c}`);
   s.style.background = c;
   s.onclick = () => setColor(c);
   $("palette").appendChild(s);
@@ -300,7 +318,7 @@ function render() {
   hctx.clearRect(0, 0, W, H);
 
   // camera field of view
-  hctx.setLineDash([6, 6]); hctx.strokeStyle = "#2a2e37"; hctx.lineWidth = 1;
+  hctx.setLineDash([6, 6]); hctx.strokeStyle = "#2f3641"; hctx.lineWidth = 1;
   hctx.strokeRect(r.x, r.y, r.w, r.h); hctx.setLineDash([]);
 
   const age = performance.now() - twin.lastUpdate;
@@ -314,7 +332,7 @@ function render() {
     for (let i = 0; i < lm.length; i++) {
       const [x, y] = toPx(lm[i], r);
       const rad = Math.max(3, 6 - lm[i][2] * 40);       // closer joints look bigger
-      hctx.fillStyle = [4, 8, 12, 16, 20].includes(i) ? "#4f8cff" : "#e8eaed";
+      hctx.fillStyle = [4, 8, 12, 16, 20].includes(i) ? "#7b96ff" : "#e7e9ec";
       hctx.beginPath(); hctx.arc(x, y, rad, 0, Math.PI * 2); hctx.fill();
     }
     if (twin.pointer) {
@@ -326,15 +344,15 @@ function render() {
     if (twin.gesture === "palm" && palmStart && !palmDone) {
       const progress = Math.min(1, (performance.now() - palmStart) / PALM_HOLD_MS);
       const [x, y] = toPx(lm[9], r);
-      hctx.strokeStyle = "#ffd60a"; hctx.lineWidth = 5;
+      hctx.strokeStyle = "#e0a83a"; hctx.lineWidth = 5;
       hctx.beginPath(); hctx.arc(x, y, 40, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2); hctx.stroke();
     }
     hctx.globalAlpha = 1;
     emit("render", { ctx: hctx, rect: r, age });
   }
 
-  // side panel
-  $("gesture").textContent = GESTURES[twin.gesture]?.label ?? twin.gesture;
+  // side panel + empty state on the canvas
+  $("handEmpty").classList.toggle("hidden", !!(lm && age < 1000) || twin.strokes.length > 0);
   document.querySelectorAll(".finger").forEach((el, i) => el.classList.toggle("up", !!lm && twin.fingers[i]));
   $("age").textContent = twin.lastUpdate ? (age < 1000 ? Math.round(age) + " ms" : (age / 1000).toFixed(1) + " s") : "–";
   $("phoneFps").textContent = twin.phoneFps ?? "–";
@@ -375,6 +393,7 @@ $("newRoom").onclick = () => { location.search = BACKEND_OVERRIDE ? `?backend=${
 
 // ------------------------------------------------------------------ start
 export function start() {
+  $("gestureIcon").innerHTML = icon(GESTURES.none.icon, 20);
   resize();
   connect();
   requestAnimationFrame(render);
