@@ -4,12 +4,17 @@
 // The open section is kept in the URL hash (#hand / #pose) and sent to the phone,
 // so the phone can highlight the sensor that the open twin needs.
 
-import { on, sendToPhone, logEvent, $ } from "./core.js";
+import { on, emit, twin, sendToPhone, logEvent, $ } from "./core.js";
 
 const SECTIONS = {
   hand: { title: "Hand drawing", desc: "A live virtual copy of your hand, built from the phone's camera. Draw with gestures." },
   pose: { title: "Phone pose twin", desc: "Smart parcel monitor: the phone is the sensor tag on a fragile parcel in transit." },
+  games: { title: "Arcade", desc: "Play in the browser with your phone as the controller: tilt, hand gestures and shaking." },
 };
+// The games add what the phone needs to know (which sensor, which game); see games.js
+let modeExtra = () => ({});
+export function setModeExtra(fn) { modeExtra = fn; }
+export function resendMode() { sendToPhone({ type: "mode", mode: current, ...(current === "games" ? modeExtra() : {}) }); }
 let current = null;
 const shell = $("shell");
 
@@ -28,12 +33,14 @@ export function showSection(name) {
   document.title = `${SECTIONS[name].title} · Digital Twin Lab`;
   history.replaceState(null, "", `${location.pathname}${location.search}#${name}`);
   shell.classList.remove("nav-open");
-  sendToPhone({ type: "mode", mode: name });
+  twin.section = name;
+  emit("section", name);
+  resendMode();
   logEvent(`Opened ${SECTIONS[name].title}`, "source");
 }
 
 document.querySelectorAll(".nav-item").forEach(b => b.onclick = () => showSection(b.dataset.section));
-on("phoneConnected", () => sendToPhone({ type: "mode", mode: current }));
+on("phoneConnected", resendMode);
 
 // collapsible sidebar (remembered per browser)
 function setCollapsed(c) {

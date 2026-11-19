@@ -33,7 +33,8 @@ Single column, maximum width 560 px, using the shared [design system](design-sys
 |---|---|
 | Header | Brand, "Sensor · Physical side", room badge |
 | Status tiles | **Link to backend** (online or offline) and **Digital twin** (listening or waiting) |
-| Mode hint | Appears when the twin reports which section is open, and tells the user what to tap |
+| Mode hint | Appears when the twin reports which section is open, and tells the user what to tap. In the Arcade it names the selected game and how to hold the phone. |
+| **Game** | Visible only while the Arcade is open: game name, a **Player 1** or **Player 2** badge, the score, and the latest status text |
 | **Hand camera** | Live preview with skeleton overlay, **Start camera**, **Flip**, detections per second, round-trip time |
 | **Motion sensors** | **Share motion sensors** and a live readout of the angles and shock |
 | **From the twin** | Feedback: your hand (gesture and pen colour), parcel status, parcel condition |
@@ -94,7 +95,14 @@ every 50 ms        ->  {"type":"pose", alpha, beta, gamma, absolute, acc, gmin}
 | `pong` | Computes round-trip time, shown in the Hand camera card and sent inside `hand.rtt` |
 | `feedback` | Updates the gesture label and pen colour dot. Vibrates twice on `event: "cleared"` and once on `event: "color"`. |
 | `parcel` | Shows the status badge (green, amber or red) and `score / 100`. Vibrates when `alert` is true: one pulse for `warn`, three for `crit`. |
-| `mode` | Highlights the relevant card (see above) |
+| `mode` | Highlights the relevant card (see above). For `games` it highlights the motion sensors card (tilt and shake games) or the camera card (hand games) and shows the game's hint. |
+| `game` | Only if `to` equals this phone's player number: vibrates on `buzz` (with the given pattern), updates the score on `score`, shows `text` on `info` and `over`, and gives a short buzz on `start` |
+
+### Player number
+
+The page reads `?p=2` from its URL (default `1`) and adds `"p": <player>` to **every** message it sends. A second phone
+therefore joins the same room as **Player 2** for the two-player games. It also ignores `pong` replies and `game` messages meant for the other player.
+The twin page's **Add player 2** button shows a QR code with this URL.
 
 `navigator.vibrate` is not available on iOS, so haptic feedback works on Android only.
 

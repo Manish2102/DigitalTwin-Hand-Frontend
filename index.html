@@ -191,12 +191,60 @@
              border-radius: var(--radius); background: var(--surface-2); }
   .url-box a { flex: 1; min-width: 0; font: 12px var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+
+  /* ============================== arcade ============================== */
+  .g-menu.hidden, .g-play.hidden, .g-overlay.hidden { display: none !important; }
+  .g-menu { flex: 1; overflow-y: auto; padding: var(--s6); display: flex; flex-direction: column; gap: var(--s5); }
+  .g-intro { display: flex; align-items: flex-start; gap: var(--s4); max-width: 860px; color: var(--text-2); font-size: var(--fs-sm); line-height: 1.6; }
+  .g-intro .icon { flex: none; color: var(--accent); margin-top: 2px; }
+  .g-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--s4); }
+  .game-card { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s2); padding: var(--s4); text-align: left; cursor: pointer; font: inherit; color: inherit;
+               background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); transition: border-color .15s, background .15s, transform .15s var(--ease); }
+  .game-card:hover { border-color: var(--accent-border); background: var(--surface-2); transform: translateY(-1px); }
+  .game-ico { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--accent-weak); color: var(--accent); border: 1px solid var(--accent-border); }
+  .game-name { font-size: var(--fs-md); font-weight: 600; margin-top: var(--s1); }
+  .game-desc { font-size: var(--fs-sm); color: var(--text-2); flex: 1; }
+  .game-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--s2); }
+  .chip-best { color: var(--warning); border-color: var(--warning-border); background: var(--warning-weak); }
+  .g-play { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .g-stage { position: relative; flex: 1; min-height: 320px; display: grid; place-items: center; overflow: hidden;
+             background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 24px 24px; }
+  .g-frame { position: relative; border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg); box-shadow: var(--shadow); }
+  .g-frame canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .g-frame { container-type: inline-size; }
+  .g-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s3); padding: var(--s5);
+               text-align: center; background: rgba(11,13,17,.82); backdrop-filter: blur(2px); }
+  .g-overlay h2 { font-size: var(--fs-xl); }
+  .g-overlay p { max-width: 460px; color: var(--text-2); font-size: var(--fs-sm); }
+  .g-devices { display: grid; gap: 6px; margin-top: var(--s2); }
+  .g-devices .dev { display: flex; align-items: center; gap: var(--s2); justify-content: center; font-size: var(--fs-sm); color: var(--text-2); }
+  .g-devices .dev.ok { color: var(--text); }
+  .g-phone-hint { display: flex; gap: var(--s2); align-items: flex-start; justify-content: center; }
+  .g-phone-hint .icon { flex: none; margin-top: 2px; color: var(--accent); }
+  .g-actions { display: flex; flex-wrap: wrap; gap: var(--s2); justify-content: center; margin-top: var(--s3); }
+  @container (max-width: 560px) {                 /* small game frame: keep only what is needed to start */
+    .g-overlay { gap: var(--s2); padding: var(--s3); }
+    .g-overlay h2 { font-size: var(--fs-lg); }
+    .g-overlay > p:not(.g-phone-hint), .g-phone-hint { display: none; }
+    .g-actions { margin-top: var(--s1); }
+    .g-final b { font-size: 32px; }
+  }
+  .g-final { display: flex; align-items: baseline; gap: var(--s3); }
+  .g-final b { font-size: 48px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .g-final span { color: var(--text-3); font-size: var(--fs-sm); }
+  .howto { margin: 0; padding-left: 18px; font-size: var(--fs-sm); color: var(--text-2); display: grid; gap: 6px; }
+  .rank { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-3); font-size: var(--fs-xs); color: var(--text-2); }
+  #gScores .log-item { display: flex; align-items: center; gap: var(--s3); }
+  #gScores .log-item .subtle { margin-left: auto; }
+
   /* ============================ responsive ============================ */
   @media (max-width: 1100px) {
     .workspace { grid-template-columns: 1fr; overflow-y: auto; }
     .panel { border-left: 0; border-top: 1px solid var(--border); overflow: visible; }
     #viewport { flex: none; height: 62vh; }
     .pose-stage { flex: none; height: 62vh; }
+    .g-stage { flex: none; height: 62vh; }
+    .g-play, .g-play .workspace { flex: none; }
     .section.active { overflow-y: auto; }
   }
   @media (max-width: 760px) {
@@ -240,10 +288,18 @@
       </button>
     </nav>
 
+    <div class="nav-label">Play</div>
+    <nav class="nav">
+      <button class="nav-item" data-section="games" data-tip="Arcade" data-tip-pos="right">
+        <i data-icon="gamepad" data-size="18"></i>
+        <span class="nav-text"><span class="nav-title">Arcade</span><span class="nav-desc">Games · phone as controller</span></span>
+      </button>
+    </nav>
+
     <div class="sidebar-foot">
       <div class="conn-card">
         <div class="conn-row"><span class="dot" id="connDot"></span><span id="conn">Phone offline</span></div>
-        <div class="conn-sub">One phone can feed both twins</div>
+        <div class="conn-sub">One phone feeds every section; a second joins for 2-player games</div>
       </div>
       <button class="btn btn-primary btn-block" id="connectBtn" data-tip="Connect phone" data-tip-pos="right">
         <i data-icon="qr"></i><span class="btn-label">Connect phone</span>
@@ -545,6 +601,109 @@
         </div>
       </div>
     </section>
+
+    <!-- ============================ section: arcade ============================ -->
+    <section class="section" id="sec-games" aria-label="Arcade">
+      <!-- game menu -->
+      <div class="g-menu" id="gMenu">
+        <div class="g-intro">
+          <i data-icon="gamepad" data-size="20"></i>
+          <span>The phone is the controller and this page is the game, which is the digital twin idea again: a sensor in the physical world, a live virtual model, and a feedback loop (the phone vibrates when you score or get hit).
+          Tilt games read the phone's orientation, hand games watch your fingers through its camera, and Shake Duel measures acceleration.
+          Each game also works with the keyboard and mouse, so you can try it before pairing a phone. Best scores are kept in this browser.</span>
+        </div>
+        <div class="g-grid" id="gGrid"></div>
+      </div>
+
+      <!-- play view -->
+      <div class="g-play hidden" id="gPlay">
+        <div class="toolbar">
+          <div class="tool-group">
+            <button class="btn" id="gBack" data-tip="Back to the game list"><i data-icon="arrowLeft"></i><span>All games</span></button>
+            <b id="gTitle" style="margin-left:6px"></b>
+            <span class="badge" id="gState">Ready</span>
+          </div>
+          <span class="divider"></span>
+          <div class="tool-group">
+            <div class="seg" id="gModes" aria-label="Players"></div>
+            <button class="btn" id="gP2" data-tip="Show the QR code for a second phone"><i data-icon="qr"></i><span>Add player 2</span></button>
+          </div>
+          <span class="divider"></span>
+          <div class="tool-group">
+            <button class="btn" id="gCalibrate" data-tip="Use the way the phone is held right now as the neutral position"><i data-icon="crosshair"></i><span>Calibrate tilt</span></button>
+            <button class="btn" id="gPause" style="display:none"><i data-icon="pause"></i><span>Pause</span></button>
+            <button class="btn btn-icon" id="gSound" data-tip="Sound is off" aria-label="Sound off"><i data-icon="volumeOff"></i></button>
+          </div>
+        </div>
+        <div class="workspace">
+          <div class="stage-col">
+            <div class="g-stage" id="gStage">
+              <div class="g-frame" id="gFrame">
+                <canvas id="gCanvas" aria-label="Game"></canvas>
+                <div class="g-overlay" id="gOverlay"></div>
+              </div>
+            </div>
+          </div>
+          <aside class="panel">
+            <div class="card">
+              <div class="card-head"><i data-icon="info"></i><span class="card-title">How to play</span></div>
+              <ol class="howto" id="gHow"></ol>
+            </div>
+            <div class="card">
+              <div class="card-head"><i data-icon="phone"></i><span class="card-title">Controllers</span><span class="card-meta">Live</span></div>
+              <div id="gControllers"></div>
+            </div>
+            <div class="card">
+              <div class="card-head"><i data-icon="trophy"></i><span class="card-title">Best scores</span><span class="card-meta" id="gScoresMeta"></span></div>
+              <ul class="list" id="gScores"></ul>
+              <button class="btn btn-ghost btn-sm" id="gClearScores" style="margin-top:8px"><i data-icon="trash" data-size="14"></i>Clear scores</button>
+            </div>
+            <div class="card">
+              <details class="explain" open>
+                <summary class="card-head" style="cursor:pointer"><i data-icon="layers"></i><span class="card-title">Why this is a digital twin</span></summary>
+                <dl class="dl">
+                  <div><dt>Physical entity</dt><dd>You, holding the phone.</dd></div>
+                  <div><dt>Sensors</dt><dd>Orientation, accelerometer or camera hand tracking, streamed 20 to 30 times a second.</dd></div>
+                  <div><dt>Virtual model</dt><dd>The game world: marble, paddle or glider moves exactly as you move the phone or your hand.</dd></div>
+                  <div><dt>Feedback loop</dt><dd>The phone vibrates on hits and shows your score.</dd></div>
+                </dl>
+              </details>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ============================ player 2 modal ============================ -->
+<div class="modal-backdrop hidden" id="p2Modal" role="dialog" aria-modal="true" aria-labelledby="p2Title">
+  <div class="modal">
+    <div class="modal-head">
+      <div style="flex:1">
+        <h2 id="p2Title">Add player 2</h2>
+        <p>A second phone joins the same room as player 2. Any network works.</p>
+      </div>
+      <button class="btn btn-ghost btn-icon" id="p2Close" aria-label="Close"><i data-icon="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="qr-wrap">
+        <div id="qr2" style="flex:none;background:#fff;padding:8px;border-radius:var(--radius)"></div>
+        <ol class="steps">
+          <li>Scan the code with the second phone.</li>
+          <li>Tap <b>Share motion sensors</b> (tilt and shake games) or <b>Start camera</b> (hand games).</li>
+          <li>The phone shows <b>Player 2</b> and the game starts using it.</li>
+        </ol>
+      </div>
+      <div class="url-box">
+        <a id="p2Url" target="_blank" rel="noopener">…</a>
+        <button class="btn btn-sm" id="copyP2"><i data-icon="copy" data-size="14"></i>Copy</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span></span>
+      <button class="btn btn-primary" id="p2Done">Done</button>
+    </div>
   </div>
 </div>
 

@@ -28,6 +28,13 @@ Example: a "balance" twin that uses the phone's orientation as a spirit level.
 
 No backend change is needed: the relay forwards any JSON.
 
+## Add a game
+
+Games are small files that plug into the Arcade engine; no HTML, phone-page or backend change is needed.
+Create `js/games/yourgame.js` exporting `{ id, title, icon, sensor, desc, phone, howto, modes, init, update, draw }`,
+and add it to the `GAMES` array in `js/games.js`. The full template, the engine API and the input fields are in
+[games.md](games.md#adding-a-game).
+
 ## Add a message type
 
 See [Adding a message type](https://github.com/Manish2102/DigitalTwin-Hand-Backend/blob/main/docs/protocol.md#adding-a-message-type)

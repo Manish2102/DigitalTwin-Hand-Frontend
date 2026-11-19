@@ -32,7 +32,9 @@ const dctx = drawC.getContext("2d"), hctx = handC.getContext("2d");
 // ------------------------------------------------------------------ state
 export const twin = {
   source: "phone",       // where frames come from: phone | simulation | replay
-  phones: 0,
+  section: "hand",       // which part of the app is open: hand | pose | games (set by nav.js)
+  phones: 0,             // how many phones are connected (player 1 and 2)
+  players: { 1: false, 2: false },   // which player slots have a live phone
   handedness: null,
   landmarks: null,       // latest 21 joints, un-mirrored, normalized 0..1
   fingers: [false, false, false, false, false],
@@ -59,11 +61,14 @@ let palmStart = null, palmDone = false, msgCount = 0;
 // source (name)             data source switched
 // event  ({text,kind,time}) human-readable log line
 // render ({ctx,rect})       draw overlays on the hand layer
-// message (raw msg)         any other message from the phone (e.g. type "pose")
-// phoneConnected            first message after the phone was considered offline
+// message (raw msg)         any message from the phone that is not a hand frame (e.g. type "pose")
+// raw     (raw msg)         EVERY message from any phone; m.p is the player number (used by the games)
+// phoneConnected (player)   first message after a phone was considered offline
+// phoneLeft      (player)   a phone stopped sending
+// section (name)            the open part of the app changed (hand | pose | games)
 const listeners = {};
 export const on = (evt, fn) => (listeners[evt] ??= []).push(fn);
-const emit = (evt, data) => (listeners[evt] || []).forEach(fn => fn(data));
+export const emit = (evt, data) => (listeners[evt] || []).forEach(fn => fn(data));
 export const logEvent = (text, kind = "info") => emit("event", { text, kind, time: new Date() });
 
 // ------------------------------------------------------------- data link
@@ -75,26 +80,36 @@ function connect() {
   ws.onerror = () => { if (linkUp) logEvent("Backend link lost - reconnecting", "warn"); linkUp = false; };
   ws.onmessage = e => {
     const m = JSON.parse(e.data);
-    phoneSeen();                                  // everything in this room comes from the phone
-    if (m.type === "hand") ingest(m, "phone");
-    else if (m.type === "ping") send({ type: "pong", ts: m.ts });
+    m.p = m.p === 2 ? 2 : 1;                      // player slot; phones that never say are player 1
+    phoneSeen(m.p);                               // everything in this room comes from a phone
+    emit("raw", m);                               // the games read every player's data from here
+    if (m.type === "hand") { if (m.p === 1) ingest(m, "phone"); }
+    else if (m.type === "ping") send({ type: "pong", ts: m.ts, p: m.p });
     else emit("message", m);                      // other sensors (e.g. phone pose) -> feature modules
   };
 }
-// Presence: the phone pings every second, so "connected" means "heard from it recently".
-function phoneSeen() {
-  lastPhoneMsg = performance.now();
-  if (!twin.phones) {
-    twin.phones = 1; logEvent("Phone connected", "ok"); sendFeedback(); updateConn();
-    showHint(false);
-    toast("Phone connected", "success");
-    emit("phoneConnected");
-  }
+// Presence: each phone pings every second, so "connected" means "heard from it recently".
+// Player 1 is the normal phone; a second phone joins with ?p=2 (used by two-player games).
+const lastSeen = { 1: 0, 2: 0 };
+const NAME = { 1: "Phone", 2: "Player 2 phone" };
+function countPhones() { twin.phones = (twin.players[1] ? 1 : 0) + (twin.players[2] ? 1 : 0); }
+function phoneSeen(p) {
+  lastSeen[p] = performance.now();
+  if (twin.players[p]) return;
+  twin.players[p] = true; countPhones();
+  logEvent(`${NAME[p]} connected`, "ok"); sendFeedback(); updateConn();
+  showHint(false);
+  toast(`${NAME[p]} connected`, "success");
+  emit("phoneConnected", p);
 }
 setInterval(() => {
-  if (twin.phones && performance.now() - lastPhoneMsg > 3000) {
-    twin.phones = 0; logEvent("Phone disconnected", "warn"); updateConn();
-    toast("Phone disconnected", "warning");
+  for (const p of [1, 2]) {
+    if (twin.players[p] && performance.now() - lastSeen[p] > 3000) {
+      twin.players[p] = false; countPhones();
+      logEvent(`${NAME[p]} disconnected`, "warn"); updateConn();
+      toast(`${NAME[p]} disconnected`, "warning");
+      emit("phoneLeft", p);
+    }
   }
 }, 1000);
 function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
@@ -105,7 +120,8 @@ export function sendFeedback(event) {
 function updateConn() {
   const on = twin.phones > 0;
   for (const id of ["connDot", "connDot2"]) $(id).classList.toggle("on", on);
-  for (const id of ["conn", "conn2"]) $(id).textContent = on ? "Phone connected" : "Phone offline";
+  const both = twin.players[1] && twin.players[2];
+  for (const id of ["conn", "conn2"]) $(id).textContent = both ? "2 phones connected" : on ? "Phone connected" : "Phone offline";
 }
 // Connect-phone modal: shown on first load, hidden once a phone connects or the user closes it.
 export function showHint(show) {
@@ -152,12 +168,13 @@ export function ingest(m, source) {
   emit("state", { t: now, pointer: twin.pointer, tip });
 
   // act on the state
-  if (twin.gesture === "draw") {
+  const drawing = twin.section === "hand";       // the games also read hand frames; they must not draw or clear
+  if (drawing && twin.gesture === "draw") {
     if (!currentStroke) { currentStroke = { color: twin.color, width: twin.width, pts: [] }; twin.strokes.push(currentStroke); }
     currentStroke.pts.push([...twin.pointer]);
     drawLastSegment(currentStroke);
   }
-  if (twin.gesture === "palm" && !palmDone) {
+  if (drawing && twin.gesture === "palm" && !palmDone) {
     palmStart ??= now;
     if (now - palmStart >= PALM_HOLD_MS) { clearDrawing("palm gesture"); palmDone = true; }
   }
@@ -198,14 +215,14 @@ export function setSource(src) {
 }
 
 const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
-function fingersUp(lm) {
+export function fingersUp(lm) {
   const wrist = lm[0];
   // a finger is "up" when its tip is clearly farther from the wrist than its middle joint
   const up = (tip, pip) => dist(lm[tip], wrist) > dist(lm[pip], wrist) * 1.1;
   const thumb = dist(lm[4], lm[9]) > dist(lm[3], lm[9]) * 1.1;
   return [thumb, up(8, 6), up(12, 10), up(16, 14), up(20, 18)];
 }
-function classify([, i, m, r, p]) {
+export function classify([, i, m, r, p]) {
   if (i && !m && !r && !p) return "draw";
   if (i && m && !r && !p) return "hover";
   if (i && m && r && p) return "palm";

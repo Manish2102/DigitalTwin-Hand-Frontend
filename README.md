@@ -1,12 +1,13 @@
 # Digital Twin Lab - Frontend
 
 Your phone is the sensor and this web page is the **live virtual copy** (the digital twin).
-The app has two twins, which you choose in the sidebar. One phone can feed both at once.
+The app has two twins and an arcade, which you choose in the sidebar. One phone can feed all of them.
 
 | Section | Physical thing | Phone sensor | What the twin does |
 |---|---|---|---|
 | **Hand drawing** | Your hand | Camera + on-device hand tracking | Mirrors the hand skeleton, recognizes gestures, draws with your finger |
 | **Phone pose twin** | A fragile parcel (the phone is its sensor tag) | Gyroscope + accelerometer | Mirrors the parcel in 3D, enforces shipping rules, scores its condition, writes a delivery report |
+| **Arcade** | You, holding the phone as a game controller | Tilt, camera hand tracking, shaking | Six browser games (marble maze, fruit slicer, glider, rock paper scissors, shake duel, tilt pong), one or two players |
 
 Backend (WebSocket relay): [DigitalTwin-Hand-Backend](https://github.com/Manish2102/DigitalTwin-Hand-Backend)
 
@@ -16,6 +17,7 @@ Full documentation is in [`docs/`](docs/README.md):
 [architecture](docs/architecture.md) ·
 [hand twin](docs/hand-twin.md) ·
 [phone pose twin](docs/pose-twin.md) ·
+[arcade games](docs/games.md) ·
 [phone page](docs/phone-page.md) ·
 [design system](docs/design-system.md) ·
 [deployment](docs/deployment.md) ·
@@ -80,6 +82,22 @@ What you see:
 The phone shows the parcel status and vibrates on each incident.
 **Simulate delivery trip** plays a scripted 32-second trip with no phone.
 
+### Arcade - games with the phone as the controller
+
+Pick **Arcade** in the sidebar, choose a game, press **Start**. The phone highlights the sensor the game needs.
+
+| Game | Sensor | Players |
+|---|---|---|
+| Marble Maze | Tilt | 1 |
+| Fruit Slicer | Hand camera | 1 |
+| Sky Glider | Hand camera | 1 |
+| Rock Paper Scissors | Hand camera | 1 vs computer, or 2 |
+| Shake Duel | Accelerometer | 1 or 2 |
+| Tilt Pong | Tilt | 1 vs computer, or 2 |
+
+For two players, press **Add player 2** and scan the second QR code with another phone. Every game also works with the
+keyboard and mouse, and the phone vibrates on hits and scores. Best scores are kept in the browser.
+
 ## Design system
 
 `css/design.css` holds one set of tokens and components shared by both pages: neutral dark
@@ -126,3 +144,5 @@ Locally, use the simulate buttons or the backend's `tools/fake_phone.py`.
 | `js/analytics.js` | Hand metrics, chart, gesture time, activity log |
 | `js/predictor.js` | Fingertip forecasting and accuracy |
 | `js/pose.js` | Parcel twin: 3D model, shipping rules, incidents, score, charts, report, simulated trip |
+| `js/games.js` | Arcade screen: game menu, toolbar, overlays, side panel, player 2 pairing |
+| `js/games/` | `engine.js` (game runtime), `input.js` (phone data to game input), and one file per game |

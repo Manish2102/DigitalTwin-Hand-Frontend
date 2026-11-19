@@ -85,6 +85,17 @@ All tokens are CSS custom properties on `:root`.
 | **Empty states** | Every list and chart has one, so a blank panel always explains itself |
 | **Loading and status** | Buttons change label while working ("Starting…"); badges show "No sensor data" instead of stale values |
 
+### Arcade components
+
+The Arcade adds a few page-level pieces to the shell, built from the same tokens (see the `/* arcade */` block in `index.html`):
+
+| Class | Use |
+|---|---|
+| `.game-card` | Menu card: icon tile, title, description, chips (sensor, players, best score) |
+| `.g-stage`, `.g-frame` | The play area (dotted background) and the framed 16:10 canvas |
+| `.g-overlay` | Start, pause and result screen over the canvas. Below 560 px frame width (container query) it shows only the title, status and buttons. |
+| `.howto`, `.rank` | Numbered instructions and the rank bubble in the best-scores list |
+
 ## Icons
 
 `js/icons.js` is a single set of 24×24 line icons (1.75 stroke, `currentColor`) written as inline SVG, so

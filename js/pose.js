@@ -146,7 +146,7 @@ function handlePose(m) {
   }
 }
 
-on("message", m => { if (m.type === "pose" && !demo) handlePose(m); });
+on("message", m => { if (m.type === "pose" && m.p === 1 && !demo) handlePose(m); });   // player 2 belongs to the games
 
 // ------------------------------------------------------------- rendering
 function flash() {

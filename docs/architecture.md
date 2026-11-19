@@ -26,7 +26,11 @@ app.js
  ├─ analytics.js ────── core.js, icons.js, ui.js
  ├─ predictor.js ────── core.js
  ├─ pose.js ─────────── core.js, icons.js, ui.js     (the parcel twin)
- └─ nav.js ──────────── core.js                       (app shell navigation)
+ ├─ nav.js ──────────── core.js                       (app shell navigation)
+ └─ games.js ────────── core.js, nav.js, config.js, icons.js, ui.js
+     ├─ games/engine.js ── core.js, games/input.js     (loop, scores, sound)
+     ├─ games/input.js ─── core.js                      (phone data -> tilt / hand / shake)
+     └─ games/marble.js, slicer.js, glider.js, rps.js, shake.js, pong.js  (each imports engine.js)
 ```
 
 `app.js` imports every module for its side effects and then calls `start()` from `core.js`:
@@ -34,13 +38,14 @@ app.js
 ```js
 import { start } from "./core.js";
 import "./simulator.js"; import "./recorder.js"; import "./analytics.js";
-import "./predictor.js"; import "./pose.js"; import "./nav.js";
+import "./predictor.js"; import "./pose.js"; import "./nav.js"; import "./games.js";
 start();
 ```
 
 Feature modules never import each other. They talk to the core through the event bus and a handful of
 exports, so removing a line from `app.js` removes that feature and the rest keeps working (provided its
-DOM is also removed, see below).
+DOM is also removed, see below). Two small exceptions: `games.js` imports `nav.js` (to tell the phone which game is open)
+and the games import the game engine, which is their own runtime. See [games.md](games.md).
 
 ## The DOM contract
 
@@ -56,6 +61,7 @@ the app, which is intentional: it fails loudly instead of silently missing a con
 | `predictor.js` | `predOn`, `predH`, `predHVal`, `predErr`, `baseErr`, `predGain` |
 | `pose.js` | `pDemo`, `pDemoStatus`, `pNew`, `pRecenter`, `pModel`, `pReport`, `parcel3d`, `phone3d`, `poseStage`, `pBanner`, `pLive`, `pStatus`, `pScore`, `pGrade`, `pScoreBar`, `pTilt`, `pMaxTilt`, `pMaxG`, `pUpright`, `pIncCount`, `pDuration`, `pMaxTiltRule`, `pMaxTiltVal`, `pShockRule`, `pTiltChart`, `pShockChart`, `pAlpha`, `pBeta`, `pGamma`, `pIncidents`, `pIncMeta`, `pFlash` |
 | `nav.js` | `shell`, `crumb`, `pageTitle`, `pageDesc`, `sourceChip`, `collapseBtn`, `menuBtn`, `scrim`, plus `.nav-item[data-section]` buttons and `.section#sec-<name>` panels |
+| `games.js` | `gMenu`, `gGrid`, `gPlay`, `gBack`, `gTitle`, `gState`, `gModes`, `gP2`, `gCalibrate`, `gPause`, `gSound`, `gCanvas`, `gFrame`, `gOverlay`, `gHow`, `gControllers`, `gScores`, `gScoresMeta`, `gClearScores`, player 2 modal (`p2Modal`, `p2Close`, `p2Done`, `qr2`, `p2Url`, `copyP2`) |
 
 ## The event bus
 
@@ -71,8 +77,11 @@ emits (feature modules call `logEvent`, which emits `event`).
 | `source` | `"phone" \| "simulation" \| "replay"` | The hand data source changed | simulator, recorder, analytics, predictor |
 | `event` | `{ text, kind, time }` | `logEvent(...)` was called | analytics (activity log) |
 | `render` | `{ ctx, rect, age }` | Each animation frame while a fresh hand is shown | predictor (ghost cursor) |
-| `message` | any non-`hand`, non-`ping` message from the phone | A message arrives (for example `pose`) | pose |
-| `phoneConnected` | none | The first message arrives after the phone was considered offline | nav (sends `mode`) |
+| `message` | any non-`hand`, non-`ping` message from the phone (each carries `p`, the player number) | A message arrives (for example `pose`) | pose |
+| `raw` | any message from any phone, with `p` | Every message, before routing | games input |
+| `phoneConnected` | player number (`1` or `2`) | The first message arrives from a phone that was considered offline | nav (sends `mode`), games |
+| `phoneLeft` | player number | A phone has been silent for 3 s | (available) |
+| `section` | `"hand" \| "pose" \| "games"` | The open section changed | games (pause and stop the loop when leaving) |
 
 Log `kind` values (colour the activity dot): `info`, `ok`, `warn`, `action`, `source`, `gesture`.
 
@@ -83,7 +92,8 @@ One object, `twin`, exported from `core.js`:
 | Field | Meaning |
 |---|---|
 | `source` | `phone`, `simulation` or `replay`: where hand frames are accepted from |
-| `phones` | `0` or `1`: whether a phone has been heard from in the last 3 s |
+| `section` | Which section is open (`hand`, `pose`, `games`). The hand twin only draws and clears while it is `hand`. |
+| `phones`, `players` | How many phones were heard from in the last 3 s, and which player slots (`1`, `2`) are live |
 | `landmarks`, `handedness`, `fingers`, `gesture`, `pointer` | Current hand state |
 | `color`, `width`, `strokes` | Pen colour, brush size, and the drawing |
 | `aspect` | Camera aspect ratio (shapes the drawing area) |

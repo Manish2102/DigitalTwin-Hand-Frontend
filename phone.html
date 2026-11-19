@@ -25,6 +25,9 @@
   .mode-hint { display: none; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--radius); font-size: var(--fs-sm);
                background: var(--accent-weak); border: 1px solid var(--accent-border); color: var(--text); }
   .mode-hint.show { display: flex; }
+  .game-card-phone { display: none; }
+  .game-card-phone.show { display: block; }
+  .score-big { font-size: 44px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; margin-top: 4px; }
   .mode-hint .icon { color: var(--accent); margin-top: 2px; }
   .card.recommended { border-color: var(--accent-border); box-shadow: 0 0 0 1px var(--accent-border); }
   .rec-tag { display: none; }
@@ -72,6 +75,13 @@
     </div>
 
     <div class="mode-hint" id="modeHint"><i data-icon="info"></i><span id="modeText"></span></div>
+
+    <!-- game feedback -->
+    <section class="card game-card-phone" id="gameCard">
+      <div class="card-head"><i data-icon="gamepad"></i><span class="card-title" id="gameName">Choose a game</span><span class="badge badge-accent" id="playerTag">Player 1</span></div>
+      <div class="score-big" id="gameScore">0</div>
+      <p class="note" id="gameText" style="margin-top:6px">Waiting for the game to start.</p>
+    </section>
 
     <!-- hand camera -->
     <section class="card" id="handCard">
@@ -133,6 +143,9 @@ let frames = 0, fps = 0, rtt = null, lastTwinMsg = 0;
 // ------------------------------------------------------------------- room
 // The QR code on the twin page carries ?room=CODE. Without it, ask for the code.
 const ROOM = roomFromUrl();
+// Player number: the first phone is player 1; a second phone joins with ?p=2 (two-player games).
+const PLAYER = new URLSearchParams(location.search).get("p") === "2" ? 2 : 1;
+if (PLAYER === 2) document.title = "Player 2 · Digital Twin Lab";
 if (!ROOM) {
   $("join").classList.add("show");
   $("start").disabled = true;
@@ -154,7 +167,8 @@ function connect() {
   ws.onmessage = e => {
     const m = JSON.parse(e.data);
     lastTwinMsg = Date.now();                       // anything in this room comes from the twin
-    if (m.type === "pong") rtt = Date.now() - m.ts;
+    if (m.type === "pong" && (m.p ?? 1) === PLAYER) rtt = Date.now() - m.ts;
+    if (m.type === "game" && (m.to ?? 1) === PLAYER) onGame(m);       // game events are addressed to one player
     if (m.type === "feedback") {                    // hand twin -> physical
       $("twinGesture").textContent = LABELS[m.gesture] || m.gesture;
       $("swatch").style.background = m.color;
@@ -168,20 +182,25 @@ function connect() {
       if (m.alert) navigator.vibrate?.(m.level === "crit" ? [200, 80, 200, 80, 200] : [150]);
     }
     if (m.type === "mode") {                        // which twin is open on the laptop
-      const pose = m.mode === "pose";
+      const games = m.mode === "games";
+      $("gameCard").classList.toggle("show", games);
+      const pose = m.mode === "pose" || (games && (m.sensor === "tilt" || m.sensor === "shake"));
       $("handCard").classList.toggle("recommended", !pose);
       $("poseCard").classList.toggle("recommended", pose);
       $("poseBtn").classList.toggle("btn-primary", pose && !poseOn);
       $("start").classList.toggle("btn-primary", !pose && !running);
       $("modeHint").classList.add("show");
-      $("modeText").textContent = pose
-        ? "The laptop is showing the Phone pose twin. Tap Share motion sensors, then tilt, flip or bump this phone."
-        : "The laptop is showing Hand drawing. Tap Start camera and show one hand to the camera.";
+      $("modeText").textContent = games
+        ? (m.game ? `Playing ${m.game}. ${m.hint ?? ""}` : (m.hint ?? "Pick a game on the laptop."))
+        : pose
+          ? "The laptop is showing the Phone pose twin. Tap Share motion sensors, then tilt, flip or bump this phone."
+          : "The laptop is showing Hand drawing. Tap Start camera and show one hand to the camera.";
+      if (games) $("gameName").textContent = m.game ?? "Choose a game";
       (pose ? $("poseCard") : $("handCard")).scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   };
 }
-function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ ...obj, p: PLAYER })); }   // tag every message with the player
 if (ROOM) connect();
 
 setInterval(() => {
@@ -291,6 +310,17 @@ $("poseBtn").onclick = async () => {
     $("poseInfo").textContent = "Could not start motion sensors: " + e.message;
   }
 };
+
+// ------------------------------------------------------- games (feedback from the twin)
+$("playerTag").textContent = `Player ${PLAYER}`;
+function onGame(m) {
+  if (m.event === "buzz") navigator.vibrate?.(m.vibrate ?? 30);          // hit, score, crash...
+  if (m.score != null) $("gameScore").textContent = Math.round(m.score);
+  if (m.game) $("gameName").textContent = m.game;
+  if (m.event === "start") { navigator.vibrate?.(60); $("gameText").textContent = "Go!"; }
+  if (m.event === "over") { navigator.vibrate?.([80, 60, 80]); $("gameText").textContent = m.text ?? "Game over"; }
+  if (m.event === "info") $("gameText").textContent = m.text ?? "";
+}
 
 function loop() {
   if (!running) return;
