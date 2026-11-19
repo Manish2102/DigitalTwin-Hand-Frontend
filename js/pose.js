@@ -208,7 +208,7 @@ function drawChart(id, data, max, limit, color) {
   ctx.setLineDash([4, 4]); ctx.strokeStyle = "rgba(242,102,94,.8)";
   ctx.beginPath(); ctx.moveTo(0, y(limit)); ctx.lineTo(W, y(limit)); ctx.stroke(); ctx.setLineDash([]);
   if (data.length < 2) {
-    ctx.fillStyle = "#727a86"; ctx.font = "12px Inter, system-ui, sans-serif"; ctx.textAlign = "center";
+    ctx.fillStyle = "#868e9a"; ctx.font = "12px Inter, system-ui, sans-serif"; ctx.textAlign = "center";
     ctx.fillText("Waiting for sensor data", W / 2, H / 2 + 4);
     return;
   }

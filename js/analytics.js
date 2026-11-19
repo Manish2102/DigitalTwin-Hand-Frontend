@@ -85,7 +85,7 @@ function drawChart() {
   ctx.strokeStyle = "#232932"; ctx.lineWidth = 1;           // light horizontal grid
   for (const f of [0.25, 0.5, 0.75]) { ctx.beginPath(); ctx.moveTo(0, Math.round(H * f) + .5); ctx.lineTo(W, Math.round(H * f) + .5); ctx.stroke(); }
   if (!series.speed.some(v => v > 0) && !series.rtt.some(v => v > 0)) {
-    ctx.fillStyle = "#727a86"; ctx.font = "12px Inter, system-ui, sans-serif"; ctx.textAlign = "center";
+    ctx.fillStyle = "#868e9a"; ctx.font = "12px Inter, system-ui, sans-serif"; ctx.textAlign = "center";
     ctx.fillText("No data yet", W / 2, H / 2 + 4);
     return;
   }

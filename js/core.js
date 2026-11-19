@@ -18,7 +18,7 @@ export const GESTURES = {
   hover: { label: "Hover",        icon: "move",   color: "#4fc3f7" },
   palm:  { label: "Clearing",     icon: "eraser", color: "#e0a83a" },
   fist:  { label: "Paused",       icon: "pause",  color: "#c47dff" },
-  idle:  { label: "Unknown pose", icon: "help",   color: "#727a86" },
+  idle:  { label: "Unknown pose", icon: "help",   color: "#868e9a" },
   none:  { label: "No hand",      icon: "scan",   color: "#2f3641" },
 };
 export const SOURCES = { phone: "Live phone", simulation: "Simulation", replay: "Replay" };
@@ -60,6 +60,7 @@ let palmStart = null, palmDone = false, msgCount = 0;
 // event  ({text,kind,time}) human-readable log line
 // render ({ctx,rect})       draw overlays on the hand layer
 // message (raw msg)         any other message from the phone (e.g. type "pose")
+// phoneConnected            first message after the phone was considered offline
 const listeners = {};
 export const on = (evt, fn) => (listeners[evt] ??= []).push(fn);
 const emit = (evt, data) => (listeners[evt] || []).forEach(fn => fn(data));

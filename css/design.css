@@ -19,12 +19,12 @@
   /* text */
   --text: #e7e9ec;
   --text-2: #a7aeb8;
-  --text-3: #727a86;
+  --text-3: #868e9a;
 
   /* accent + status */
   --accent: #7b96ff;
-  --accent-solid: #4d6bf2;
-  --accent-solid-hover: #5d79f5;
+  --accent-solid: #4361e8;
+  --accent-solid-hover: #4a68ee;
   --accent-weak: rgba(123,150,255,.13);
   --accent-border: rgba(123,150,255,.45);
   --success: #46c068;  --success-weak: rgba(70,192,104,.13);  --success-border: rgba(70,192,104,.4);
