@@ -4,13 +4,23 @@
 import { W, H, C, text, hud, circle, grid } from "./engine.js";
 
 export const LEVELS = [
+  // 1-3: a few holes, nothing moves
   { start: [90, 510], goal: [870, 90],  holes: [[480, 300]] },
+  { start: [90, 510], goal: [870, 90],  holes: [[400, 330], [620, 200]] },
+  { start: [90, 300], goal: [870, 300], holes: [[330, 200], [480, 400], [660, 230]] },
+  // 4-6: more holes, still fixed
   { start: [90, 90],  goal: [870, 510], holes: [[260, 200], [420, 380], [600, 210], [740, 400], [520, 90]] },
+  { start: [90, 90],  goal: [870, 510], holes: [[250, 300], [420, 150], [430, 450], [640, 300], [760, 470]] },
   { start: [90, 510], goal: [870, 90],  holes: [[200, 420], [320, 290], [200, 170], [480, 470], [530, 200], [690, 330], [780, 170], [700, 510]] },
+  // 7-10: slow moving holes join in
+  { start: [90, 510], goal: [870, 90],  holes: [[250, 380], [480, 250], [700, 150]],
+    moving: [{ x: 560, y: 420, axis: "x", amp: 80, speed: 1.0 }] },
   { start: [90, 300], goal: [870, 300], holes: [[260, 150], [260, 450], [480, 300], [640, 140], [640, 460], [780, 300]],
     moving: [{ x: 360, y: 300, axis: "y", amp: 110, speed: 1.6 }, { x: 720, y: 220, axis: "x", amp: 60, speed: 1.2 }] },
+  { start: [90, 300], goal: [870, 300], holes: [[300, 150], [300, 450], [520, 300], [720, 160], [720, 440]],
+    moving: [{ x: 410, y: 300, axis: "y", amp: 90, speed: 1.2 }] },
   { start: [90, 510], goal: [870, 90],  holes: [[180, 370], [300, 150], [430, 430], [560, 270], [680, 470], [790, 300], [520, 90]],
-    moving: [{ x: 320, y: 300, axis: "y", amp: 100, speed: 1.3 }, { x: 640, y: 150, axis: "x", amp: 110, speed: 1.1 }, { x: 860, y: 420, axis: "y", amp: 80, speed: 1.8 }] },
+    moving: [{ x: 320, y: 300, axis: "y", amp: 70, speed: 1.3 }, { x: 660, y: 160, axis: "x", amp: 90, speed: 1.1 }, { x: 860, y: 420, axis: "y", amp: 80, speed: 1.8 }] },
 ];
 export const HOLE_R = 28, BALL_R = 14, GOAL_R = 24, LEVEL_TIME = 45;
 const ACCEL = 55, FRICTION = 1.4, MAX_V = 720, FALL_AT = HOLE_R - 7;
@@ -25,12 +35,12 @@ const holesOf = (lv, t) => [
 
 export default {
   id: "marble", title: "Marble Maze", icon: "marble", sensor: "tilt",
-  desc: "Tilt the phone to roll the marble into the goal. Holes swallow it. Five levels.",
+  desc: "Tilt the phone to roll the marble into the goal. Holes swallow it. Ten levels, easy to moderate.",
   modes: [{ id: "solo", label: "1 player", players: 1, scored: true }],
   phone: "Hold the phone flat like a tray and tilt it gently.",
   howto: ["Tilt the phone: the marble rolls downhill, like on a real board.",
           "Reach the green goal before the 45 s timer ends.",
-          "Falling into a hole or running out of time costs a life (3 lives).",
+          "Falling into a hole or running out of time costs a life (3 lives). Every third level cleared gives one back.",
           "Keyboard: W A S D tilt the board."],
 
   init() { return { level: 0, lives: 3, levelTime: 0, t: 0, fall: 0, ball: null, vx: 0, vy: 0, flash: 0, msg: "", msgT: 0 }; },
@@ -86,7 +96,9 @@ export default {
       g.addScore(1, 100 + bonus); g.sfx("win"); g.buzz(1, [60, 40, 60]);
       s.level++;
       if (s.level >= LEVELS.length) { g.addScore(1, 200); return g.end({ title: "You cleared every level", win: true, detail: "+200 bonus" }); }
-      s.ball = null; s.msg = `Level ${s.level + 1}`; s.msgT = 1.4;
+      if (s.level % 3 === 0 && s.lives < 3) { s.lives++; s.msg = `Level ${s.level + 1} - extra life`; }   // a breather every third level
+      else s.msg = `Level ${s.level + 1}`;
+      s.ball = null; s.msgT = 1.4;
     }
   },
 

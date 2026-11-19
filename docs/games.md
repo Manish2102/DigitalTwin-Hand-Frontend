@@ -16,7 +16,7 @@ model (the game world) and a feedback loop (vibration and score on the phone).
 
 | Game | Phone sensor | Players | You | Scoring |
 |---|---|---|---|---|
-| **Marble Maze** | Tilt | 1 | Tilt the phone like a tray to roll the marble into the goal. 5 levels, 3 lives, 45 s per level. Holes swallow the marble; levels 4 and 5 have moving holes. | 100 per level plus 3 per second left; 200 bonus for clearing all five |
+| **Marble Maze** | Tilt | 1 | Tilt the phone like a tray to roll the marble into the goal. 10 levels from easy to moderate, 3 lives (one comes back every third level), 45 s per level. Holes swallow the marble; levels 7 to 10 add slow moving holes. | 100 per level plus 3 per second left; 200 bonus for clearing all ten |
 | **Fruit Slicer** | Hand camera | 1 | Swipe the index finger through flying fruit. Avoid the bombs. 3 lives. | 10 per fruit; 5 per extra fruit cut in the same swipe |
 | **Sky Glider** | Hand camera | 1 | Raise and lower the hand to fly a glider through gaps in pillars. One life. | 1 per gap |
 | **Rock Paper Scissors** | Hand camera | 1 vs computer, or 2 | Fist, open palm, or index and middle finger. First to 3 rounds. | 100 per round, 200 for the match (computer mode is scored) |
@@ -118,7 +118,7 @@ All numbers are constants at the top of each file, so they are easy to tune.
 | `LEVEL_TIME` | 45 s | Time per level; running out costs a life |
 
 The level layouts are data (`LEVELS`): start, goal, static holes and moving holes (axis, amplitude, speed).
-All five were checked with a breadth-first search on a 10 px grid (treating static holes as 42 px hazards) to
+All ten were checked with a breadth-first search on a 10 px grid (treating static holes as 42 px hazards) to
 confirm there is always a route from start to goal.
 
 ### Fruit Slicer (`slicer.js`)
