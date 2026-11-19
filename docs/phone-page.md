@@ -95,7 +95,7 @@ every 50 ms        ->  {"type":"pose", alpha, beta, gamma, absolute, acc, gmin}
 | `pong` | Computes round-trip time, shown in the Hand camera card and sent inside `hand.rtt` |
 | `feedback` | Updates the gesture label and pen colour dot. Vibrates twice on `event: "cleared"` and once on `event: "color"`. |
 | `parcel` | Shows the status badge (green, amber or red) and `score / 100`. Vibrates when `alert` is true: one pulse for `warn`, three for `crit`. |
-| `mode` | Highlights the relevant card (see above). For `games` it highlights the motion sensors card (tilt and shake games) or the camera card (hand games) and shows the game's hint. |
+| `mode` | Highlights the relevant card (see above). For `scan` (Object to 3D) it highlights nothing and says the laptop uses its own webcam, so the phone is not needed. For `scan` (Object to 3D) it highlights nothing and says the laptop uses its own webcam, so the phone is not needed. For `games` it highlights the motion sensors card (tilt and shake games) or the camera card (hand games) and shows the game's hint. |
 | `game` | Only if `to` equals this phone's player number: vibrates on `buzz` (with the given pattern), updates the score on `score`, shows `text` on `info` and `over`, and gives a short buzz on `start` |
 
 ### Player number

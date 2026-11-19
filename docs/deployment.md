@@ -80,7 +80,12 @@ The page loads these at runtime, so it needs internet access:
 | `fonts.googleapis.com` / `fonts.gstatic.com` | Both pages | Inter font (falls back to system fonts) |
 | `cdn.jsdelivr.net` (`@mediapipe/tasks-vision` 0.10.14) | Phone page | Hand tracking runtime |
 | `storage.googleapis.com` (hand landmarker model) | Phone page | The model file (about 8 MB, cached by the browser) |
+| `cdn.jsdelivr.net` (`three` 0.170.0 and its `examples/jsm` add-ons) | Twin page, Object to 3D | 3D viewer and GLB / STL export, through the import map in `index.html` |
+| `cdn.jsdelivr.net` (`@huggingface/transformers` 3.8.1 and its ONNX Runtime files) | Twin page, Object to 3D | Runs the depth model in a Web Worker |
+| `huggingface.co` (`onnx-community/depth-anything-v2-small`) | Twin page, Object to 3D | The depth model: 49.6 MB on WebGPU or 27.3 MB on CPU |
+| `cdn.jsdelivr.net` (`@mediapipe/tasks-vision` 1.2.0) and `storage.googleapis.com` (interactive segmenter, about 30 MB) | Twin page, Object to 3D | Click-to-select cut-out (the phone page stays on 0.10.14) |
 
+The Object to 3D resources load only when that section is used, so the other sections never wait for them.
 If a CDN is blocked, the page degrades rather than breaks (no QR code or fallback font), except that the phone
 page cannot track hands without the MediaPipe resources.
 

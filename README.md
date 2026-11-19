@@ -7,6 +7,7 @@ The app has two twins and an arcade, which you choose in the sidebar. One phone 
 |---|---|---|---|
 | **Hand drawing** | Your hand | Camera + on-device hand tracking | Mirrors the hand skeleton, recognizes gestures, draws with your finger |
 | **Phone pose twin** | A fragile parcel (the phone is its sensor tag) | Gyroscope + accelerometer | Mirrors the parcel in 3D, enforces shipping rules, scores its condition, writes a delivery report |
+| **Object to 3D** | Any object you hold up | The laptop webcam | Cuts the object out, estimates depth with AI, builds a solid 3D model to rotate, export and save |
 | **Arcade** | You, holding the phone as a game controller | Tilt, camera hand tracking, shaking | Six browser games (marble maze, fruit slicer, glider, rock paper scissors, shake duel, tilt pong), one or two players |
 
 Backend (WebSocket relay): [DigitalTwin-Hand-Backend](https://github.com/Manish2102/DigitalTwin-Hand-Backend)
@@ -18,6 +19,7 @@ Full documentation is in [`docs/`](docs/README.md):
 [hand twin](docs/hand-twin.md) ·
 [phone pose twin](docs/pose-twin.md) ·
 [arcade games](docs/games.md) ·
+[object to 3D](docs/object-scanner.md) ·
 [phone page](docs/phone-page.md) ·
 [design system](docs/design-system.md) ·
 [deployment](docs/deployment.md) ·
@@ -98,6 +100,18 @@ Pick **Arcade** in the sidebar, choose a game, press **Start**. The phone highli
 For two players, press **Add player 2** and scan the second QR code with another phone. Every game also works with the
 keyboard and mouse, and the phone vibrates on hits and scores. Best scores are kept in the browser.
 
+### Object to 3D - webcam to 3D model
+
+Pick **Object to 3D**. This section uses the **laptop webcam** (or an uploaded photo); the phone is not needed.
+
+1. **Start camera**, hold an object up, press **Capture** (3 second countdown), or **Upload photo**.
+2. **Click the object** in the photo to cut it out. Depth estimation has already started in the background.
+3. The **3D model** appears. Drag to rotate; the sliders change depth strength, smoothness and back thickness.
+4. Enter the object's **real width** (cm), then export **GLB** (with colour) or **STL** (for 3D printing), or **Save to library**.
+
+It builds a 3D *relief* from one photo: the front is estimated, the back is flat. The AI models (about 80 MB in total) run in
+the browser and download on first use; the photo never leaves your computer. Details and limits: [docs/object-scanner.md](docs/object-scanner.md).
+
 ## Design system
 
 `css/design.css` holds one set of tokens and components shared by both pages: neutral dark
@@ -146,3 +160,5 @@ Locally, use the simulate buttons or the backend's `tools/fake_phone.py`.
 | `js/pose.js` | Parcel twin: 3D model, shipping rules, incidents, score, charts, report, simulated trip |
 | `js/games.js` | Arcade screen: game menu, toolbar, overlays, side panel, player 2 pairing |
 | `js/games/` | `engine.js` (game runtime), `input.js` (phone data to game input), and one file per game |
+| `js/scan.js` | Object to 3D screen: capture, selection, depth, model, export, library |
+| `js/scan/` | `camera.js`, `segment.js`, `depth.js` + `depth.worker.js`, `mesh.js`, `viewer.js`, `library.js` |

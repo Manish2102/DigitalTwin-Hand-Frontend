@@ -182,21 +182,23 @@ function connect() {
       if (m.alert) navigator.vibrate?.(m.level === "crit" ? [200, 80, 200, 80, 200] : [150]);
     }
     if (m.type === "mode") {                        // which twin is open on the laptop
-      const games = m.mode === "games";
+      const games = m.mode === "games", scan = m.mode === "scan";
       $("gameCard").classList.toggle("show", games);
       const pose = m.mode === "pose" || (games && (m.sensor === "tilt" || m.sensor === "shake"));
-      $("handCard").classList.toggle("recommended", !pose);
+      $("handCard").classList.toggle("recommended", !pose && !scan);
       $("poseCard").classList.toggle("recommended", pose);
       $("poseBtn").classList.toggle("btn-primary", pose && !poseOn);
-      $("start").classList.toggle("btn-primary", !pose && !running);
+      $("start").classList.toggle("btn-primary", !pose && !scan && !running);
       $("modeHint").classList.add("show");
-      $("modeText").textContent = games
+      $("modeText").textContent = scan
+        ? "The laptop is in Object to 3D and uses its own webcam, so this phone is not needed there. Switch to another section to use the phone's sensors."
+        : games
         ? (m.game ? `Playing ${m.game}. ${m.hint ?? ""}` : (m.hint ?? "Pick a game on the laptop."))
         : pose
           ? "The laptop is showing the Phone pose twin. Tap Share motion sensors, then tilt, flip or bump this phone."
           : "The laptop is showing Hand drawing. Tap Start camera and show one hand to the camera.";
       if (games) $("gameName").textContent = m.game ?? "Choose a game";
-      (pose ? $("poseCard") : $("handCard")).scrollIntoView({ behavior: "smooth", block: "nearest" });
+      if (!scan) (pose ? $("poseCard") : $("handCard")).scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   };
 }

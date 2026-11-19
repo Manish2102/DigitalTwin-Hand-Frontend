@@ -2,7 +2,8 @@
 
 The app is a **static site with no build step and no framework**: plain HTML, CSS and ES modules.
 The only third-party code is loaded from CDNs: QR code generation on the twin page (`qrcodejs`), the
-hand-tracking model on the phone page (MediaPipe Tasks Vision), and the Inter font.
+hand-tracking model on the phone page (MediaPipe Tasks Vision), and the Inter font. The Object to 3D section
+loads Three.js, Transformers.js and MediaPipe from CDNs the first time it is used (see [deployment.md](deployment.md#external-resources)).
 
 ## Two pages
 
@@ -31,6 +32,12 @@ app.js
      ├─ games/engine.js ── core.js, games/input.js     (loop, scores, sound)
      ├─ games/input.js ─── core.js                      (phone data -> tilt / hand / shake)
      └─ games/marble.js, slicer.js, glider.js, rps.js, shake.js, pong.js  (each imports engine.js)
+ └─ scan.js ─────────── core.js, icons.js, ui.js     (Object to 3D; no backend, no phone)
+     ├─ scan/camera.js, library.js                     (webcam and photo input; IndexedDB)
+     ├─ scan/segment.js ─── MediaPipe interactive segmenter (loaded on first use)
+     ├─ scan/depth.js ───── scan/depth.worker.js       (Transformers.js depth model, in a Web Worker)
+     ├─ scan/mesh.js ────── pure functions, tested in Node
+     └─ scan/viewer.js ──── Three.js (loaded on first model, through the import map)
 ```
 
 `app.js` imports every module for its side effects and then calls `start()` from `core.js`:
@@ -38,14 +45,15 @@ app.js
 ```js
 import { start } from "./core.js";
 import "./simulator.js"; import "./recorder.js"; import "./analytics.js";
-import "./predictor.js"; import "./pose.js"; import "./nav.js"; import "./games.js";
+import "./predictor.js"; import "./pose.js"; import "./nav.js"; import "./games.js"; import "./scan.js";
 start();
 ```
 
 Feature modules never import each other. They talk to the core through the event bus and a handful of
 exports, so removing a line from `app.js` removes that feature and the rest keeps working (provided its
 DOM is also removed, see below). Two small exceptions: `games.js` imports `nav.js` (to tell the phone which game is open)
-and the games import the game engine, which is their own runtime. See [games.md](games.md).
+and the games import the game engine, which is their own runtime. See [games.md](games.md). `scan.js` is self-contained and only
+uses the core for `$`, the `section` event (to switch the camera off) and the shared icon and toast helpers. See [object-scanner.md](object-scanner.md).
 
 ## The DOM contract
 
@@ -61,6 +69,7 @@ the app, which is intentional: it fails loudly instead of silently missing a con
 | `predictor.js` | `predOn`, `predH`, `predHVal`, `predErr`, `baseErr`, `predGain` |
 | `pose.js` | `pDemo`, `pDemoStatus`, `pNew`, `pRecenter`, `pModel`, `pReport`, `parcel3d`, `phone3d`, `poseStage`, `pBanner`, `pLive`, `pStatus`, `pScore`, `pGrade`, `pScoreBar`, `pTilt`, `pMaxTilt`, `pMaxG`, `pUpright`, `pIncCount`, `pDuration`, `pMaxTiltRule`, `pMaxTiltVal`, `pShockRule`, `pTiltChart`, `pShockChart`, `pAlpha`, `pBeta`, `pGamma`, `pIncidents`, `pIncMeta`, `pFlash` |
 | `nav.js` | `shell`, `crumb`, `pageTitle`, `pageDesc`, `sourceChip`, `collapseBtn`, `menuBtn`, `scrim`, plus `.nav-item[data-section]` buttons and `.section#sec-<name>` panels |
+| `scan.js` | `scCam`, `scMain`, `scUpload`, `scFile`, `scRetake`, `scTabs`, `scReset`, `scGlb`, `scStl`, `scSave`, `scStage`, `scVideo`, `scPhoto`, `scDepth`, `scView`, `scBanner`, `scEmpty`, `scSteps`, `scProgWrap`, `scProg`, `scWhole`, `scDevice`, `scStats`, `scStrength(V)`, `scSmooth(V)`, `scThick(V)`, `scWidth`, `scName`, `scLit`, `scWire`, `scFree`, `scLib`, `scLibMeta` |
 | `games.js` | `gMenu`, `gGrid`, `gPlay`, `gBack`, `gTitle`, `gState`, `gModes`, `gP2`, `gCalibrate`, `gPause`, `gSound`, `gCanvas`, `gFrame`, `gOverlay`, `gHow`, `gControllers`, `gScores`, `gScoresMeta`, `gClearScores`, player 2 modal (`p2Modal`, `p2Close`, `p2Done`, `qr2`, `p2Url`, `copyP2`) |
 
 ## The event bus
@@ -81,7 +90,7 @@ emits (feature modules call `logEvent`, which emits `event`).
 | `raw` | any message from any phone, with `p` | Every message, before routing | games input |
 | `phoneConnected` | player number (`1` or `2`) | The first message arrives from a phone that was considered offline | nav (sends `mode`), games |
 | `phoneLeft` | player number | A phone has been silent for 3 s | (available) |
-| `section` | `"hand" \| "pose" \| "games"` | The open section changed | games (pause and stop the loop when leaving) |
+| `section` | `"hand" \| "pose" \| "games" \| "scan"` | The open section changed | games (pause and stop the loop when leaving), scan (switch the camera off when leaving) |
 
 Log `kind` values (colour the activity dot): `info`, `ok`, `warn`, `action`, `source`, `gesture`.
 
@@ -92,7 +101,7 @@ One object, `twin`, exported from `core.js`:
 | Field | Meaning |
 |---|---|
 | `source` | `phone`, `simulation` or `replay`: where hand frames are accepted from |
-| `section` | Which section is open (`hand`, `pose`, `games`). The hand twin only draws and clears while it is `hand`. |
+| `section` | Which section is open (`hand`, `pose`, `games`, `scan`). The hand twin only draws and clears while it is `hand`. |
 | `phones`, `players` | How many phones were heard from in the last 3 s, and which player slots (`1`, `2`) are live |
 | `landmarks`, `handedness`, `fingers`, `gesture`, `pointer` | Current hand state |
 | `color`, `width`, `strokes` | Pen colour, brush size, and the drawing |

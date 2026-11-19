@@ -1,13 +1,15 @@
 # Digital Twin Lab - documentation
 
 Digital Twin Lab turns a **phone into a sensor** and a **web page into the digital twin** (a live
-virtual copy) of whatever the phone senses. It has two twins, plus an arcade that uses the phone as a game controller:
+virtual copy) of whatever the phone senses. It has two twins, an arcade that uses the phone as a game controller,
+and a scanner that turns a webcam photo into a 3D model:
 
 | Twin | Physical thing | Phone sensor | What the twin does |
 |---|---|---|---|
 | **Hand drawing** | Your hand | Camera + on-device hand tracking | Mirrors the hand skeleton, recognizes gestures, draws with your finger |
 | **Phone pose twin** (smart parcel) | A fragile parcel, with the phone as its sensor tag | Gyroscope + accelerometer | Mirrors the parcel in 3D, enforces shipping rules, scores its condition, writes a delivery report |
 | **Arcade** | You, holding the phone as a controller | Tilt, camera hand tracking, shaking | Six browser games for one or two players; the phone vibrates on hits and scores |
+| **Object to 3D** | Any object you hold up | The **laptop webcam** (not the phone) | Cuts the object out, estimates its depth with AI, builds a solid 3D model you can rotate, export and save |
 
 ## How the pieces fit
 
@@ -48,6 +50,9 @@ are made, and the physical side receives the outcome.
 | Simulation | Virtual hand | Simulated delivery trip |
 | Prediction | Fingertip forecast with an accuracy score | - |
 
+Object to 3D is a **snapshot twin**: the sensor is the laptop webcam, the virtual model is the 3D mesh built from one photo,
+and it records how the object looked at one moment instead of updating live.
+
 The Arcade follows the same pattern: the physical entity is the player, the sensors are the phone's tilt, accelerometer or camera,
 the virtual model is the game world, and the feedback loop is vibration and the score card on the phone.
 
@@ -59,6 +64,7 @@ the virtual model is the game world, and the feedback loop is vibration and the 
 | [hand-twin.md](hand-twin.md) | The hand twin in depth: gesture algorithm, drawing, simulator, recorder, analytics, predictor |
 | [pose-twin.md](pose-twin.md) | The parcel twin in depth: sensor maths, rules, scoring, simulation, report format, tuning constants |
 | [games.md](games.md) | The Arcade: the six games, the game engine, input and tilt maths, two-player mode, how to add a game |
+| [object-scanner.md](object-scanner.md) | Object to 3D: the models, the mesh algorithm, the viewer, export formats, the library, limits |
 | [phone-page.md](phone-page.md) | The sensor page: camera pipeline, motion sensors, feedback, requirements |
 | [design-system.md](design-system.md) | Tokens, components, icons, accessibility and responsive behaviour |
 | [deployment.md](deployment.md) | Running locally, deploying to Vercel, configuration, troubleshooting |

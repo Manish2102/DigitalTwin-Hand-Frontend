@@ -237,12 +237,53 @@
   #gScores .log-item { display: flex; align-items: center; gap: var(--s3); }
   #gScores .log-item .subtle { margin-left: auto; }
 
+
+  /* ========================= object to 3D ========================= */
+  .sc-stage { position: relative; flex: 1; min-height: 360px; display: grid; place-items: center; overflow: hidden;
+              background-color: var(--bg); background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 24px 24px; }
+  .sc-stage > video, .sc-stage > canvas { grid-area: 1 / 1; max-width: 100%; max-height: 100%; border-radius: var(--radius); }
+  .sc-stage > #scView { grid-area: 1 / 1; width: 100%; height: 100%; }
+  .sc-stage > #scView canvas { display: block; touch-action: none; cursor: grab; }
+  .sc-stage .off { display: none !important; }
+  .sc-stage > #scPhoto { cursor: crosshair; outline-offset: 3px; }
+  .sc-banner { position: absolute; top: var(--s4); left: 50%; transform: translateX(-50%); z-index: 2; max-width: calc(100% - 32px); pointer-events: none; }
+  .sc-banner:empty { display: none; }
+  .sc-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .sc-steps li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: center; font-size: var(--fs-sm); color: var(--text-3); }
+  .sc-steps li b { display: block; font-weight: 500; color: var(--text-2); }
+  .sc-steps .sc-sub { display: block; font-size: var(--fs-xs); color: var(--text-3); font-variant-numeric: tabular-nums; }
+  .sc-ico { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-3); color: var(--text-3); }
+  .sc-steps li[data-state="active"] b, .sc-steps li[data-state="wait"] b { color: var(--text); }
+  .sc-steps li[data-state="wait"] .sc-ico { background: var(--accent-weak); color: var(--accent); }
+  .sc-steps li[data-state="active"] .sc-ico { background: var(--accent-weak); color: var(--accent); }
+  .sc-steps li[data-state="active"] .sc-ico svg { animation: sc-spin 1s linear infinite; }
+  .sc-steps li[data-state="done"] b { color: var(--text); }
+  .sc-steps li[data-state="done"] .sc-ico { background: var(--success-weak); color: var(--success); }
+  .sc-steps li[data-state="error"] b { color: var(--danger); }
+  .sc-steps li[data-state="error"] .sc-ico { background: var(--danger-weak); color: var(--danger); }
+  @keyframes sc-spin { to { transform: rotate(360deg); } }
+  .sc-prog { height: 4px; border-radius: 2px; background: var(--surface-3); margin-top: var(--s3); overflow: hidden; opacity: 0; transition: opacity .2s; }
+  .sc-prog.on { opacity: 1; }
+  .sc-prog i { display: block; height: 100%; width: 0; background: var(--accent-solid); transition: width .15s linear; }
+  .sc-lib { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--s2); }
+  .sc-lib .empty { grid-column: 1 / -1; }
+  .sc-item { position: relative; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); overflow: hidden; }
+  .sc-item > button.open { display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; text-align: left; font: inherit; }
+  .sc-item img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--surface-3); }
+  .sc-item .nm { padding: 6px 8px 7px; font-size: var(--fs-xs); color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-item .nm small { display: block; color: var(--text-3); }
+  .sc-item .del { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; display: grid; place-items: center; border: 0; border-radius: var(--radius-sm);
+                  background: rgba(11,13,17,.72); color: var(--text-2); cursor: pointer; }
+  .sc-item .del:hover { color: var(--danger); }
+
   /* ============================ responsive ============================ */
   @media (max-width: 1100px) {
     .workspace { grid-template-columns: 1fr; overflow-y: auto; }
     .panel { border-left: 0; border-top: 1px solid var(--border); overflow: visible; }
     #viewport { flex: none; height: 62vh; }
     .pose-stage { flex: none; height: 62vh; }
+    .sc-stage { flex: none; height: 62vh; }
+    #sec-scan .workspace { flex: none; }
     .g-stage { flex: none; height: 62vh; }
     .g-play, .g-play .workspace { flex: none; }
     .section.active { overflow-y: auto; }
@@ -293,6 +334,10 @@
       <button class="nav-item" data-section="games" data-tip="Arcade" data-tip-pos="right">
         <i data-icon="gamepad" data-size="18"></i>
         <span class="nav-text"><span class="nav-title">Arcade</span><span class="nav-desc">Games · phone as controller</span></span>
+      </button>
+      <button class="nav-item" data-section="scan" data-tip="Object to 3D" data-tip-pos="right">
+        <i data-icon="cube" data-size="18"></i>
+        <span class="nav-text"><span class="nav-title">Object to 3D</span><span class="nav-desc">Webcam · depth AI · 3D model</span></span>
       </button>
     </nav>
 
@@ -673,6 +718,97 @@
         </div>
       </div>
     </section>
+
+    <!-- ======================= section: object to 3D ======================= -->
+    <section class="section" id="sec-scan" aria-label="Object to 3D">
+      <div class="toolbar">
+        <div class="tool-group" aria-label="Capture">
+          <select class="select" id="scCam" aria-label="Camera" style="max-width:190px;display:none"></select>
+          <button class="btn btn-primary" id="scMain" data-tip="Turn on the laptop webcam"><i data-icon="camera"></i><span>Start camera</span></button>
+          <button class="btn" id="scUpload" data-tip="Use a photo from a file, for example one taken with your phone"><i data-icon="upload"></i><span>Upload photo</span></button>
+          <input type="file" id="scFile" accept="image/*" hidden>
+          <button class="btn" id="scRetake" disabled data-tip="Discard this photo and take another"><i data-icon="rotateCcw"></i><span>Retake</span></button>
+        </div>
+        <span class="divider"></span>
+        <div class="tool-group" aria-label="View">
+          <span class="tool-label">View</span>
+          <div class="seg" id="scTabs">
+            <button data-tab="photo" class="sel"><i data-icon="image" data-size="14"></i>Photo</button>
+            <button data-tab="model" disabled><i data-icon="cube" data-size="14"></i>3D model</button>
+            <button data-tab="depth" disabled><i data-icon="layers" data-size="14"></i>Depth map</button>
+          </div>
+          <button class="btn btn-icon" id="scReset" disabled data-tip="Reset the 3D view" aria-label="Reset the 3D view"><i data-icon="crosshair"></i></button>
+        </div>
+        <span class="divider"></span>
+        <div class="tool-group" aria-label="Export">
+          <button class="btn" id="scGlb" disabled data-tip="3D file with the photo as colour (opens in Blender, Windows 3D Viewer, web viewers)"><i data-icon="download"></i><span>GLB</span></button>
+          <button class="btn" id="scStl" disabled data-tip="Solid shape for 3D printing, in millimetres (no colour)"><i data-icon="download"></i><span>STL</span></button>
+          <button class="btn" id="scSave" disabled data-tip="Keep this scan in this browser"><i data-icon="check"></i><span>Save to library</span></button>
+        </div>
+      </div>
+
+      <div class="workspace">
+        <div class="stage-col">
+          <div class="sc-stage" id="scStage">
+            <video id="scVideo" playsinline muted aria-label="Camera preview"></video>
+            <canvas id="scPhoto" tabindex="0" aria-label="Captured photo. Click the object to cut it out."></canvas>
+            <canvas id="scDepth" aria-label="Estimated depth map"></canvas>
+            <div id="scView"></div>
+            <span class="badge badge-lg sc-banner" id="scBanner"></span>
+            <div class="stage-empty" id="scEmpty">
+              <div class="empty">
+                <i data-icon="cube" data-size="26"></i>
+                <span class="empty-title">Scan an object</span>
+                <div class="empty-desc">Start the camera and hold an object up to it, or upload a photo.<br>You get a 3D relief you can rotate and export.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <aside class="panel">
+          <div class="card">
+            <div class="card-head"><i data-icon="list"></i><span class="card-title">Steps</span><span class="card-meta" id="scDevice"></span></div>
+            <ol class="sc-steps" id="scSteps">
+              <li data-step="1"><span class="sc-ico"></span><div><b>Capture a photo</b><span class="sc-sub">Camera or upload</span></div></li>
+              <li data-step="2"><span class="sc-ico"></span><div><b>Select the object</b><span class="sc-sub">Click it in the photo</span></div></li>
+              <li data-step="3"><span class="sc-ico"></span><div><b>Estimate depth</b><span class="sc-sub">AI model, runs in this browser</span></div></li>
+              <li data-step="4"><span class="sc-ico"></span><div><b>Build the 3D model</b><span class="sc-sub">Depth becomes a solid mesh</span></div></li>
+            </ol>
+            <div class="sc-prog" id="scProgWrap"><i id="scProg"></i></div>
+            <button class="btn btn-sm" id="scWhole" disabled style="margin-top:10px" data-tip="Skip the cut-out and use the whole picture"><i data-icon="scan" data-size="14"></i>Use the whole picture</button>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><i data-icon="sliders"></i><span class="card-title">Model</span><span class="card-meta" id="scStats"></span></div>
+            <div class="field"><span class="field-label">Depth strength</span><div class="range-row"><input type="range" id="scStrength" min="5" max="90" value="35" aria-label="Depth strength"><b id="scStrengthV">35%</b></div></div>
+            <div class="field"><span class="field-label">Smoothness</span><div class="range-row"><input type="range" id="scSmooth" min="0" max="8" value="4" aria-label="Smoothness"><b id="scSmoothV">4</b></div></div>
+            <div class="field"><span class="field-label">Back thickness</span><div class="range-row"><input type="range" id="scThick" min="0" max="20" value="6" aria-label="Back thickness"><b id="scThickV">6%</b></div></div>
+            <div class="field"><span class="field-label">Real width</span><span><input class="input" id="scWidth" type="number" min="0.5" max="200" step="0.5" placeholder="10" style="width:76px" aria-label="Real width in centimetres"> cm</span></div>
+            <div class="field"><span class="field-label">Name</span><input class="input" id="scName" type="text" maxlength="40" placeholder="My object" style="width:150px" aria-label="Scan name"></div>
+            <label class="check"><input type="checkbox" id="scLit" checked> Shaded (off shows the plain photo)</label>
+            <label class="check"><input type="checkbox" id="scWire"> Wireframe</label>
+            <label class="check"><input type="checkbox" id="scFree"> Rotate all the way round</label>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><i data-icon="history"></i><span class="card-title">Library</span><span class="card-meta" id="scLibMeta"></span></div>
+            <div class="sc-lib" id="scLib"></div>
+          </div>
+
+          <div class="card">
+            <details class="explain">
+              <summary class="card-head" style="cursor:pointer"><i data-icon="info"></i><span class="card-title">How it works and its limits</span></summary>
+              <dl class="dl">
+                <div><dt>Physical entity</dt><dd>Any object you hold up to the camera.</dd></div>
+                <div><dt>Sensor</dt><dd>The webcam takes one photo. The photo never leaves this computer.</dd></div>
+                <div><dt>Virtual model</dt><dd>An AI model guesses the depth of every pixel, and the page turns it into a solid mesh coloured with your photo.</dd></div>
+                <div><dt>A snapshot twin</dt><dd>Unlike the hand and parcel twins, this copy does not update live: it records how the object looked at one moment. Saved scans can be exported.</dd></div>
+                <div><dt>Limits</dt><dd>Depth is estimated, not measured, so it is relative. Only the front is real; the back is flat and the sides are guesses. Shiny, see-through and furry objects work badly. Use good light. Enter the real width to get a true size.</dd></div>
+              </dl>
+            </details>
+          </div>
+        </aside>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -738,6 +874,12 @@
   </div>
 </div>
 
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
 <script type="module" src="js/icons.js"></script>
 <script type="module" src="js/app.js"></script>
 </body>
