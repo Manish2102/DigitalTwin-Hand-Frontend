@@ -44,6 +44,8 @@ const tests = [
   ["far presenter: small hand, short swipe", cat(still(600, 0.4), move(0.4, 0.62, 300, 0, true, 0.06), still(600, 0.62)), "right"],
   ["close presenter: huge hand, 40% of the frame width", cat(still(600, 0.3, 0, 0.006, 0.5), move(0.3, 0.7, 300, 0, true, 0.4), still(600, 0.7)), "right"],
   ["close presenter: huge hand, small wobble", cat(still(600, 0.45, 0), move(0.45, 0.52, 300, 0, true, 0.4), still(600, 0.52)), 0],
+  ["slow forward stroke (missed), then a fast return: return must not fire", cat(still(600, 0.3), move(0.3, 0.62, 1300, 0), still(150, 0.62), move(0.62, 0.3, 250, 0), still(600, 0.3)), 0],
+  ["wave right-left-right-left", cat(still(600, 0.3), ...Array.from({ length: 6 }, (_, k) => move(k % 2 ? 0.7 : 0.3, k % 2 ? 0.3 : 0.7, 300, 0))), "right"],
   ["far presenter: tiny nudge", cat(still(600, 0.4), move(0.4, 0.47, 200, 0, true, 0.06), still(600, 0.47)), 0],
   ["gesturing while talking (small fast waves)", cat(still(600), ...Array.from({ length: 8 }, (_, k) => move(k % 2 ? 0.58 : 0.42, k % 2 ? 0.42 : 0.58, 250, 0))), 0],
 ];

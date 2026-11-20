@@ -18,7 +18,7 @@ const savePrefs = () => { try { localStorage.setItem(PREFS, JSON.stringify(prefs
 prefs.corner ??= "br"; prefs.sens ??= "normal"; prefs.reverse ??= false; prefs.camVisible ??= true; prefs.camSize ??= "m";
 
 let deck = null, cur = 0, front = $("dkSlideA"), back = $("dkSlideB"), showing = 0, loading = false;
-let lastSeen = "", gesturesOn = false, black = false, startedAt = 0;
+let whyText = "", gestureWhyAt = 0, lastSeen = "", gesturesOn = false, black = false, startedAt = 0;
 const detector = new SwipeDetector({ sensitivity: prefs.sens });
 const vision = new Vision({ hands: true, pose: false, numHands: 2 });
 const stats = { swipes: 0, last: "", lastAt: 0 };
@@ -212,7 +212,10 @@ vision.onResult(r => {
   drawCam(r);
   $("dkMeter").style.width = `${Math.round(detector.progress * 100)}%`;
   if (!dir) {
-    const seen = r.hands.length ? "Hand seen. Swipe sideways with an open palm." : "No hand seen. Hold an open hand up to the camera.";
+    if (detector.why) { whyText = detector.why; gestureWhyAt = performance.now(); }
+    const seen = !r.hands.length ? "No hand seen. Hold an open hand up to the camera."
+      : performance.now() - gestureWhyAt < 2500 ? `Ignored: ${whyText}`
+      : "Hand seen. Swipe sideways with an open palm.";
     if (seen !== lastSeen) { lastSeen = seen; $("dkLast").textContent = seen; }
     return;
   }

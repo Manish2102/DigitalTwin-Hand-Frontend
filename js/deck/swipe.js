@@ -14,7 +14,7 @@ const PRESETS = {
   normal: { dist: 0.20, windowMs: 750, minMs: 100, mono: 0.65, cooldown: 900,  back: 1400 },
   easy:   { dist: 0.14, windowMs: 900, minMs: 90,  mono: 0.60, cooldown: 800,  back: 1200 },
 };
-const KEEP_MS = 1500, SEEN_MS = 100;
+const KEEP_MS = 2500, SEEN_MS = 100;
 
 const dist = (a, b, asp) => Math.hypot((a[0] - b[0]) * asp, a[1] - b[1]);
 
@@ -39,23 +39,23 @@ export class SwipeDetector {
     this.reset();
   }
   setSensitivity(name) { this.cfg = PRESETS[name] ?? PRESETS.normal; this.sensitivity = PRESETS[name] ? name : "normal"; }
-  reset() { this.buf = []; this.coolUntil = 0; this.backDir = 0; this.backUntil = 0; this.progress = 0; this.lastSeen = -1e9; this.dx = 0; }
+  reset() { this.buf = []; this.coolUntil = 0; this.backDir = 0; this.backUntil = 0; this.progress = 0; this.lastSeen = -1e9; this.dx = 0; this.why = ""; }
 
   // feed one tracking result; returns "left", "right" or null. t in ms.
   update(t, hands, aspect = 4 / 3) {
     const c = this.cfg;
-    this.progress = 0; this.dx = 0;
+    this.progress = 0; this.dx = 0; this.why = "";
     if (!hands || !hands.length) {                     // no hand: a short blur drop-out is fine, a long one starts fresh
-      if (t - this.lastSeen > 300) this.buf = [];
+      if (t - this.lastSeen > 700) this.buf = [];
       return null;
     }
     let best = null;                                   // the presenter's hand = the biggest one in view
     for (const lm of hands) { const h = handInfo(lm, aspect); if (!best || h.palm > best.palm) best = h; }
-    if (this.buf.length && t - this.lastSeen > 300) this.buf = [];
+    if (this.buf.length && t - this.lastSeen > 700) this.buf = [];
     this.lastSeen = t;
     this.buf.push({ t, ...best });
     while (this.buf.length && t - this.buf[0].t > KEEP_MS) this.buf.shift();
-    if (t < this.coolUntil) return null;
+    if (t < this.coolUntil) { this.why = "cooling down after the last swipe"; return null; }
 
     const b = this.buf, now = b[b.length - 1];
     for (let k = b.length - 2; k >= 0; k--) {
@@ -65,23 +65,26 @@ export class SwipeDetector {
       const dx = now.x - s.x, dyW = (now.y - s.y) / aspect;           // both in frame widths
       this.progress = Math.max(this.progress, Math.min(1, Math.abs(dx) / c.dist));
       if (Math.abs(dx) > Math.abs(this.dx)) this.dx = dx;
-      if (Math.abs(dx) < c.dist || Math.abs(dx) < 1.3 * Math.abs(dyW)) continue;
+      if (Math.abs(dx) < c.dist) continue;
+      if (Math.abs(dx) < 1.3 * Math.abs(dyW)) { this.why ||= "movement not sideways enough"; continue; }
       const seg = b.slice(k), dir = Math.sign(dx);
-      if (seg.length < 3) continue;
+      if (seg.length < 3) { this.why ||= "too few tracking frames (the hand was lost while moving)"; continue; }
       let same = 0, steps = 0, jump = 0, mvOpen = 0;
       for (let j = 1; j < seg.length; j++) {
         const st = seg[j].x - seg[j - 1].x;
         if (Math.abs(st) > 0.004) { steps++; if (Math.sign(st) === dir) same++; if (seg[j].open) mvOpen++; }
         jump = Math.max(jump, Math.abs(st));
       }
-      if (jump > 0.75 * Math.abs(dx)) continue;                       // one-frame jump = tracking glitch
-      if (steps < 2 || same < c.mono * steps) continue;
-      if (this.requireOpen && (mvOpen < 0.6 * steps || !(now.open || b[b.length - 2].open))) continue;   // not a fist
-      if (s.t - b[0].t < SEEN_MS) continue;                           // the hand was not in view before the movement
+      if (jump > 0.75 * Math.abs(dx)) { this.why ||= "tracking jumped"; continue; }                       // one-frame jump = tracking glitch
+      if (steps < 2 || same < c.mono * steps) { this.why ||= "not a clean one-way movement"; continue; }
+      if (this.requireOpen && (mvOpen < 0.6 * steps || !(now.open || b[b.length - 2].open))) { this.why ||= "hand not open (fist?)"; continue; }   // not a fist
+      if (s.t - b[0].t < SEEN_MS) { this.why ||= "hand just appeared"; continue; }                           // the hand was not in view before the movement
       const before = b.filter(p => p.t <= s.t && p.t >= s.t - 300);
       const xs = before.map(p => p.x);
-      if (Math.max(...xs) - Math.min(...xs) > 0.35 * Math.abs(dx)) continue;   // it was already moving (entering, or a wave): not a fresh swipe
-      if (this.backDir === -dir && t < this.backUntil) { this.buf = []; this.coolUntil = t + 300; return null; }   // returning hand
+      if (Math.max(...xs) - Math.min(...xs) > 0.35 * Math.abs(dx)) { this.why ||= "hand was already moving before (wave): pause briefly, then swipe"; continue; }   // it was already moving (entering, or a wave): not a fresh swipe
+      // the return stroke: within the last 2 s the hand was already about where this movement ends (it just came from there)
+      if (b.some(p => p.t < s.t && t - p.t <= 2200 && Math.abs(p.x - now.x) < 0.5 * Math.abs(dx))) { this.why ||= "looked like the hand coming back: swipe once, then rest"; continue; }
+      if (this.backDir === -dir && t < this.backUntil) { this.why = "hand coming back after a swipe"; this.buf = []; this.coolUntil = t + 300; return null; }   // returning hand
       this.coolUntil = t + c.cooldown; this.backDir = dir; this.backUntil = t + c.back;
       this.buf = []; this.progress = 1;
       return dir > 0 ? "right" : "left";
