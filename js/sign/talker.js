@@ -49,6 +49,7 @@ export function createTalker(panel, { toast = () => {}, onChange = () => {} } = 
       <button class="btn btn-sm" id="tkTest">Test voice</button>
       <button class="btn btn-sm btn-ghost" id="tkStop">Stop</button>
     </div>
+    <div class="subtle" id="tkVoiceStatus" style="margin-top:6px" aria-live="polite">Voice not used yet: press Test voice to hear it.</div>
   </div>
   <div class="card" id="tkLinesCard">
     <div class="card-head"><span class="card-title">What the avatar says</span></div>
@@ -73,20 +74,41 @@ export function createTalker(panel, { toast = () => {}, onChange = () => {} } = 
   function showVoice() { const v = pickVoice(); $("tkVoice").textContent = !synth ? "no speech in this browser" : v ? v.name.replace(/Microsoft |Google /, "").slice(0, 26) : "default voice"; }
   synth?.addEventListener?.("voiceschanged", showVoice); showVoice();
 
+  let current = null;                                    // keep a reference: some browsers drop an utterance that gets garbage-collected
+  function voiceStatus(msg, bad = false) { const e = $("tkVoiceStatus"); if (e) { e.textContent = msg; e.style.color = bad ? "var(--warning, #e0a83a)" : ""; } }
   function speak(text, { cancel = true } = {}) {
     text = String(text ?? "").trim();
     if (!text) return;
     $("tkBubble").textContent = text; $("tkBubble").classList.remove("idle"); $("tkBubble").classList.add("talking");
-    if (!synth) { talking = true; clearTimeout(bubbleT); bubbleT = setTimeout(() => stopTalking(), 1200 + text.length * 55); return; }   // no voice: still animate
-    if (cancel) synth.cancel();
-    const u = new SpeechSynthesisUtterance(text), v = pickVoice();
-    if (v) u.voice = v;
-    u.rate = 0.95; u.pitch = 1.05;
-    u.onstart = () => { talking = true; };
-    u.onboundary = () => { level = 1; };                  // a word starts: open the mouth wide
-    u.onend = u.onerror = () => { if (!synth.speaking && !synth.pending) stopTalking(); };
+    if (!synth) { talking = true; voiceStatus("This browser has no speech synthesis: use Chrome or Edge.", true); clearTimeout(bubbleT); bubbleT = setTimeout(() => stopTalking(), 1200 + text.length * 55); return; }   // no voice: still animate
+    const busy = synth.speaking || synth.pending;
+    if (cancel && busy) synth.cancel();
+    try { synth.resume(); } catch {}
     talking = true;                                       // start moving at once; onend stops it
-    synth.speak(u);
+    let started = false, tries = 0;
+    const attempt = () => {
+      tries++;
+      const u = new SpeechSynthesisUtterance(text), v = pickVoice();
+      if (v) u.voice = v;
+      u.rate = 0.95; u.pitch = 1.05; u.volume = 1;
+      u.onstart = () => { started = true; talking = true; voiceStatus("Speaking..."); };
+      u.onboundary = () => { level = 1; };                // a word starts: open the mouth wide
+      u.onend = () => { if (current === u) current = null; if (!synth.speaking && !synth.pending) { stopTalking(); if (started) voiceStatus("Voice OK"); } };
+      u.onerror = e => {
+        if (e.error === "canceled" || e.error === "interrupted") return;
+        voiceStatus(`The browser could not speak (${e.error}). ${e.error === "not-allowed" ? "Click anywhere on the page, then try again." : "Check the sound output."}`, true);
+        stopTalking();
+      };
+      current = u;
+      synth.speak(u);
+      // if nothing started within 1.5 s, try once more with a fresh utterance, then say so on screen
+      setTimeout(() => {
+        if (started || current !== u) return;
+        if (tries < 2) { try { synth.cancel(); } catch {} setTimeout(attempt, 80); }
+        else { voiceStatus("No sound started. Check the computer volume, that this tab is not muted, and the browser's sound output, then press Test voice.", true); stopTalking(); }
+      }, 1500);
+    };
+    if (cancel && busy) setTimeout(attempt, 80); else attempt();   // speaking straight after cancel() can be silent in Chrome
   }
   function stopTalking() {
     talking = false; clearTimeout(bubbleT);
@@ -141,6 +163,8 @@ export function createTalker(panel, { toast = () => {}, onChange = () => {} } = 
 
   return {
     speak,
+    // call from a click (e.g. Start camera): lets the browser know speech is allowed on this page
+    unlock() { if (!synth) return; try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; synth.speak(u); } catch {} },
     // a sign was recognised: say its line (words) or its name (letters)
     say(label, type = "word") {
       if (!auto) return;

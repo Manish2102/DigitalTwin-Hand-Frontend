@@ -42,6 +42,7 @@ function applySet() {
 
 // ------------------------------------------------------------------ camera
 $("sdCam").onclick = async () => {
+  talker.unlock();                                           // this click lets the browser speak on this page
   if (vision.state === "on") { vision.stop(); return; }
   try { await load(); } catch (e) { toast(`Could not load the sign model: ${e.message}`, "warning", 5000); return; }
   const ok = await vision.start($("sdVideo"));
