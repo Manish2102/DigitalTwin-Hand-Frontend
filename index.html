@@ -193,6 +193,13 @@
 
 
   /* ============================== arcade ============================== */
+  .dk-lib { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow: auto; }
+  .dk-lib-row { display: flex; align-items: center; gap: 6px; }
+  .dk-lib-open { flex: 1; min-width: 0; text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); color: var(--text); cursor: pointer; }
+  .dk-lib-open:hover { border-color: var(--accent); }
+  .dk-lib-open.sel { border-color: var(--accent); background: var(--accent-weak, var(--surface-3)); }
+  .dk-lib-open b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .dk-lib-open span { font-size: var(--fs-sm); color: var(--text-2); }
   /* GestureDeck avatar transition */
   .dk-av-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 7; }
   .dk-av { position: absolute; will-change: transform; filter: drop-shadow(0 8px 12px rgba(0,0,0,.45)); }
@@ -229,6 +236,11 @@
   @keyframes av-wobble { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
   @keyframes av-strain { 0%, 100% { transform: rotate(-2deg) translateX(-1.5px); } 50% { transform: rotate(2deg) translateX(1.5px); } }
   @keyframes av-drip { 0% { transform: translateY(-4px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(16px); opacity: 0; } }
+  .av-faces { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .av-face { position: relative; width: 58px; height: 58px; }
+  .av-face img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); background: var(--surface-2); }
+  .av-face .av-n { position: absolute; left: -2px; bottom: -2px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--accent); color: #fff; font-size: 11px; line-height: 18px; text-align: center; padding: 0 4px; }
+  .av-face .av-x { position: absolute; right: -4px; top: -4px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: var(--danger, #d6213f); color: #fff; font-size: 13px; line-height: 20px; cursor: pointer; padding: 0; }
   .av-slot { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
   .av-preview { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); background: var(--surface-2); flex: none; }
   .av-slot .av-lbl { flex: 1; min-width: 0; font-size: var(--fs-sm); }
@@ -942,16 +954,22 @@
           </div>
           <div class="card" id="dkAvatarCard">
             <div class="card-head"><i data-icon="user"></i><span class="card-title">Avatar transition</span></div>
-            <p class="subtle" style="margin-bottom:8px">When you swipe, a big-headed avatar sprints in, grabs the slide and hauls it away. Give it your face: one picture for swipes to the right and one for swipes to the left. <b>If you add only one, it is used for both.</b></p>
+            <p class="subtle" style="margin-bottom:8px">When you swipe, a big-headed avatar sprints in, grabs the slide and hauls it away. Add as many faces as you like: <b>each swipe uses the next face, so every face gets its turn before any repeats.</b></p>
             <label class="field" style="cursor:pointer"><span class="field-label">Avatar pulls the slide</span><input type="checkbox" id="dkAvOn"></label>
             <label class="field" style="cursor:pointer"><span class="field-label">Also for keys and clicks</span><input type="checkbox" id="dkAvAll"></label>
+            <label class="field" style="cursor:pointer"><span class="field-label">Shuffle the order</span><input type="checkbox" id="dkAvShuffle"></label>
             <div id="dkAvSlots"></div>
             <div class="tool-group" style="flex-wrap:wrap;gap:6px;margin-top:10px">
               <button class="btn btn-sm btn-primary" id="dkAvTestNext"><span>Preview: next</span></button>
               <button class="btn btn-sm btn-primary" id="dkAvTestPrev"><span>Preview: previous</span></button>
             </div>
-            <input type="file" id="dkAvFile" accept="image/*" class="hidden">
+            <input type="file" id="dkAvFile" accept="image/*" multiple class="hidden">
             <p class="subtle" style="margin-top:8px">Photos are cropped to a square around the centre and stay in this browser. For the camera option, turn Gestures on and face the camera.</p>
+          </div>
+          <div class="card" id="dkLibCard">
+            <div class="card-head"><i data-icon="presentation"></i><span class="card-title">My presentations</span><span class="card-meta" id="dkLibCount"></span></div>
+            <p class="subtle" style="margin-bottom:8px">Presentations you open are kept in this browser, so they are still here after a refresh. Pick one to show it.</p>
+            <div class="dk-lib" id="dkLib"><p class="subtle">None saved yet. Open a presentation and it will appear here.</p></div>
           </div>
           <div class="card">
             <div class="card-head"><i data-icon="list"></i><span class="card-title">Slides</span><span class="card-meta" id="dkKind"></span></div>

@@ -4,18 +4,22 @@
 // grabs its edge, grunts "HEAVE!" and hauls the slide away with a lot of effort (sweat, dust, a wobbling head) while the
 // next slide zooms up from underneath. Next slide: it comes in from the left and drags the slide off to the left;
 // previous slide: the other way round.
-// You can give it two faces: one for swipes to the right and one for swipes to the left. With only one, it is used for both.
+// You can add as many faces as you like; each swipe uses the next face, so every face gets its turn once before any repeats
+// (in the order added, or shuffled). With one face, it is always that face.
 // Pure DOM + SVG + the Web Animations API, no library. Faces are only stored in this browser (localStorage).
 
 const NS = "http://www.w3.org/2000/svg";
-const KEYS = { left: "dtl.deckFaceL", right: "dtl.deckFaceR" }, OLD_KEY = "dtl.deckFace";
+const PHRASES = ["HEAVE!", "Pulling harder!", "Help me!", "So heavy!", "Almost there!", "Ugh... one more!", "My back!", "Come ON!"];
 const AR = 160 / 250;                       // avatar width / height (the SVG viewBox is 160 x 250)
+const FACES_KEY = "dtl.deckFaces", OLD_KEYS = ["dtl.deckFaceL", "dtl.deckFaceR", "dtl.deckFace"], MAX_FACES = 12;
 
 const get = k => { try { return localStorage.getItem(k) || null; } catch { return null; } };
 const put = (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch {} };
 export function loadFaces() {
-  const old = get(OLD_KEY);                                   // a single face saved by the first version
-  return { left: get(KEYS.left), right: get(KEYS.right) ?? old };
+  let list = [];
+  try { list = JSON.parse(get(FACES_KEY) || "[]"); } catch {}
+  for (const k of OLD_KEYS) { const v = get(k); if (v) { if (!list.includes(v)) list.push(v); put(k, null); } }   // faces saved by earlier versions
+  return list.filter(x => typeof x === "string").slice(0, MAX_FACES);
 }
 
 // centre-cropped square, 240 px, as a JPEG data URL
@@ -88,14 +92,31 @@ export function buildAvatarSvg(face) {
 
 export class Avatar {
   constructor(stage) {
-    this.stage = stage; this.faces = loadFaces();
+    this.stage = stage; this.faces = loadFaces(); this.bag = []; this.last = -1;
     this.layer = document.createElement("div"); this.layer.className = "dk-av-layer";
     stage.appendChild(this.layer);
-    this.anims = []; this.done = null; this.timers = [];
+    this.anims = []; this.done = null; this.timers = []; this.phrase = 0; this.turn = 0;
+    this.save();
   }
-  // side: "left" | "right" (the swipe direction). Falls back to the other face, then to the default face.
-  faceFor(side) { return this.faces[side] ?? this.faces[side === "left" ? "right" : "left"] ?? null; }
-  setFace(side, url) { this.faces[side] = url; put(KEYS[side], url); if (side === "right") put(OLD_KEY, null); }
+  save() { put(FACES_KEY, this.faces.length ? JSON.stringify(this.faces) : null); }
+  addFace(url) {
+    if (this.faces.length >= MAX_FACES) throw new Error(`You can keep up to ${MAX_FACES} faces. Remove one first.`);
+    this.faces.push(url); this.bag = []; this.save();
+  }
+  removeFace(i) { this.faces.splice(i, 1); this.bag = []; this.save(); }
+  // The face for the next pull: each face comes once before any repeats. shuffle: a random order each round
+  // (never the same face twice in a row); otherwise the order they were added.
+  nextFace(shuffle = false) {
+    const n = this.faces.length;
+    if (!n) return null;
+    if (!shuffle) return this.faces[this.turn++ % n];
+    if (!this.bag.length) {
+      this.bag = [...this.faces.keys()].sort(() => Math.random() - 0.5);
+      if (n > 1 && this.bag[this.bag.length - 1] === this.last) this.bag.unshift(this.bag.pop());      // draw from the end
+    }
+    this.last = this.bag.pop();
+    return this.faces[this.last];
+  }
   get busy() { return this.anims.length > 0; }
 
   // stop at once: the slide and the avatar are removed, the caller tidies the slide layer
@@ -114,8 +135,8 @@ export class Avatar {
   }
 
   // oldEl: the layer holding the slide that leaves. underEl: the layer with the next slide (zooms up). dir: "next" or "prev".
-  // side: which face to use ("left" | "right").
-  pull(oldEl, dir, { underEl = null, side = dir === "next" ? "right" : "left" } = {}) {
+  // face: the picture (data URL) for the head; none = the default goofy face.
+  pull(oldEl, dir, { underEl = null, face = null } = {}) {
     this.cancel();
     const sr = this.stage.getBoundingClientRect(), W = sr.width, H = sr.height;
     const frame = oldEl.querySelector(".dk-frame")?.getBoundingClientRect();
@@ -127,7 +148,7 @@ export class Avatar {
     const bottom = Math.max(6, H * 0.03);
     const holder = document.createElement("div"); holder.className = "dk-av";
     holder.style.cssText = `width:${aw}px;height:${ah}px;bottom:${bottom}px;left:0;transform-origin:50% 100%`;
-    const svg = buildAvatarSvg(this.faceFor(side));
+    const svg = buildAvatarSvg(face);
     holder.appendChild(svg);
     const bubble = document.createElement("b"); bubble.className = "av-bubble"; bubble.textContent = "HUP!";
     holder.appendChild(bubble);
@@ -137,7 +158,7 @@ export class Avatar {
     const D = (next ? R0 : W - L0) + aw + 60;                           // how far until slide and avatar are gone
     const end = next ? stand - D : stand + D;
     const over = (next ? 1 : -1) * aw * 0.18;                           // overshoot when it skids to a stop
-    const T = reduce ? 600 : 1800, easeIn = "cubic-bezier(.55,0,.85,.5)";
+    const T = reduce ? 900 : 4800, easeIn = "cubic-bezier(.4,0,.7,.8)";
     const sign = next ? 1 : -1;                                          // +1: the runner comes in facing right
 
     const a1 = holder.animate([
@@ -169,9 +190,16 @@ export class Avatar {
     }
     holder.classList.add("walk");
     const later = (ms, fn) => this.timers.push(setTimeout(fn, ms));
-    later(T * 0.36, () => { bubble.textContent = "HEAVE!"; holder.classList.add("pull"); });
-    later(T * 0.5, () => bubble.classList.add("show"));
-    later(T * 0.88, () => bubble.classList.remove("show"));
+    later(T * 0.36, () => holder.classList.add("pull"));
+    // it shouts while it pulls: a new phrase every ~0.7 s (it carries on from where the last swipe stopped), one after another, repeating
+    const speak = () => {
+      bubble.classList.remove("show");
+      setTimeout(() => { bubble.textContent = PHRASES[this.phrase++ % PHRASES.length]; bubble.classList.add("show"); }, 120);
+    };
+    later(T * 0.12, () => { bubble.textContent = "HUP!"; bubble.classList.add("show"); });
+    later(T * 0.3, () => bubble.classList.remove("show"));
+    later(T * 0.46, () => { speak(); this.timers.push(setInterval(speak, 720)); });
+    later(T * 0.94, () => bubble.classList.remove("show"));
     // dust behind the shoes while it runs and pulls
     const iv = setInterval(() => {
       const r = holder.getBoundingClientRect(), s = this.layer.getBoundingClientRect();

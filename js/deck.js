@@ -11,6 +11,7 @@ import { toast } from "./ui.js";
 import { openDeck, DeckError } from "./deck/render.js";
 import { SwipeDetector } from "./deck/swipe.js";
 import { Avatar, faceFromFile, faceFromVideo } from "./deck/avatar.js";
+import * as lib from "./deck/library.js";
 import { Vision, HAND_BONES } from "./vision/vision.js";
 
 const PREFS = "dtl.deck";
@@ -30,12 +31,13 @@ $("dkOpen").onclick = $("dkEmptyOpen").onclick = () => $("dkFile").click();
 $("dkFile").onchange = e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) load(f); };
 const stage = $("dkStage");
 const avatar = new Avatar(stage);
+let curId = null;                        // id of the open presentation in the library
 let pulling = null;                      // the slide layer the avatar is pulling away, while it does
 stage.addEventListener("dragover", e => { e.preventDefault(); stage.classList.add("drag"); });
 stage.addEventListener("dragleave", () => stage.classList.remove("drag"));
 stage.addEventListener("drop", e => { e.preventDefault(); stage.classList.remove("drag"); const f = e.dataTransfer?.files?.[0]; if (f) load(f); });
 
-export async function load(file) {
+export async function load(file, { fromLibrary = false, id = null } = {}) {
   if (loading) return;
   loading = true;
   $("dkError").classList.add("hidden");
@@ -44,6 +46,13 @@ export async function load(file) {
     const d = await openDeck(file, setLoading);
     deck?.destroy();
     deck = d; cur = 0; startedAt = Date.now();
+    if (fromLibrary) curId = id;
+    else if (lib.supported()) {                                     // keep it for next time
+      try { curId = await lib.save(file); lib.keepStorage(); }
+      catch (e2) { curId = null; toast("Could not keep this file for next time: browser storage is full or blocked.", "warning", 5000); }
+    }
+    if (curId) { prefs.lastDeck = curId; savePrefs(); }
+    renderLibrary();
     $("dkName").textContent = d.name; $("dkName").title = d.name;
     $("dkEmpty").classList.add("hidden");
     renderWarnings(); await renderThumbs();
@@ -128,7 +137,7 @@ async function show(i, instant = false, pull = null) {
     const old = back; pulling = old;
     front.style.transition = "none";
     old.classList.add("on", "pulled");
-    avatar.pull(old, pull, { underEl: front, side: sideFor(pull) }).then(() => { if (pulling === old) { pulling = null; old.classList.remove("on", "pulled"); old.replaceChildren(); front.style.transition = ""; } });
+    avatar.pull(old, pull, { underEl: front, face: avatar.nextFace(prefs.avShuffle) }).then(() => { if (pulling === old) { pulling = null; old.classList.remove("on", "pulled"); old.replaceChildren(); front.style.transition = ""; } });
   } else {
     back.classList.remove("on");
     if (instant) back.replaceChildren();
@@ -331,38 +340,39 @@ renderGestureUi(); updateCounters(); hydrateIcons(stage);
 
 
 // ------------------------------------------------------------ avatar settings
-// "right" = the face for a swipe to the right (next slide, unless "reverse" is on), "left" = for a swipe to the left.
-const SLOTS = [["right", "Swipe right (next slide)"], ["left", "Swipe left (previous slide)"]];
-const sideFor = dir => (dir === "next") !== prefs.reverse ? "right" : "left";
-let faceTarget = "right";
+// Faces: add as many as you like; each pull uses the next one, so every face comes once before any repeats.
 function renderAvatar() {
-  $("dkAvOn").checked = prefs.avatar; $("dkAvAll").checked = prefs.avatarAll;
-  $("dkAvSlots").innerHTML = SLOTS.map(([side, label]) => {
-    const own = avatar.faces[side], shown = avatar.faceFor(side);
-    const msg = own ? "Your picture." : shown ? "Using the other picture." : "None yet: default goofy face.";
-    return `<div class="av-slot"><img class="av-preview" alt="Face for ${label}" ${shown ? `src="${shown}"` : ""} style="${shown ? "" : "visibility:hidden"}">
-      <div class="av-lbl"><b>${label}</b><div class="subtle">${msg}</div>
-        <div class="av-btns"><button class="btn btn-sm" data-av="up" data-side="${side}">Upload</button><button class="btn btn-sm" data-av="cam" data-side="${side}">Camera</button>${own ? `<button class="btn btn-sm btn-ghost" data-av="rm" data-side="${side}">Remove</button>` : ""}</div></div></div>`;
-  }).join("");
+  prefs.avShuffle ??= false;
+  $("dkAvOn").checked = prefs.avatar; $("dkAvAll").checked = prefs.avatarAll; $("dkAvShuffle").checked = prefs.avShuffle;
+  const n = avatar.faces.length;
+  $("dkAvSlots").innerHTML = `<div class="av-faces">${avatar.faces.map((f, i) => `<div class="av-face"><img src="${f}" alt="Face ${i + 1}"><span class="av-n">${i + 1}</span><button class="av-x" data-rm="${i}" aria-label="Remove face ${i + 1}" title="Remove">&times;</button></div>`).join("")}</div>
+    <p class="subtle" style="margin-top:6px">${n ? `${n} face${n > 1 ? "s" : ""}: ${n > 1 ? "each swipe uses the next one" : "used for every swipe"}.` : "No faces yet: the avatar has a default goofy face."}</p>
+    <div class="av-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn btn-sm" data-av="up"><i data-icon="upload" data-size="14"></i><span>Add photos</span></button><button class="btn btn-sm" data-av="cam"><i data-icon="camera" data-size="14"></i><span>Add from camera</span></button>${n ? `<button class="btn btn-sm btn-ghost" data-av="clear">Remove all</button>` : ""}</div>`;
+  hydrateIcons($("dkAvSlots"));
 }
 $("dkAvSlots").onclick = e => {
+  const rm = e.target.closest("[data-rm]"); if (rm) { avatar.removeFace(+rm.dataset.rm); renderAvatar(); return; }
   const b = e.target.closest("[data-av]"); if (!b) return;
-  const side = b.dataset.side;
-  if (b.dataset.av === "up") { faceTarget = side; $("dkAvFile").click(); }
-  else if (b.dataset.av === "rm") { avatar.setFace(side, null); renderAvatar(); }
+  if (b.dataset.av === "up") $("dkAvFile").click();
+  else if (b.dataset.av === "clear") { while (avatar.faces.length) avatar.removeFace(0); renderAvatar(); }
   else {
     if (!gesturesOn || vision.state !== "on") { toast("Turn Gestures on first, then look at the camera", "warning", 3500); return; }
-    try { avatar.setFace(side, faceFromVideo($("dkVideo"))); renderAvatar(); toast("Face taken from the camera", "success", 1800); }
+    try { avatar.addFace(faceFromVideo($("dkVideo"))); renderAvatar(); toast("Face added from the camera", "success", 1800); }
     catch (err) { toast(err.message, "warning", 3500); }
   }
 };
 $("dkAvOn").onchange = e => { prefs.avatar = e.target.checked; savePrefs(); };
 $("dkAvAll").onchange = e => { prefs.avatarAll = e.target.checked; savePrefs(); };
+$("dkAvShuffle").onchange = e => { prefs.avShuffle = e.target.checked; savePrefs(); };
 $("dkAvFile").onchange = async e => {
-  const f = e.target.files?.[0]; e.target.value = "";
-  if (!f) return;
-  try { avatar.setFace(faceTarget, await faceFromFile(f)); renderAvatar(); toast("Face saved for the avatar", "success", 1800); }
-  catch (err) { toast(err.message || "That image could not be read", "warning", 4000); }
+  const files = [...(e.target.files ?? [])]; e.target.value = "";
+  let added = 0;
+  for (const f of files) {
+    try { avatar.addFace(await faceFromFile(f)); added++; }
+    catch (err) { toast(err.message || `${f.name} could not be read`, "warning", 4000); if (/up to/.test(err.message)) break; }
+  }
+  renderAvatar();
+  if (added) toast(`${added} face${added > 1 ? "s" : ""} added`, "success", 1800);
 };
 function previewPull(dir) {
   if (!deck) { toast("Open a presentation first", "warning", 2500); return; }
@@ -372,3 +382,44 @@ function previewPull(dir) {
 $("dkAvTestNext").onclick = () => previewPull("next");
 $("dkAvTestPrev").onclick = () => previewPull("prev");
 renderAvatar();
+
+
+// ------------------------------------------------------------ my presentations (saved in this browser)
+const fmtSize = n => n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`;
+async function renderLibrary() {
+  const box = $("dkLib");
+  if (!lib.supported()) { box.innerHTML = `<p class="subtle">This browser cannot keep files between visits.</p>`; return; }
+  let items = [];
+  try { items = await lib.list(); } catch { box.innerHTML = `<p class="subtle">Saved presentations could not be read in this browser.</p>`; return; }
+  $("dkLibCount").textContent = items.length ? `${items.length} saved` : "";
+  if (!items.length) { box.innerHTML = `<p class="subtle">None saved yet. Open a presentation and it will appear here.</p>`; return; }
+  box.innerHTML = items.map(f => `<div class="dk-lib-row"><button class="dk-lib-open${f.id === curId ? " sel" : ""}" data-id="${esc(f.id)}" title="Show this presentation"><b>${esc(f.name)}</b><span>${fmtSize(f.size)}, added ${new Date(f.added).toLocaleDateString()}</span></button><button class="btn btn-icon btn-sm btn-ghost" data-del="${esc(f.id)}" aria-label="Remove ${esc(f.name)} from this list" title="Remove">${icon("trash", 14)}</button></div>`).join("");
+}
+$("dkLib").addEventListener("click", async e => {
+  const del = e.target.closest("[data-del]"), open = e.target.closest("[data-id]");
+  if (del) {
+    const items = await lib.list(), f = items.find(x => x.id === del.dataset.del);
+    if (!f || !confirm(`Remove "${f.name}" from this list? The file on your computer is not touched.`)) return;
+    await lib.remove(f.id);
+    if (prefs.lastDeck === f.id) { prefs.lastDeck = null; savePrefs(); }
+    if (curId === f.id) curId = null;
+    renderLibrary();
+  } else if (open && open.dataset.id !== curId) openSaved(open.dataset.id);
+});
+async function openSaved(id) {
+  try {
+    const f = await lib.asFile(id);
+    if (!f) { toast("That presentation is no longer saved", "warning"); renderLibrary(); return; }
+    await load(f, { fromLibrary: true, id });
+  } catch (e) { toast("Could not open the saved presentation", "warning"); }
+  renderLibrary();
+}
+let restored = false;
+function restoreLast() {                                           // after a refresh: show the presentation you were using
+  if (restored || deck || loading) return;
+  restored = true;
+  if (prefs.lastDeck) openSaved(prefs.lastDeck);
+}
+renderLibrary();
+if (twin.section === "deck") restoreLast();
+on("section", name => { if (name === "deck") restoreLast(); });
