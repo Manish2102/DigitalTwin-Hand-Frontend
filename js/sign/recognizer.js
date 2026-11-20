@@ -12,7 +12,10 @@ import { anchors, frameFeatures, sequenceFeatures, isActive, FRAME_DIM } from ".
 
 const END_REST_MS = 280, MIN_SIGN_MS = 350, MAX_SIGN_MS = 4500;
 const HOLD_MS = 650, LETTER_WINDOW = 12, MARGIN = 0.12;
-const dist = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) { const d = a[i] - b[i]; s += d * d; } return Math.sqrt(s); };
+// Distance (standardised features) at which a recording stops looking like one of the user's own: repeats of one sign by one
+// person measured about 8-14, other signs 17 and up (tools/isl/experiment_match.py).
+export const MATCH_D0 = 17;
+export const dist = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) { const d = a[i] - b[i]; s += d * d; } return Math.sqrt(s); };
 
 export class Recognizer {
   constructor({ words, letters }) {
@@ -26,20 +29,7 @@ export class Recognizer {
   // Restrict the words to a list. Looser threshold (0.45 / margin 0.10): with few candidates a lower probability is
   // still reliable (measured on INCLUDE test videos: answers 95% of signs, 89% right; tools/isl/experiment_phrases.py).
   setSubset(labels) { this.subset = labels?.length ? new Set(labels) : null; }
-  setTemplates(t) {
-    this.templates = t && Object.keys(t).length ? t : null;
-    // typical distance between two recordings of the same sign by this person
-    const within = [];
-    for (const arr of Object.values(t ?? {})) {
-      if (arr.length < 2) continue;
-      for (let i = 0; i < arr.length; i++) {
-        let best = Infinity;
-        for (let j = 0; j < arr.length; j++) if (i !== j) best = Math.min(best, dist(arr[i], arr[j]));
-        within.push(best);
-      }
-    }
-    this.tau = within.length ? Math.max(1e-3, within.reduce((a, b) => a + b, 0) / within.length) : 0;
-  }
+  setTemplates(t) { this.templates = t && Object.keys(t).length ? t : null; }
   setMode(m) { this.mode = m; this.reset(); }
   reset() {
     this.anchor = null; this.frames = []; this.signing = false; this.signStart = 0; this.restSince = 0; this.waitRest = false;
@@ -119,27 +109,32 @@ export class Recognizer {
   }
 
   _decide(model, x, type) {
-    let p = model.predict(x), thr = model.threshold, margin = MARGIN;
-    if (type === "word" && this.subset) {
-      const L = model.labels;
-      let sum = 0;
-      for (let i = 0; i < p.length; i++) { if (!this.subset.has(L[i])) p[i] = 0; sum += p[i]; }
-      for (let i = 0; i < p.length; i++) p[i] /= sum || 1;
-      thr = 0.45; margin = 0.10;
-      const T = this.templates;
-      if (T && this.tau) {                              // blend with how close this is to the user's own recordings
-        const z = model.standardise(x), d = {};
-        let dmin = Infinity;
-        for (const [l, arr] of Object.entries(T)) { d[l] = Math.min(...arr.map(a => dist(z, a))); dmin = Math.min(dmin, d[l]); }
-        const q = {}; let qs = 0;
-        for (const l of Object.keys(d)) { q[l] = Math.exp(-(d[l] - dmin) / this.tau); qs += q[l]; }
-        for (let i = 0; i < p.length; i++) if (q[L[i]] !== undefined) p[i] = 0.5 * p[i] + 0.5 * (q[L[i]] / qs);
-        let s2 = 0; for (let i = 0; i < p.length; i++) s2 += p[i];
-        for (let i = 0; i < p.length; i++) p[i] /= s2 || 1;
+    if (type === "word" && (this.subset || this.templates)) return this._decideSet(model, x);
+    const p = model.predict(x), top = model.top(p, 3), best = top[0];
+    if (best.p >= model.threshold && best.p - (top[1]?.p ?? 0) >= MARGIN) return { type, label: best.label, p: best.p, top };
+    return { type: "unsure", top, reason: best.p < model.threshold ? "low confidence" : "two signs look alike" };
+  }
+
+  // Words from a short list, optionally with the user's own recordings (which may include signs the network does not know,
+  // such as "Welcome"). score(label) = network probability among the list, blended with closeness to the user's recordings.
+  _decideSet(model, x) {
+    const L = model.labels, pm = model.predict(x), T = this.templates ?? {};
+    const cand = new Set([...(this.subset ?? L), ...Object.keys(T)]);
+    const s = {}; let msum = 0;
+    for (let i = 0; i < L.length; i++) if (cand.has(L[i])) { s[L[i]] = pm[i]; msum += pm[i]; }
+    for (const l of cand) s[l] = (s[l] ?? 0) / (msum || 1);
+    if (this.templates) {
+      // a taught sign gets a boost from how closely this matches ITS recordings; it never lowers the other signs
+      const z = model.standardise(x);
+      for (const [l, arr] of Object.entries(T)) {
+        const d = Math.min(...arr.map(a => dist(z, a)));
+        const match = Math.exp(-Math.pow(d / MATCH_D0, 4));                       // ~1 for a repeat of the same sign, ~0 for another sign
+        s[l] = L.includes(l) ? (s[l] ?? 0) + (1 - (s[l] ?? 0)) * 0.8 * match : 0.95 * match;
       }
     }
-    const top = model.top(p, 3), best = top[0];
-    if (best.p >= thr && best.p - (top[1]?.p ?? 0) >= margin) return { type, label: best.label, p: best.p, top };
+    const top = Object.entries(s).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([label, p]) => ({ label, p }));
+    const best = top[0], thr = 0.45, margin = 0.10;
+    if (best.p >= thr && best.p - (top[1]?.p ?? 0) >= margin) return { type: "word", label: best.label, p: best.p, top };
     return { type: "unsure", top, reason: best.p < thr ? "low confidence" : "two signs look alike" };
   }
 }

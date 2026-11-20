@@ -9,13 +9,15 @@ import { icon, hydrateIcons } from "./icons.js";
 import { toast, copyText } from "./ui.js";
 import { Vision, HAND_BONES } from "./vision/vision.js";
 import { loadModel } from "./sign/model.js";
-import { Recognizer } from "./sign/recognizer.js";
+import { Recognizer, dist, MATCH_D0 } from "./sign/recognizer.js";
 import { REST_Y, anchors } from "./sign/features.js";
 
-// Everyday phrases for a talk or demo. Recognition limited to a list like this is much more accurate than 106 words.
-export const PHRASES = ["Hello", "How are you", "Thank you", "Good Morning", "Good afternoon", "Pleased", "I", "you", "Friend", "Mother", "Father", "Today", "Tomorrow"];
+// Easy, distinct signs for a talk or demo (each recognised in every test video). A short list is far more accurate than 106 words.
+export const DEMO = ["Hello", "Thank you", "How are you", "Good Morning", "I", "you", "Pleased"];   // easy, distinct, 100% in tests
+export const WELCOME = "Welcome";    // not in the INCLUDE vocabulary: it works once you teach it (your own sign)
 const STORE = "dtl.signTemplates", SETKEY = "dtl.signSet";
-let wordSet = (() => { try { return localStorage.getItem(SETKEY) || "phrases"; } catch { return "phrases"; } })();
+let wordSet0 = (() => { try { return localStorage.getItem(SETKEY) || "demo"; } catch { return "demo"; } })();
+let wordSet = wordSet0 === "phrases" ? "demo" : wordSet0;
 let samples = (() => { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; } })();   // { label: [base64 float32] }
 const vision = new Vision({ hands: true, pose: true, numHands: 2 });
 let rec = null, models = null, modelsP = null, mode = "words";
@@ -232,19 +234,17 @@ const taught = () => Object.keys(samples).filter(l => samples[l].length >= 2);
 let teaching = false;
 
 function applyWordSet() {
-  if (wordSet === "mine" && taught().length < 2) wordSet = "phrases";
+  if (wordSet === "mine" && taught().length < 2) wordSet = "demo";
   $("slSets").querySelectorAll("button").forEach(b => b.classList.toggle("sel", b.dataset.set === wordSet));
   $("slSetMine").classList.toggle("hidden", taught().length < 2);
   $("slSetGroup").classList.toggle("hidden", mode !== "words");
   if (!rec || !models) return;
-  const labels = models.words.labels;
-  if (wordSet === "mine") {
-    const t = {};
-    for (const l of taught()) t[l] = samples[l].map(x => models.words.standardise(unb64(x)));
-    rec.setSubset(taught()); rec.setTemplates(t);
-  } else {
-    rec.setSubset(wordSet === "phrases" ? PHRASES.filter(l => labels.includes(l)) : null); rec.setTemplates(null);
-  }
+  const labels = models.words.labels, t = {};
+  for (const l of taught()) t[l] = samples[l].map(x => models.words.standardise(unb64(x)));
+  rec.setTemplates(t);                                        // the user's own recordings help in every set
+  if (wordSet === "mine") rec.setSubset(taught());
+  else if (wordSet === "demo") rec.setSubset([...DEMO.filter(l => labels.includes(l)), ...taught()]);
+  else rec.setSubset(null);
 }
 $("slSets").querySelectorAll("button").forEach(b => b.onclick = () => {
   wordSet = b.dataset.set; try { localStorage.setItem(SETKEY, wordSet); } catch {}
@@ -255,8 +255,8 @@ function renderTeach() {
   if (!models) return;
   const sel = $("slTeachWord");
   if (!sel.options.length) {
-    const rest = models.words.labels.filter(l => !PHRASES.includes(l));
-    sel.innerHTML = `<optgroup label="Presentation phrases">${PHRASES.map(l => `<option>${esc(l)}</option>`).join("")}</optgroup><optgroup label="Other words">${rest.map(l => `<option>${esc(l)}</option>`).join("")}</optgroup>`;
+    const rest = models.words.labels.filter(l => !DEMO.includes(l));
+    sel.innerHTML = `<optgroup label="Important"><option value="${WELCOME}">${WELCOME} (teach your own sign)</option></optgroup><optgroup label="Demo signs">${DEMO.map(l => `<option>${esc(l)}</option>`).join("")}</optgroup><optgroup label="Other words">${rest.map(l => `<option>${esc(l)}</option>`).join("")}</optgroup>`;
   }
   const have = Object.entries(samples).filter(([, v]) => v.length);
   $("slTeachList").innerHTML = have.map(([l, v]) => `<span class="chip${v.length >= 3 ? " hit" : ""}">${esc(l)} ${v.length}/3</span>`).join("") || `<span class="subtle">Nothing recorded yet.</span>`;
@@ -268,9 +268,14 @@ function addSample(label, x) {
   if (samples[label].length > 6) samples[label].shift();
   saveSamples();
   const n = samples[label].length;
-  $("slTeachMsg").textContent = n >= 3 ? `${label}: ${n} recordings. Good. Pick the next sign, or try it.` : `${label}: ${n} of 3 recorded. Record another.`;
+  $("slTeachMsg").textContent = n >= 3 ? `${label}: ${n} recordings. Good. Pick the next sign, or try it now.` : `${label}: ${n} of 3 recorded. Record another.`;
   $("slTeachRec").querySelector("span").textContent = "Record a sample";
-  if (taught().length >= 2 && wordSet !== "mine") { wordSet = "mine"; try { localStorage.setItem(SETKEY, wordSet); } catch {} }
+  if (n >= 2) {                                              // are my repeats alike? (distance in the same units the matcher uses)
+    const z = samples[label].map(t => models.words.standardise(unb64(t)));
+    const nearest = z.map((a, i) => Math.min(...z.filter((_, j) => j !== i).map(b => dist(a, b))));
+    const avg = nearest.reduce((a, b) => a + b, 0) / nearest.length;
+    if (avg > MATCH_D0 * 0.95) $("slTeachMsg").textContent = `${label}: your ${n} recordings look quite different from each other. Press "Forget my recordings" or keep recording, and sign it the same way each time.`;
+  }
   applyWordSet(); renderTeach();
   toast(`Recorded "${label}" (${n})`, "success", 1800);
 }
@@ -278,9 +283,10 @@ $("slTeachRec").onclick = () => {
   if (!rec || vision.state !== "on") { toast("Start the camera first", "warning"); return; }
   if (mode !== "words") $("slModes").querySelector('[data-mode="words"]').click();
   if (teaching) { rec.capture = null; teaching = false; $("slTeachMsg").textContent = "Cancelled."; $("slTeachRec").querySelector("span").textContent = "Record a sample"; return; }
-  const label = $("slTeachWord").value;
+  const custom = $("slTeachCustom").value.trim().slice(0, 30);
+  const label = custom || $("slTeachWord").value;
   rec.reset(); rec.capture = label; teaching = true;
   $("slTeachMsg").textContent = `Now sign "${label}" the way you will in the talk, then lower your hands.`;
   $("slTeachRec").querySelector("span").textContent = "Cancel";
 };
-$("slTeachClear").onclick = () => { samples = {}; saveSamples(); if (wordSet === "mine") wordSet = "phrases"; applyWordSet(); renderTeach(); $("slTeachMsg").textContent = "Your recordings were removed."; };
+$("slTeachClear").onclick = () => { samples = {}; saveSamples(); if (wordSet === "mine") wordSet = "demo"; applyWordSet(); renderTeach(); $("slTeachMsg").textContent = "Your recordings were removed."; };

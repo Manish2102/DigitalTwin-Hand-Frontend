@@ -6,7 +6,7 @@ Pictures and descriptions come from docs/isl/index.json (measured from real INCL
 """
 import argparse, html, json, os, subprocess, pathlib
 
-PHRASES = ["Hello", "How are you", "Thank you", "Good Morning", "Good afternoon", "Pleased", "I", "you", "Friend", "Mother", "Father", "Today", "Tomorrow"]
+PHRASES = ["Thank you", "Hello", "How are you", "Good Morning", "I", "you", "Pleased"]
 MEANING = {"Hello": "Greeting", "How are you": "Asking how someone is", "Thank you": "Thanks", "Good Morning": "Morning greeting",
            "Good afternoon": "Afternoon greeting", "Pleased": "Pleased to meet you / happy", "I": "I, me", "you": "You (one person)",
            "Friend": "A friend", "Mother": "Mother", "Father": "Father", "Today": "Today", "Tomorrow": "Tomorrow"}
@@ -38,17 +38,19 @@ def main():
     E = html.escape
     out = [f"<!doctype html><html><head><meta charset='utf-8'><title>ISL presentation guide</title><style>{CSS}</style></head><body>"]
     out.append("""<h1>Indian Sign Language: presentation guide</h1>
-<p class="sub">13 everyday signs the Digital Twin Lab recognises reliably, and how to use them live. Seen from the camera, the signer's
+<p class="sub">Seven easy signs plus <b>Welcome</b>, chosen to work reliably in a live demo, and how to use them. Seen from the camera, the signer's
 <b>right hand is blue</b> and the left is orange; a grey hand is resting.</p>
-<div class="box"><b>The 13 signs:</b> Hello, How are you, Thank you, Good Morning, Good afternoon, Pleased, I, you, Friend, Mother, Father, Today, Tomorrow.
-On unseen signers in the INCLUDE test videos this list was recognised <b>43 of 48 times, with 1 wrong answer</b>; the rest were "not sure", never a wrong word.</div>
+<div class="box"><b>The demo signs:</b> Thank you, Hello, How are you, Good Morning, I, you, Pleased, and <b>Welcome</b>.
+The first seven come from the ISL recordings the app was trained on. On 28 test videos of signers it had never seen,
+restricted to these seven: <b>25 right, 1 wrong (I read as "you"), 2 "not sure"</b>. <b>Welcome is not in that dataset</b>, so it works only after you teach it (step 4): it then matches <i>your</i> sign.
+Choose the sign you use for Welcome (or take it from the ISLRTC dictionary) and sign it the same way every time.</div>
 
 <h2>1. Before your presentation (5 minutes)</h2>
 <ol class="steps">
 <li><b>Set up.</b> Open <i>Sign language</i> in the app, press <i>Start camera</i> and wait until the badge says "Ready" (the first start takes about 5 seconds to load).</li>
 <li><b>Position.</b> Sit or stand 1 to 1.5 m from the camera. Your head, both shoulders and both hands must be in the picture. Face a light (a window or lamp in front of you, not behind you).</li>
-<li><b>Choose the set.</b> Keep <i>Presentation phrases</i> selected. This limits the app to the 13 signs above, which is far more accurate than all 106 words.</li>
-<li><b>Teach it your signs (recommended).</b> In <i>Teach it your signs</i>, choose a sign, press <i>Record a sample</i>, sign it the way you will on stage, and lower your hands. Do it <b>3 times per sign</b> for the signs you will use. The app then switches to <i>My signs</i>: it looks only for those signs and compares them with your own recordings. Recordings stay in your browser.</li>
+<li><b>Choose the set.</b> Keep <i>Demo signs</i> selected. This limits the app to the signs above, which is far more accurate than all 106 words.</li>
+<li><b>Teach it Welcome, and your key signs.</b> In <i>Teach it your signs</i>, choose <b>Welcome</b> (first in the list), press <i>Record a sample</i>, sign it the way you will on stage, and lower your hands. Do it <b>3 times, the same way each time</b>. Repeat for <b>Thank you</b> and any other sign you care about. Recordings stay in your browser. The app boosts a sign when what it sees matches your own recordings, and warns you if your three recordings look too different.</li>
 <li><b>Rehearse.</b> Sign each phrase once and check the text. If a sign comes out as "Not sure", tap the right suggestion, then record one more sample of that sign.</li>
 </ol>
 
@@ -68,14 +70,15 @@ On unseen signers in the INCLUDE test videos this list was recognised <b>43 of 4
 <tr><th>Sign these, with a rest between each</th><th>Text on screen</th></tr>
 <tr><td>Hello</td><td>Hello</td></tr>
 <tr><td>Hello, How are you</td><td>Hello How are you</td></tr>
-<tr><td>I, Pleased</td><td>I Pleased</td></tr>
-<tr><td>Good Morning, Friend</td><td>Good Morning Friend</td></tr>
+<tr><td>Welcome</td><td>Welcome</td></tr>
+<tr><td>Good Morning, I, Pleased</td><td>Good Morning I Pleased</td></tr>
 <tr><td>Thank you</td><td>Thank you</td></tr>
 </table>
 <p class="sub">Tip: use the <i>Speak</i> button to read the text aloud for the audience.</p>
 """)
     out.append("<div class='pb'></div><h2>4. The signs</h2>")
     out.append("<p class='sub'>Each picture shows the start, middle and end of the movement, drawn from the most typical recording of a real signer. The line under the picture is measured from the same recording. These pictures are a reminder, not a course: for a precise model of each sign, watch the ISLRTC video dictionary (islrtc.nic.in) or ask a Deaf signer.</p>")
+    out.append("<div class='card'><h3>Welcome<span class='tag'>teach it: not in the dataset</span></h3><div class='sub'>Welcome</div><p>There is no recording of Welcome in the training data, so the app cannot know it until you teach it. Use the sign you normally use, or the one in the ISLRTC dictionary. Record it <b>3 times</b> in <i>Teach it your signs</i>, signing it the same way each time: same hand shape, same place in front of your chest, same movement. The app then recognises it when what it sees closely matches your recordings, and says &quot;not sure&quot; otherwise. If you later change how you sign it, press <i>Forget my recordings</i> and record again.</p></div>")
     for l in PHRASES:
         w = byl.get(l)
         if not w:
@@ -94,7 +97,7 @@ On unseen signers in the INCLUDE test videos this list was recognised <b>43 of 4
 <tr><th style="width:36%">Problem</th><th>What to do</th></tr>
 <tr><td>Nothing happens when you sign</td><td>Check the badge says "Ready" and your hands go above the dashed rest line; make sure both shoulders are in view.</td></tr>
 <tr><td>"Not sure" with suggestions</td><td>Tap the correct suggestion, or sign it again a little slower. Record another sample of that sign beforehand.</td></tr>
-<tr><td>A different word appears</td><td>Use <i>Undo</i>. Record 3 samples of the sign in <i>Teach it your signs</i> and use <i>My signs</i>.</td></tr>
+<tr><td>A different word appears</td><td>Use <i>Undo</i>. Record 3 samples of the sign in <i>Teach it your signs</i>.</td></tr>
 <tr><td>It is slow or the camera freezes</td><td>Close other tabs and apps that use the camera, press <i>Stop camera</i>, then <i>Start camera</i>.</td></tr>
 <tr><td>The room is dark or very bright behind you</td><td>Light your face and hands from the front. Backlight makes the hands hard to track.</td></tr>
 <tr><td>You need to be sure</td><td>Type or tap the words you need: tap a sign chip in "Signs it knows" to show its picture, and use <i>Speak</i> on the text.</td></tr>
@@ -102,7 +105,7 @@ On unseen signers in the INCLUDE test videos this list was recognised <b>43 of 4
 <h2>6. About the data</h2>
 <p>Words come from INCLUDE (Sridhar, Ganesan, Kumar, Khapra; AI4Bharat and IIT Madras), CC BY 4.0, recorded in Chennai.
 The recogniser was trained on those recordings (landmarks only). Measured accuracy for the whole 106-word vocabulary is about
-87% on the first guess for signers it has not seen; it is higher for a short list and for signs you have taught it.
+87% on the first guess for signers it has not seen; it is higher for a short list.
 Regional differences exist: if your sign differs from the picture, teach it your version.
 Full reference: <b>docs/isl-reference.md</b> in the project.</p>
 </body></html>""")

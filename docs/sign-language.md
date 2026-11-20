@@ -135,24 +135,30 @@ temperature-scaled on held-out signers (T = 2.1 for letters, 1.9 for words) befo
 - **Not a substitute for an interpreter.** This is a demonstration of the technology and a help for short exchanges.
 
 
-## Presentation phrases and "Teach it your signs"
+## Demo signs and "Teach it your signs"
 
 For a talk or demo, the Words mode has three sets (the buttons next to the mode switch):
 
-- **Presentation phrases** (default): 13 everyday signs (Hello, How are you, Thank you, Good Morning, Good afternoon, Pleased,
-  I, you, Friend, Mother, Father, Today, Tomorrow). The recogniser only chooses among these and uses a looser confidence
-  threshold (0.45, margin 0.10), because with few candidates a lower probability is still reliable. Measured on INCLUDE test videos of
-  unseen signers (`tools/isl/replay_phrases.mjs`, end to end through the browser code): all 106 words 49 of 67 videos right;
-  the 17 phrases tried first 55 of 67; the final 13 phrases 43 of 48 right, 1 wrong, 2 not sure, 2 not detected.
-  Good evening / Good night and Brother / Sister were left out of the default list because they were confused with each other.
-- **My signs**: appears after you record a sign at least twice (3 times recommended) with *Teach it your signs*. The recogniser
-  then only looks for the signs you taught and blends the network's answer 50/50 with the distance to your own recordings
-  (standardised 16-step feature vectors, nearest recording per sign, scaled by how much your own repeats vary).
-  Recordings are stored in this browser (`localStorage`, key `dtl.signTemplates`) and never leave it.
-  Replay with the first 3 test videos per phrase as the "user's recordings": 18 of 20 right, 1 wrong, 1 not sure
-  (same videos without recordings: 18 right, 2 wrong). The test uses other signers, so it understates the benefit for one person;
-  it has not been measured with a real person signing live.
+- **Demo signs** (default): seven easy, distinct signs (Thank you, Hello, How are you, Good Morning, I, you, Pleased) plus anything
+  you taught it (such as **Welcome**). The recogniser only chooses among these and uses a looser confidence threshold (0.45, margin 0.10),
+  because with few candidates a lower probability is still reliable. Replayed end to end through the browser code on INCLUDE test
+  videos of unseen signers (`tools/isl/replay_demo.mjs`): the seven signs 25 of 28 right, 1 wrong (I read as you), 2 not sure.
+  For comparison, all 106 words gave 49 of 67 right on the wider phrase test (`tools/isl/replay_phrases.mjs`).
+- **My signs**: appears once two or more signs are taught. Only the signs you taught.
 - **All words**: the full 106-word vocabulary.
+
+**Teach it your signs.** Choose a sign (or type a name), press *Record a sample*, sign, lower your hands; 3 times per sign.
+**Welcome is not in INCLUDE**, so the network cannot know it: it works only through your recordings. A taught sign gets a boost
+`s = p + (1 - p) * 0.8 * match` (known signs) or `0.95 * match` (signs the network does not know), where
+`match = exp(-(d / 17)^4)` and `d` is the distance (standardised 16-step feature vectors) to the nearest of your recordings. A taught sign
+never lowers the other signs. Distance scale: simulated repeats of one signer measured 8 to 14, other signs 17 and up
+(`tools/isl/experiment_match.py`; repeats are augmented copies without mirroring, an optimistic stand-in for a real person).
+The page warns if your recordings of one sign look too different from each other. Recordings are stored in this browser
+(`localStorage`, key `dtl.signTemplates`) and never leave it.
+
+Replay with simulated repeats of one signer taught as "Welcome" (`tools/isl/dump_repeats.py`): 5 of 5 held-out repeats recognised,
+the other demo signs unchanged (22 right, 1 wrong, 2 not sure of 25), and none of 29 unrelated recordings was read as Welcome.
+This has not been measured with a real person signing live.
 
 A printable guide with pictures, a set-up checklist and a demo script: [isl-presentation-guide.pdf](isl-presentation-guide.pdf)
 (built by `tools/isl/make_guide.py`).

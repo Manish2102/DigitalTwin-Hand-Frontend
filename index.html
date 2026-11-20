@@ -193,6 +193,47 @@
 
 
   /* ============================== arcade ============================== */
+  /* GestureDeck avatar transition */
+  .dk-av-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 7; }
+  .dk-av { position: absolute; will-change: transform; filter: drop-shadow(0 8px 12px rgba(0,0,0,.45)); }
+  .dk-av .av-svg { width: 100%; height: 100%; overflow: visible; }
+  .dk-slide.pulled { transition: none; z-index: 5; opacity: 1; will-change: transform; }
+  .dk-slide.pulled .dk-frame { box-shadow: 0 14px 50px rgba(0,0,0,.65); }
+  .dk-av .av-leg, .dk-av .av-arm, .dk-av .av-up, .dk-av .av-head, .dk-av .av-bob { transform-box: view-box; }
+  .dk-av .av-leg { transform-origin: 80px 168px; }
+  .dk-av .av-arm { transform-origin: 80px 122px; }
+  .dk-av .av-up { transform-origin: 80px 170px; transition: transform .25s ease; }
+  .dk-av .av-head { transform-origin: 80px 108px; }
+  .dk-av .av-sweat { opacity: 0; }
+  .dk-av.walk .av-bob { animation: av-bob .34s ease-in-out infinite; }
+  .dk-av.walk .av-leg-a { animation: av-leg .34s ease-in-out infinite; }
+  .dk-av.walk .av-leg-b { animation: av-leg .34s ease-in-out infinite reverse; }
+  .dk-av.walk .av-arm-a { animation: av-arm .34s ease-in-out infinite reverse; }
+  .dk-av.walk .av-arm-b { animation: av-arm .34s ease-in-out infinite; }
+  .dk-av.walk .av-head { animation: av-wobble .34s ease-in-out infinite; }
+  .dk-av.pull .av-up { transform: rotate(20deg); }
+  .dk-av.pull .av-arm { animation: none; transform: rotate(118deg); }
+  .dk-av.pull .av-arm-b { transform: rotate(104deg); }
+  .dk-av.pull .av-bob { animation-duration: .5s; }
+  .dk-av.pull .av-leg-a, .dk-av.pull .av-leg-b { animation-duration: .27s; }
+  .dk-av.pull .av-head { animation: av-strain .12s linear infinite; }
+  .dk-av.pull .av-sweat { opacity: 1; animation: av-drip .7s ease-in infinite; }
+  .av-bubble { position: absolute; left: 50%; top: -6%; transform: translate(-50%, 10px) scale(.6) rotate(-6deg); opacity: 0; padding: 4px 12px; border-radius: 14px;
+               background: #fff; color: #d6213f; font: 900 clamp(14px, 2.6vw, 26px)/1 Inter, system-ui, sans-serif; letter-spacing: .04em; white-space: nowrap;
+               border: 3px solid #d6213f; transition: transform .18s cubic-bezier(.3,1.6,.5,1), opacity .12s; }
+  .av-bubble.show { opacity: 1; transform: translate(-50%, 0) scale(1) rotate(-6deg); }
+  .av-dust { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; background: rgba(230,232,240,.8); filter: blur(1.5px); }
+  @keyframes av-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+  @keyframes av-leg { 0%, 100% { transform: rotate(-38deg); } 50% { transform: rotate(38deg); } }
+  @keyframes av-arm { 0%, 100% { transform: rotate(-45deg); } 50% { transform: rotate(45deg); } }
+  @keyframes av-wobble { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+  @keyframes av-strain { 0%, 100% { transform: rotate(-2deg) translateX(-1.5px); } 50% { transform: rotate(2deg) translateX(1.5px); } }
+  @keyframes av-drip { 0% { transform: translateY(-4px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(16px); opacity: 0; } }
+  .av-slot { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .av-preview { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); background: var(--surface-2); flex: none; }
+  .av-slot .av-lbl { flex: 1; min-width: 0; font-size: var(--fs-sm); }
+  .av-slot .av-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  @media (prefers-reduced-motion: reduce) { .dk-av.walk .av-leg, .dk-av.walk .av-arm, .dk-av.walk .av-head, .dk-av.walk .av-bob { animation-duration: 1s; } }
   /* GestureDeck */
   #sec-deck .workspace, #sec-sign .workspace { min-height: 0; }
   .dk-stage { position: relative; flex: 1; min-height: 340px; overflow: hidden; background: #050608; outline: none;
@@ -899,6 +940,19 @@
             <div class="field"><span class="field-label">Timer</span><span id="dkTimer" class="num">0:00</span></div>
             <label class="field" style="cursor:pointer"><span class="field-label">Reverse direction</span><input type="checkbox" id="dkReverse"></label>
           </div>
+          <div class="card" id="dkAvatarCard">
+            <div class="card-head"><i data-icon="user"></i><span class="card-title">Avatar transition</span></div>
+            <p class="subtle" style="margin-bottom:8px">When you swipe, a big-headed avatar sprints in, grabs the slide and hauls it away. Give it your face: one picture for swipes to the right and one for swipes to the left. <b>If you add only one, it is used for both.</b></p>
+            <label class="field" style="cursor:pointer"><span class="field-label">Avatar pulls the slide</span><input type="checkbox" id="dkAvOn"></label>
+            <label class="field" style="cursor:pointer"><span class="field-label">Also for keys and clicks</span><input type="checkbox" id="dkAvAll"></label>
+            <div id="dkAvSlots"></div>
+            <div class="tool-group" style="flex-wrap:wrap;gap:6px;margin-top:10px">
+              <button class="btn btn-sm btn-primary" id="dkAvTestNext"><span>Preview: next</span></button>
+              <button class="btn btn-sm btn-primary" id="dkAvTestPrev"><span>Preview: previous</span></button>
+            </div>
+            <input type="file" id="dkAvFile" accept="image/*" class="hidden">
+            <p class="subtle" style="margin-top:8px">Photos are cropped to a square around the centre and stay in this browser. For the camera option, turn Gestures on and face the camera.</p>
+          </div>
           <div class="card">
             <div class="card-head"><i data-icon="list"></i><span class="card-title">Slides</span><span class="card-meta" id="dkKind"></span></div>
             <div class="dk-thumbs" id="dkThumbs"><p class="subtle">Open a presentation to see its slides.</p></div>
@@ -934,7 +988,7 @@
         <span class="divider"></span>
         <div class="tool-group" id="slSetGroup" aria-label="Which words">
           <div class="seg" id="slSets">
-            <button data-set="phrases" class="sel" data-tip="13 everyday phrases: much easier to recognise than all 106 words">Presentation phrases</button>
+            <button data-set="demo" class="sel" data-tip="7 easy signs plus anything you taught it (such as Welcome): the most reliable for a demo">Demo signs</button>
             <button data-set="mine" id="slSetMine" class="hidden" data-tip="Only the signs you taught it">My signs</button>
             <button data-set="all">All words</button>
           </div>
@@ -942,7 +996,7 @@
         <span class="divider"></span>
         <div class="tool-group">
           <a class="btn" href="https://github.com/Manish2102/DigitalTwin-Hand-Frontend/blob/main/docs/isl-reference.md" target="_blank" rel="noopener" data-tip="Every supported sign with an illustration and a description"><i data-icon="book"></i><span>Sign reference</span></a>
-          <a class="btn" href="docs/isl-presentation-guide.pdf" target="_blank" rel="noopener" data-tip="PDF: how to sign the 13 presentation phrases and run a live demo"><i data-icon="book"></i><span>Presentation guide (PDF)</span></a>
+          <a class="btn" href="docs/isl-presentation-guide.pdf" target="_blank" rel="noopener" data-tip="PDF: how to sign the demo signs and run a live demo"><i data-icon="book"></i><span>Presentation guide (PDF)</span></a>
         </div>
       </div>
       <div class="workspace">
@@ -978,9 +1032,10 @@
           </div>
           <div class="card" id="slTeachCard">
             <div class="card-head"><i data-icon="signs"></i><span class="card-title">Teach it your signs</span><span class="card-meta" id="slTeachCount"></span></div>
-            <p class="subtle" style="margin-bottom:8px">For a presentation: record each sign you will use 3 times. It then matches <b>your</b> way of signing and only looks for those signs. The recordings stay in this browser.</p>
+            <p class="subtle" style="margin-bottom:8px">For a presentation: record each sign you will use 3 times, especially <b>Welcome</b> (it is not in the built-in vocabulary, so it only works once you teach it). It then matches <b>your</b> way of signing. The recordings stay in this browser.</p>
             <div class="tool-group" style="flex-wrap:wrap;gap:6px">
               <select class="input" id="slTeachWord" aria-label="Sign to teach"></select>
+              <input class="input" id="slTeachCustom" placeholder="or type your own sign name" aria-label="Your own sign name" maxlength="30" style="min-width:180px">
               <button class="btn btn-primary" id="slTeachRec"><span>Record a sample</span></button>
             </div>
             <div class="subtle" id="slTeachMsg" style="margin:8px 0">Start the camera first.</div>

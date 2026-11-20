@@ -2,7 +2,7 @@
 import json, sys, numpy as np
 sys.path.insert(0, ".")
 from train import load_words
-PHRASES = ["Hello", "How are you", "Thank you", "Good Morning", "Good afternoon", "Good evening", "Good night", "Pleased",
+PHRASES = ["Sunday", "Monday", "Hospital", "Hello", "How are you", "Thank you", "Good Morning", "Good afternoon", "Good evening", "Good night", "Pleased",
            "I", "you", "Friend", "Mother", "Father", "Brother", "Sister", "Today", "Tomorrow"]
 nan = lambda a: np.where(np.isfinite(a), np.round(a, 5), None).tolist()
 vids = [v for v in load_words(sys.argv[1]) if v["split"] == "test" and v["label"] in PHRASES]

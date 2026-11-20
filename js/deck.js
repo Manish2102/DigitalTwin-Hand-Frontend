@@ -10,24 +10,27 @@ import { icon, hydrateIcons } from "./icons.js";
 import { toast } from "./ui.js";
 import { openDeck, DeckError } from "./deck/render.js";
 import { SwipeDetector } from "./deck/swipe.js";
+import { Avatar, faceFromFile, faceFromVideo } from "./deck/avatar.js";
 import { Vision, HAND_BONES } from "./vision/vision.js";
 
 const PREFS = "dtl.deck";
 const prefs = (() => { try { return JSON.parse(localStorage.getItem(PREFS)) || {}; } catch { return {}; } })();
 const savePrefs = () => { try { localStorage.setItem(PREFS, JSON.stringify(prefs)); } catch {} };
-prefs.corner ??= "br"; prefs.sens ??= "normal"; prefs.reverse ??= false; prefs.camVisible ??= true; prefs.camSize ??= "m";
+prefs.corner ??= "br"; prefs.sens ??= "normal"; prefs.reverse ??= false; prefs.camVisible ??= true; prefs.camSize ??= "m"; prefs.avatar ??= true; prefs.avatarAll ??= false;
 
 let deck = null, cur = 0, front = $("dkSlideA"), back = $("dkSlideB"), showing = 0, loading = false;
 let whyText = "", gestureWhyAt = 0, lastSeen = "", gesturesOn = false, black = false, startedAt = 0;
 const detector = new SwipeDetector({ sensitivity: prefs.sens });
 const vision = new Vision({ hands: true, pose: false, numHands: 2 });
 const stats = { swipes: 0, last: "", lastAt: 0 };
-window.__deck = { get deck() { return deck; }, get cur() { return cur; }, detector, vision, stats, go: n => go(n, "test") };   // for the console and tests
+window.__deck = { avatar: () => avatar, get deck() { return deck; }, get cur() { return cur; }, detector, vision, stats, go: n => go(n, "test") };   // for the console and tests
 
 // ------------------------------------------------------------------ opening
 $("dkOpen").onclick = $("dkEmptyOpen").onclick = () => $("dkFile").click();
 $("dkFile").onchange = e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) load(f); };
 const stage = $("dkStage");
+const avatar = new Avatar(stage);
+let pulling = null;                      // the slide layer the avatar is pulling away, while it does
 stage.addEventListener("dragover", e => { e.preventDefault(); stage.classList.add("drag"); });
 stage.addEventListener("dragleave", () => stage.classList.remove("drag"));
 stage.addEventListener("drop", e => { e.preventDefault(); stage.classList.remove("drag"); const f = e.dataTransfer?.files?.[0]; if (f) load(f); });
@@ -97,7 +100,15 @@ function frameSize() {
   return [Math.floor(w), Math.floor(h)];
 }
 
-async function show(i, instant = false) {
+function endPull() {                       // finish an avatar transition at once (a newer slide was asked for)
+  if (!pulling) return;
+  const l = pulling; pulling = null;
+  avatar.cancel();
+  l.classList.remove("on", "pulled"); l.replaceChildren();
+  front.style.transition = "";
+}
+
+async function show(i, instant = false, pull = null) {
   if (!deck) return;
   const n = ++showing;
   const [w, h] = frameSize();
@@ -105,15 +116,24 @@ async function show(i, instant = false) {
   try { el = await deck.slide(i, w, h); }
   catch (e) { console.warn(e); toast(`Slide ${i + 1} could not be drawn`, "warning"); return; }
   if (n !== showing) return;                                         // a newer request won
+  endPull();
   const frame = document.createElement("div");
   frame.className = "dk-frame";
   frame.style.width = `${w}px`; frame.style.height = `${h}px`;
   frame.appendChild(el);
   back.replaceChildren(frame);
   [front, back] = [back, front];
-  front.classList.add("on"); back.classList.remove("on");
-  if (instant) back.replaceChildren();
-  else setTimeout(() => { if (!back.classList.contains("on")) back.replaceChildren(); }, 260);
+  front.classList.add("on");
+  if (pull && !instant && back.firstChild) {                          // the avatar pulls the old slide away
+    const old = back; pulling = old;
+    front.style.transition = "none";
+    old.classList.add("on", "pulled");
+    avatar.pull(old, pull, { underEl: front, side: sideFor(pull) }).then(() => { if (pulling === old) { pulling = null; old.classList.remove("on", "pulled"); old.replaceChildren(); front.style.transition = ""; } });
+  } else {
+    back.classList.remove("on");
+    if (instant) back.replaceChildren();
+    else setTimeout(() => { if (!back.classList.contains("on")) back.replaceChildren(); }, 260);
+  }
   updateCounters();
 }
 
@@ -135,7 +155,7 @@ export function go(i, how = "key") {
   const dir = n > cur ? "next" : "prev";
   cur = n;
   if (black) setBlack(false);
-  show(cur);
+  show(cur, false, (prefs.avatar && (how === "gesture" || prefs.avatarAll)) || how === "avatar" ? dir : null);
   if (how === "gesture") feedback(dir);
   return true;
 }
@@ -203,7 +223,7 @@ $("dkGest").onclick = () => setGestures(!gesturesOn);
 $("dkSens").value = prefs.sens;
 $("dkSens").onchange = e => { prefs.sens = e.target.value; detector.setSensitivity(prefs.sens); detector.reset(); savePrefs(); };
 $("dkReverse").checked = prefs.reverse;
-$("dkReverse").onchange = e => { prefs.reverse = e.target.checked; savePrefs(); renderGestureUi(); };
+$("dkReverse").onchange = e => { prefs.reverse = e.target.checked; savePrefs(); renderGestureUi(); renderAvatar?.(); };
 
 vision.onState(() => renderGestureUi());
 vision.onResult(r => {
@@ -308,3 +328,47 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) detec
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 renderGestureUi(); updateCounters(); hydrateIcons(stage);
+
+
+// ------------------------------------------------------------ avatar settings
+// "right" = the face for a swipe to the right (next slide, unless "reverse" is on), "left" = for a swipe to the left.
+const SLOTS = [["right", "Swipe right (next slide)"], ["left", "Swipe left (previous slide)"]];
+const sideFor = dir => (dir === "next") !== prefs.reverse ? "right" : "left";
+let faceTarget = "right";
+function renderAvatar() {
+  $("dkAvOn").checked = prefs.avatar; $("dkAvAll").checked = prefs.avatarAll;
+  $("dkAvSlots").innerHTML = SLOTS.map(([side, label]) => {
+    const own = avatar.faces[side], shown = avatar.faceFor(side);
+    const msg = own ? "Your picture." : shown ? "Using the other picture." : "None yet: default goofy face.";
+    return `<div class="av-slot"><img class="av-preview" alt="Face for ${label}" ${shown ? `src="${shown}"` : ""} style="${shown ? "" : "visibility:hidden"}">
+      <div class="av-lbl"><b>${label}</b><div class="subtle">${msg}</div>
+        <div class="av-btns"><button class="btn btn-sm" data-av="up" data-side="${side}">Upload</button><button class="btn btn-sm" data-av="cam" data-side="${side}">Camera</button>${own ? `<button class="btn btn-sm btn-ghost" data-av="rm" data-side="${side}">Remove</button>` : ""}</div></div></div>`;
+  }).join("");
+}
+$("dkAvSlots").onclick = e => {
+  const b = e.target.closest("[data-av]"); if (!b) return;
+  const side = b.dataset.side;
+  if (b.dataset.av === "up") { faceTarget = side; $("dkAvFile").click(); }
+  else if (b.dataset.av === "rm") { avatar.setFace(side, null); renderAvatar(); }
+  else {
+    if (!gesturesOn || vision.state !== "on") { toast("Turn Gestures on first, then look at the camera", "warning", 3500); return; }
+    try { avatar.setFace(side, faceFromVideo($("dkVideo"))); renderAvatar(); toast("Face taken from the camera", "success", 1800); }
+    catch (err) { toast(err.message, "warning", 3500); }
+  }
+};
+$("dkAvOn").onchange = e => { prefs.avatar = e.target.checked; savePrefs(); };
+$("dkAvAll").onchange = e => { prefs.avatarAll = e.target.checked; savePrefs(); };
+$("dkAvFile").onchange = async e => {
+  const f = e.target.files?.[0]; e.target.value = "";
+  if (!f) return;
+  try { avatar.setFace(faceTarget, await faceFromFile(f)); renderAvatar(); toast("Face saved for the avatar", "success", 1800); }
+  catch (err) { toast(err.message || "That image could not be read", "warning", 4000); }
+};
+function previewPull(dir) {
+  if (!deck) { toast("Open a presentation first", "warning", 2500); return; }
+  if (dir === "next" ? cur >= deck.count - 1 : cur <= 0) { toast(dir === "next" ? "You are on the last slide" : "You are on the first slide", "warning", 2000); return; }
+  go(dir === "next" ? cur + 1 : cur - 1, "avatar");
+}
+$("dkAvTestNext").onclick = () => previewPull("next");
+$("dkAvTestPrev").onclick = () => previewPull("prev");
+renderAvatar();
