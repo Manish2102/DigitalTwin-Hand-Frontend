@@ -10,10 +10,11 @@
 // Directions are as the presenter sees them: "right" = the hand moves to the presenter's right.
 
 const PRESETS = {
-  strict: { palms: 2.4, minFrac: 0.15, maxMs: 700, straight: 0.6, mono: 0.75, cooldown: 1100, back: 1600, settle: 200 },
-  normal: { palms: 1.9, minFrac: 0.11, maxMs: 850, straight: 0.8, mono: 0.7,  cooldown: 900,  back: 1400, settle: 120 },
-  easy:   { palms: 1.4, minFrac: 0.08, maxMs: 1000, straight: 1.0, mono: 0.65, cooldown: 800,  back: 1200, settle: 80 },
+  strict: { maxFrac: 0.40, palms: 2.4, minFrac: 0.15, maxMs: 700, straight: 0.6, mono: 0.75, cooldown: 1100, back: 1600, settle: 200 },
+  normal: { maxFrac: 0.30, palms: 1.9, minFrac: 0.11, maxMs: 850, straight: 0.8, mono: 0.7,  cooldown: 900,  back: 1400, settle: 120 },
+  easy:   { maxFrac: 0.22, palms: 1.4, minFrac: 0.08, maxMs: 1000, straight: 1.0, mono: 0.65, cooldown: 800,  back: 1200, settle: 80 },
 };
+const MAX_PALM = 0.2;            // palm length (frame heights) used for the distance rules, at most
 const MIN_MS = 90;               // faster than this is tracking noise, not a hand movement
 const KEEP_MS = 1500;
 
@@ -66,8 +67,8 @@ export class SwipeDetector {
       if (dt < MIN_MS) continue;
       if (dt > c.maxMs) break;
       const dx = (now.x - s.x) * aspect, dy = now.y - s.y;            // both in units of frame height
-      const palm = (s.palm + now.palm) / 2;
-      const need = Math.max(c.palms * palm, c.minFrac * aspect);
+      const palm = Math.min((s.palm + now.palm) / 2, MAX_PALM);     // a hand right at the camera is huge: cap it, or the swipe would have to cross the whole picture
+      const need = Math.min(Math.max(c.palms * palm, c.minFrac * aspect), c.maxFrac * aspect);
       this.progress = Math.max(this.progress, Math.min(1, Math.abs(dx) / need));
       if (Math.abs(dx) < need || Math.abs(dy) > c.straight * Math.abs(dx)) continue;
       const seg = this.buf.slice(k), dir = Math.sign(dx);
@@ -87,7 +88,7 @@ export class SwipeDetector {
       if (!before.length || s.t - this.buf[0].t < c.settle) continue;
       const drift = Math.max(...before.map(p => Math.abs(p.x - s.x) * aspect));
       if (drift > 1.0 * palm) continue;                               // a wave back and forth is not a swipe
-      if (this.requireOpen && !(seg[seg.length - 1].open && seg[seg.length - 2].open)) continue;   // the hand must still be open at the end
+      if (this.requireOpen && !(seg[seg.length - 1].open && seg[seg.length - 2].open && seg[0].open)) continue;   // open at both ends
       const name = dir > 0 ? "right" : "left";
       if (this.backDir === -dir && t < this.backUntil) {             // the hand coming back after a swipe
         this.buf = []; this.coolUntil = t + 300; return null;
