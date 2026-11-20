@@ -162,3 +162,12 @@ This has not been measured with a real person signing live.
 
 A printable guide with pictures, a set-up checklist and a demo script: [isl-presentation-guide.pdf](isl-presentation-guide.pdf)
 (built by `tools/isl/make_guide.py`).
+
+## Avatar and spoken lines
+
+When a sign is recognised, the avatar (a small SVG face at the top of the side panel) says a line out loud with the browser's
+speech synthesis, and its mouth moves while it talks (`js/sign/talker.js`). Which line comes from `js/sign/script.js`
+(hardcode your own there) or from the "What the avatar says" table on the page, which is stored in the browser and wins until you
+press "Reset to defaults". A sign with no line is spoken as its own name; letters are spoken as the letter. The line is spoken only for a
+recognised sign (never for a "not sure" result), so the avatar says what the app actually recognised. "Say each sign out loud"
+turns it off; *Test voice* and *Stop* are next to it.
