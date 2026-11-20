@@ -70,9 +70,10 @@
     </div>
 
     <div class="card">
-      <div class="card-head"><span class="card-title">Voice</span></div>
+      <div class="card-head"><span class="card-title">Voice and speaking</span><span class="card-meta" id="voiceSync"></span></div>
+      <label class="row" style="margin-bottom:10px;gap:8px"><input type="checkbox" id="auto" checked> <span>Say each recognised sign out loud on the Sign twin page</span></label>
       <div class="row">
-        <div style="flex:1;min-width:200px"><span class="lab">Voice (for the preview here and, if the Sign twin's computer has it, there too)</span><select class="input" id="voice" style="width:100%"></select></div>
+        <div style="flex:1;min-width:200px"><span class="lab">Voice (used here and on the Sign twin page, if that computer has it)</span><select class="input" id="voice" style="width:100%"></select></div>
         <div style="width:150px"><span class="lab">Speed <span id="rateV"></span></span><input type="range" id="rate" min="0.6" max="1.4" step="0.05" value="0.95" style="width:100%"></div>
         <div style="width:150px"><span class="lab">Pitch <span id="pitchV"></span></span><input type="range" id="pitch" min="0.6" max="1.6" step="0.05" value="1.05" style="width:100%"></div>
       </div>

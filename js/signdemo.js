@@ -21,9 +21,12 @@ let rec = null, words = null, loading = null;
 const log = [];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-const talker = createTalker($("sdPanel"), { toast, onChange: () => applySet() });
+const talker = createTalker(null, {
+  toast, onChange: () => applySet(),
+  onStatus: (msg, bad) => { if (bad) toast(msg, "warning", 8000); },     // the voice panel is in the admin app; only problems are shown here
+});
 import("./sign/avatar3d.js").then(m => m.createAvatar3D($("sdStage"), talker, { section: $("sec-signdemo") }))
-  .then(a => { avatar3d = a; talker.hide2d(); })
+  .then(a => { avatar3d = a; })
   .catch(e => { console.warn("3D avatar not available, using the flat avatar:", e.message); });
 window.__signdemo = { get avatar3d() { return avatar3d; }, vision, talker, get rec() { return rec; }, get log() { return log; } };
 
@@ -144,12 +147,13 @@ on("admin", m => {
     log.unshift({ label: m.label || "Admin", line: m.text, byHand: true, at: Date.now() }); log.length = Math.min(log.length, 8);
     $("sdLog").innerHTML = log.map(l => `<div><b>${esc(l.label)}</b>: ${esc(l.line)}</div>`).join("");
   } else if (m.cmd === "stop") talker.stop();
+  else if (m.cmd === "settings") talker.setSettings({ auto: m.auto, voice: m.voice, rate: m.rate, pitch: m.pitch });
   else if (m.cmd === "lines" && m.lines && typeof m.lines === "object") {
     const clean = {};
     for (const [k, v] of Object.entries(m.lines)) if (typeof k === "string" && typeof v === "string" && k.trim() && v.trim()) clean[k.slice(0, 40)] = v.slice(0, 500);
     talker.setLines(clean); applySet();
   }
-  sendToPhone({ type: "adminAck", cmd: m.cmd, id: m.id, speaking: window.speechSynthesis?.speaking ?? false, lines: Object.keys(talker.getLines()).length });
+  sendToPhone({ type: "adminAck", cmd: m.cmd, id: m.id, speaking: window.speechSynthesis?.speaking ?? false, lines: Object.keys(talker.getLines()).length, auto: talker.auto });
 });
 
 $("sdAdminLink").href = `admin.html?room=${ROOM}`;     // the admin app joins this page's room

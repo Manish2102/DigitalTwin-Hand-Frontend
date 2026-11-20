@@ -12,7 +12,7 @@ import { WS_BASE, roomFromUrl } from "./config.js";
 import { SAYINGS } from "./sign/script.js";
 
 const $ = id => document.getElementById(id);
-const LINES_KEY = "dtl.signSayings", ROOM_KEY = "dtl.adminRoom", VOICE_KEY = "dtl.adminVoice";
+const LINES_KEY = "dtl.signSayings", ROOM_KEY = "dtl.adminRoom", VOICE_KEY = "dtl.adminVoice", AUTO_KEY = "dtl.signAutoSpeak", RATE_KEY = "dtl.adminRate", PITCH_KEY = "dtl.adminPitch";
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const rd = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
 const wr = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -45,7 +45,7 @@ function connect() {
   if (!room) return;
   const mine = room;
   const sock = ws = new WebSocket(`${WS_BASE}/ws/phone?room=${mine}`);
-  sock.onopen = () => { log(`Connected to room ${mine}`, "ok"); send({ cmd: "hello" }); setBadges(); };
+  sock.onopen = () => { log(`Connected to room ${mine}`, "ok"); send({ cmd: "hello" }); pushSettings(); setBadges(); };
   sock.onclose = () => { if (ws === sock && room === mine) retryT = setTimeout(connect, 1500); setBadges(); };
   sock.onerror = () => log("Could not reach the backend, retrying", "warn");
   sock.onmessage = e => {
@@ -137,9 +137,18 @@ function fillVoices() {
   if (want && vs.some(v => v.name === want)) $("voice").value = want;
 }
 synth?.addEventListener?.("voiceschanged", fillVoices); fillVoices();
-$("voice").onchange = () => wr(VOICE_KEY, $("voice").value || null);
+$("voice").onchange = () => { wr(VOICE_KEY, $("voice").value || null); pushSettings(); };
 const showSliders = () => { $("rateV").textContent = (+$("rate").value).toFixed(2); $("pitchV").textContent = (+$("pitch").value).toFixed(2); };
+// "say each sign out loud", voice, speed and pitch are sent to the Sign twin page, which keeps them for recognised signs too
+function pushSettings() {
+  wr(AUTO_KEY, $("auto").checked); wr(RATE_KEY, +$("rate").value); wr(PITCH_KEY, +$("pitch").value);
+  const ok = send({ cmd: "settings", auto: $("auto").checked, voice: voiceName(), rate: +$("rate").value, pitch: +$("pitch").value });
+  $("voiceSync").textContent = ok ? "sent to the Sign twin" : "saved here (not connected)";
+}
+$("auto").checked = rd(AUTO_KEY, true);
+$("rate").value = rd(RATE_KEY, 0.95); $("pitch").value = rd(PITCH_KEY, 1.05);
 $("rate").oninput = $("pitch").oninput = showSliders; showSliders();
+$("rate").onchange = $("pitch").onchange = $("auto").onchange = pushSettings;
 
 // ----------------------------------------------------------- the rest
 $("freeTwin").onclick = () => say($("free").value, "Admin");

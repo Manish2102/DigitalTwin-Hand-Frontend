@@ -6,7 +6,7 @@
 
 import { SAYINGS } from "./script.js";
 
-const LINES_KEY = "dtl.signSayings", AUTO_KEY = "dtl.signAutoSpeak";
+const LINES_KEY = "dtl.signSayings", AUTO_KEY = "dtl.signAutoSpeak", SET_KEY = "dtl.signVoice";
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const rd = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
 const wr = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -22,8 +22,8 @@ const CSS = `
   .tk-tools { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin: 8px 0 0; }
 `;
 
-export function createTalker(panel, { toast = () => {}, onChange = () => {} } = {}) {
-  const style = document.createElement("style"); style.textContent = CSS; document.head.appendChild(style);
+export function createTalker(panel, { toast = () => {}, onChange = () => {}, onStatus = () => {} } = {}) {
+  // The cards below are built in memory only (not shown on the Sign twin page): lines and voice are edited in the admin app.
   const wrap = document.createElement("div");
   wrap.innerHTML = `
   <div class="card" id="tkCard">
@@ -58,25 +58,25 @@ export function createTalker(panel, { toast = () => {}, onChange = () => {} } = 
     <div class="tk-tools"><button class="btn btn-sm" id="tkAdd">Add a line</button><button class="btn btn-sm btn-ghost" id="tkReset">Reset to defaults</button></div>
     <datalist id="tkLabels"></datalist>
   </div>`;
-  const first = panel.firstElementChild;
-  for (const c of [...wrap.children]) panel.insertBefore(c, first);
-
-  const $ = id => document.getElementById(id);
+  const $ = id => wrap.querySelector(`#${id}`);
   const synth = "speechSynthesis" in window ? window.speechSynthesis : null;
   let lines = rd(LINES_KEY, null) ?? { ...SAYINGS };
+  const settings = { voice: null, rate: 0.95, pitch: 1.05, ...(rd(SET_KEY, null) ?? {}) };   // set by the admin app
   let auto = rd(AUTO_KEY, true), talking = false, level = 0, bubbleT = 0, mouthOpen = 0;
 
   // ----------------------------------------------------------- voice
   function pickVoice() {
     const v = synth?.getVoices() ?? [];
-    return v.find(x => x.lang === "en-IN") ?? v.find(x => x.lang?.startsWith("en-GB")) ?? v.find(x => x.lang?.startsWith("en")) ?? null;
+    const named = settings.voice && v.find(x => x.name === settings.voice);
+    return named || (v.find(x => x.lang === "en-IN") ?? v.find(x => x.lang?.startsWith("en-GB")) ?? v.find(x => x.lang?.startsWith("en")) ?? null);
   }
   function showVoice() { const v = pickVoice(); $("tkVoice").textContent = !synth ? "no speech in this browser" : v ? v.name.replace(/Microsoft |Google /, "").slice(0, 26) : "default voice"; }
   synth?.addEventListener?.("voiceschanged", showVoice); showVoice();
 
   let current = null;                                    // keep a reference: some browsers drop an utterance that gets garbage-collected
-  function voiceStatus(msg, bad = false) { const e = $("tkVoiceStatus"); if (e) { e.textContent = msg; e.style.color = bad ? "var(--warning, #e0a83a)" : ""; } }
-  function speak(text, { cancel = true, rate = 0.95, pitch = 1.05, voice = null } = {}) {
+  function voiceStatus(msg, bad = false) { const e = $("tkVoiceStatus"); if (e) { e.textContent = msg; e.style.color = bad ? "var(--warning, #e0a83a)" : ""; } onStatus(msg, bad); }
+  function speak(text, { cancel = true, rate = settings.rate, pitch = settings.pitch, voice = settings.voice } = {}) {
+    voice = voice ?? settings.voice; rate = rate ?? settings.rate; pitch = pitch ?? settings.pitch;
     text = String(text ?? "").trim();
     if (!text) return;
     $("tkBubble").textContent = text; $("tkBubble").classList.remove("idle"); $("tkBubble").classList.add("talking");
@@ -180,6 +180,15 @@ export function createTalker(panel, { toast = () => {}, onChange = () => {} } = 
     labels: () => Object.keys(lines),
     setLabels(list) { $("tkLabels").innerHTML = [...new Set(list)].map(l => `<option value="${esc(l)}">`).join(""); },
     get auto() { return auto; },
+    // voice, speed, pitch and "say each sign out loud" (sent by the admin app; kept in this browser)
+    setSettings(o = {}) {
+      if (typeof o.auto === "boolean") { auto = o.auto; wr(AUTO_KEY, auto); if (!auto) { synth?.cancel(); stopTalking(); } }
+      if ("voice" in o) settings.voice = o.voice || null;
+      if (Number.isFinite(+o.rate) && +o.rate > 0) settings.rate = Math.min(2, Math.max(0.3, +o.rate));
+      if (Number.isFinite(+o.pitch) && +o.pitch > 0) settings.pitch = Math.min(2, Math.max(0.3, +o.pitch));
+      wr(SET_KEY, settings);
+    },
+    getSettings: () => ({ ...settings, auto }),
     get talking() { return talking; },
     get mouth() { return mouthOpen; },
     hide2d() { const a = document.querySelector("#tkCard .tk-avatar svg"); if (a) a.style.display = "none"; },
