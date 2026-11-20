@@ -322,6 +322,8 @@
   .sd-cam-label { position: absolute; left: 8px; top: 6px; font-size: 11px; color: #fff; background: rgba(0,0,0,.5); padding: 1px 8px; border-radius: 999px; z-index: 1; }
   .sd-sub { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); width: min(62%, 640px); z-index: 3; text-align: center; font-size: 20px; font-weight: 600; color: #fff; background: rgba(8,10,16,.7); padding: 8px 16px; border-radius: 12px; opacity: 0; transition: opacity .2s; pointer-events: none; }
   .sd-sub.show { opacity: 1; }
+  .sd-emoji { position: fixed; right: 16px; bottom: 12px; z-index: 6; font-size: 22px; line-height: 1; text-decoration: none; opacity: .5; transition: opacity .15s, transform .15s; user-select: none; }
+  .sd-emoji:hover, .sd-emoji:focus-visible { opacity: 1; transform: scale(1.15); }
   .sd-stage .sl-empty.sd-hint { inset: 48px auto auto 14px; width: min(34%, 320px); padding: 10px 14px; align-items: flex-start; text-align: left; font-size: 12.5px; background: rgba(8,10,16,.6); border-radius: 10px; z-index: 3; }
   .sd-stage .sl-top { z-index: 5; }
   .sl-text-wrap { border-top: 1px solid var(--border); background: var(--surface); padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); }
@@ -1104,8 +1106,7 @@
         </div>
         <span class="divider"></span>
         <span class="subtle">A sign you make triggers a line you wrote; the avatar says it. The Sign language page is unchanged.</span>
-        <span class="divider"></span>
-        <a class="btn btn-sm" id="sdAdminLink" href="admin.html" target="_blank" rel="noopener" data-tip="Open the admin app for this room: type what the avatar says and play it">Open admin app</a>
+        <a class="sd-emoji" id="sdAdminLink" href="admin.html" target="_blank" rel="noopener" aria-label="Admin" title="&#129418;">&#129418;</a>
       </div>
       <div class="workspace">
         <div class="stage-col" style="display:flex;flex-direction:column">
