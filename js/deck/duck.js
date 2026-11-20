@@ -66,8 +66,9 @@ function buildDuck(faceImg) {
   let faceTex = null, eye = null, pupil = null;
   if (faceImg) {
     faceTex = new THREE.Texture(faceImg); faceTex.colorSpace = THREE.SRGBColorSpace; faceTex.needsUpdate = true; faceTex.anisotropy = 4;
-    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.108, 40), new THREE.MeshBasicMaterial({ map: faceTex })); disc.scale.set(1.0, 1.0, 1); plate.add(disc);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.108, 0.011, 10, 40), grey); rim.position.z = 0.002; plate.add(rim);
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.165, 48), new THREE.MeshBasicMaterial({ map: faceTex })); disc.scale.set(1.0, 1.0, 1); plate.add(disc);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.165, 0.014, 10, 48), grey); rim.position.z = 0.002; plate.add(rim);
+    plate.position.set(0, 0.03, 0.3); bill.position.y = -0.14; head.scale.setScalar(1.2);      // a big photo: bigger head, photo set a little forward, bill lowered
   } else {
     plate.add(new THREE.Mesh(new THREE.CircleGeometry(0.1, 36), panel));
     eye = new THREE.Group(); plate.add(eye);
