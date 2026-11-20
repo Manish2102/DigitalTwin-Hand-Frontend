@@ -2,7 +2,7 @@
 
 // >>> After deploying the backend, put its URL here (no trailing slash). <<<
 // You can also override it per visit with ?backend=https://your-backend.vercel.app
-const DEFAULT_BACKEND = "https://digitaltwin-hand-backend.vercel.app";
+const DEFAULT_BACKEND = "https://digitaltwin-hand-backend-two.vercel.app";
 const LOCAL_BACKEND = "http://localhost:8000";   // used when the page itself runs on localhost
 
 const params = new URLSearchParams(location.search);
