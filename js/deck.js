@@ -10,14 +10,16 @@ import { icon, hydrateIcons } from "./icons.js";
 import { toast } from "./ui.js";
 import { openDeck, DeckError } from "./deck/render.js";
 import { SwipeDetector } from "./deck/swipe.js";
-import { Avatar, faceFromFile, faceFromVideo } from "./deck/avatar.js";
+import { faceFromFile, faceFromVideo } from "./deck/avatar.js";
+import { Duck } from "./deck/duck.js";
+import { VoiceControl } from "./deck/voice.js";
 import * as lib from "./deck/library.js";
 import { Vision, HAND_BONES } from "./vision/vision.js";
 
 const PREFS = "dtl.deck";
 const prefs = (() => { try { return JSON.parse(localStorage.getItem(PREFS)) || {}; } catch { return {}; } })();
 const savePrefs = () => { try { localStorage.setItem(PREFS, JSON.stringify(prefs)); } catch {} };
-prefs.corner ??= "br"; prefs.sens ??= "normal"; prefs.reverse ??= false; prefs.camVisible ??= true; prefs.camSize ??= "m"; prefs.avatar ??= true; prefs.avatarAll ??= false;
+prefs.corner ??= "br"; prefs.sens ??= "normal"; prefs.reverse ??= false; prefs.camVisible ??= true; prefs.camSize ??= "m"; prefs.avatar ??= true; prefs.ducks ??= 2; prefs.duckSound ??= true; prefs.avatarAll ??= false;
 
 let deck = null, cur = 0, front = $("dkSlideA"), back = $("dkSlideB"), showing = 0, loading = false;
 let whyText = "", gestureWhyAt = 0, lastSeen = "", gesturesOn = false, black = false, startedAt = 0;
@@ -30,7 +32,8 @@ window.__deck = { avatar: () => avatar, get deck() { return deck; }, get cur() {
 $("dkOpen").onclick = $("dkEmptyOpen").onclick = () => $("dkFile").click();
 $("dkFile").onchange = e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) load(f); };
 const stage = $("dkStage");
-const avatar = new Avatar(stage);
+const avatar = new Duck(stage);
+avatar.count = prefs.ducks; avatar.sound = prefs.duckSound;
 let curId = null;                        // id of the open presentation in the library
 let pulling = null;                      // the slide layer the avatar is pulling away, while it does
 stage.addEventListener("dragover", e => { e.preventDefault(); stage.classList.add("drag"); });
@@ -137,7 +140,7 @@ async function show(i, instant = false, pull = null) {
     const old = back; pulling = old;
     front.style.transition = "none";
     old.classList.add("on", "pulled");
-    avatar.pull(old, pull, { underEl: front, face: avatar.nextFace(prefs.avShuffle) }).then(() => { if (pulling === old) { pulling = null; old.classList.remove("on", "pulled"); old.replaceChildren(); front.style.transition = ""; } });
+    avatar.pull(old, pull, { underEl: front, faces: Array.from({ length: avatar.count }, () => avatar.nextFace(prefs.avShuffle)) }).then(() => { if (pulling === old) { pulling = null; old.classList.remove("on", "pulled"); old.replaceChildren(); front.style.transition = ""; } });
   } else {
     back.classList.remove("on");
     if (instant) back.replaceChildren();
@@ -158,13 +161,15 @@ export function go(i, how = "key") {
   if (!deck) return false;
   const n = Math.max(0, Math.min(deck.count - 1, i));
   if (n === cur) {
-    if (how === "gesture") feedback(i > cur ? "end" : "start");
+    if (how === "gesture" || how === "voice") feedback(i > cur ? "end" : "start");
+    if (how === "voice") toast(i > cur ? "That is the last slide" : "That is the first slide", "warning", 1800);
     return false;
   }
   const dir = n > cur ? "next" : "prev";
+  const side = (dir === "next") !== prefs.reverse ? "right" : "left";       // which way the ducks pull the slide off (swipe right = next)
   cur = n;
   if (black) setBlack(false);
-  show(cur, false, (prefs.avatar && (how === "gesture" || prefs.avatarAll)) || how === "avatar" ? dir : null);
+  show(cur, false, (prefs.avatar && (how === "gesture" || how === "voice" || prefs.avatarAll)) || how === "avatar" ? side : null);
   if (how === "gesture") feedback(dir);
   return true;
 }
@@ -362,6 +367,10 @@ $("dkAvSlots").onclick = e => {
   }
 };
 $("dkAvOn").onchange = e => { prefs.avatar = e.target.checked; savePrefs(); };
+$("dkDucks").value = String(prefs.ducks);
+$("dkDucks").onchange = e => { prefs.ducks = +e.target.value; avatar.count = prefs.ducks; savePrefs(); };
+$("dkDuckSound").checked = prefs.duckSound;
+$("dkDuckSound").onchange = e => { prefs.duckSound = e.target.checked; avatar.sound = prefs.duckSound; savePrefs(); };
 $("dkAvAll").onchange = e => { prefs.avatarAll = e.target.checked; savePrefs(); };
 $("dkAvShuffle").onchange = e => { prefs.avShuffle = e.target.checked; savePrefs(); };
 $("dkAvFile").onchange = async e => {
@@ -374,13 +383,14 @@ $("dkAvFile").onchange = async e => {
   renderAvatar();
   if (added) toast(`${added} face${added > 1 ? "s" : ""} added`, "success", 1800);
 };
-function previewPull(dir) {
+function previewPull(side) {
   if (!deck) { toast("Open a presentation first", "warning", 2500); return; }
-  if (dir === "next" ? cur >= deck.count - 1 : cur <= 0) { toast(dir === "next" ? "You are on the last slide" : "You are on the first slide", "warning", 2000); return; }
-  go(dir === "next" ? cur + 1 : cur - 1, "avatar");
+  const step = (side === "right") !== prefs.reverse ? 1 : -1;
+  if (step > 0 ? cur >= deck.count - 1 : cur <= 0) { toast(step > 0 ? "You are on the last slide" : "You are on the first slide", "warning", 2000); return; }
+  go(cur + step, "avatar");
 }
-$("dkAvTestNext").onclick = () => previewPull("next");
-$("dkAvTestPrev").onclick = () => previewPull("prev");
+$("dkAvTestNext").onclick = () => previewPull("right");
+$("dkAvTestPrev").onclick = () => previewPull("left");
 renderAvatar();
 
 
@@ -423,3 +433,30 @@ function restoreLast() {                                           // after a re
 renderLibrary();
 if (twin.section === "deck") restoreLast();
 on("section", name => { if (name === "deck") restoreLast(); });
+
+
+// ------------------------------------------------------------ voice: "Hey duck, pull the slide to the right"
+const voice = new VoiceControl({
+  onState: (st, msg) => {
+    const b = $("dkVoice");
+    b.setAttribute("aria-pressed", String(st === "listening"));
+    b.classList.toggle("btn-primary", st === "listening");
+    b.querySelector("span").textContent = st === "listening" ? "Listening" : "Voice off";
+    $("dkVoiceState").textContent = st === "off" ? "Off" : st === "listening" ? 'Say "Hey duck, ..."' : "Problem";
+    $("dkVoiceState").title = msg;
+    if (st === "error") toast(msg, "warning", 6000);
+    prefs.voiceOn = st === "listening"; savePrefs();
+  },
+  onHeard: (text, cmd, woke) => { $("dkLast").textContent = woke && !cmd ? "Heard: Hey duck... (waiting for the command)" : `Voice: ${text.trim().slice(0, 60)}`; },
+  onCommand: cmd => {
+    if (!deck) { toast("Open a presentation first", "warning", 2000); return; }
+    const move = n => go(n, "voice");
+    if (cmd.type === "pull") move(cur + ((cmd.side === "right") !== prefs.reverse ? 1 : -1));
+    else if (cmd.type === "step") move(cur + (cmd.dir === "next" ? 1 : -1));
+    else if (cmd.type === "jump") move(cmd.to === "first" ? 0 : deck.count - 1);
+  },
+});
+window.__deck.voice = voice;
+$("dkVoice").onclick = () => { if (voice.state === "listening") voice.stop(); else voice.start(); };
+on("section", name => { if (name !== "deck" && voice.state !== "off") voice.stop(); });
+if (!voice.supported) { $("dkVoice").disabled = true; $("dkVoice").dataset.tip = "This browser has no speech recognition (use Chrome or Edge)"; $("dkVoiceState").textContent = "Not supported here"; }

@@ -97,6 +97,31 @@ The presenter's hand is the biggest one in view (closest to the camera). The sen
 | Files | Synthetic decks (16:9, 4:3, pictures, shapes, table, chart, dark background, 60 slides), three real PowerPoint-authored decks, a PDF export, a real .ppt saved by PowerPoint, a broken file, a text file | All open or fail with the right message |
 | Long deck | 60 slides: 70 key presses forward and 70 back at 30 ms | Ends on slide 60 and slide 1, one slide in the page at a time, no errors |
 
+## Duck transition and voice control
+
+**Ducks pull the slide.** When the slide changes (a swipe, a voice command, or the preview buttons; keys and clicks too if you tick
+"Also for keys and clicks"), one to three little robot ducks waddle in from the side, stop and look at the audience ("quack!"),
+clip a rope to the slide's edge, turn, and tow the slide off while the next slide zooms up from underneath. The robots follow
+the "micro duck" bipeds: a wide white capsule head with a grey face plate, a flat orange bill, a thin black servo neck, a white torso with
+black servo blocks, grey hips and orange feet with yellow soles, drawn in 3D with three.js from simple shapes (`js/deck/duck.js`,
+no model file). **Each duck's face is one of your photos** (in the "Duck transition" card: *Add photos*, or a photo from the camera): the
+round eye of the robot is replaced by the photo, and each swipe uses the next photo. Without photos the ducks keep the round eye. Settings: ducks
+per swipe (1 to 3), quack sounds, shuffle order. If WebGL or three.js is not available the older flat cartoon avatar is used instead.
+Direction: the slide is pulled off the way you swiped (swipe right = next slide = pulled off to the right; "Reverse direction"
+flips both).
+
+**Voice control** (`js/deck/voice.js`, button *Voice* in the toolbar; Chrome or Edge). After the wake words **"hey duck"**:
+"pull the slide to the right" / "to the left" (also just "right" / "left"), "next", "previous" or "back", "first", "last". The wake words can be in
+the same sentence or in the sentence before (within 6 seconds), and talking without them does nothing. Voice is **off until you
+switch it on**, it needs the microphone, and in Chrome and Edge the audio is sent to the browser maker's speech service to be turned into
+text, so only switch it on when that is acceptable.
+
+Tested: the command parser on 14 phrases (with and without the wake words, "hey dock", two-sentence commands, a partial result followed
+by its final result acting once); in headless Chrome with a real page and WebGL (software renderer) the full 5.6 s transition for
+one to three ducks with and without photos, rope ends on the moving slide's edge, the slide fully off at the end with no leftovers, voice
+commands through the same page code (right, left, no wake words, reverse direction, first-slide boundary), and the flat-avatar fallback. **Not
+tested:** a real microphone and the browser's real speech recognition, and a real person's photos.
+
 ## Known limits
 
 - Animations, slide transitions, embedded audio and video are not played (.pptx and .pdf).

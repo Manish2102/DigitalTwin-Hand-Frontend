@@ -927,6 +927,7 @@
             <option value="strict">Careful</option><option value="normal">Normal</option><option value="easy">Easy</option>
           </select>
           <button class="btn btn-icon" id="dkCamToggle" aria-label="Hide the camera preview" data-tip="Show or hide the camera preview (C)"><i data-icon="eye"></i></button>
+          <button class="btn" id="dkVoice" aria-pressed="false" data-tip="Say &quot;Hey duck, pull the slide to the right&quot;. Uses the microphone and the browser's speech service."><i data-icon="volume"></i><span>Voice off</span></button>
         </div>
         <span class="divider"></span>
         <div class="tool-group">
@@ -965,22 +966,25 @@
             <p class="cam-info" id="dkGestState"></p>
             <div class="field"><span class="field-label">Last swipe</span><span id="dkLast" class="subtle">None yet</span></div>
             <div class="field"><span class="field-label">Tracking</span><span id="dkFps" class="subtle">-</span></div>
+            <div class="field"><span class="field-label">Voice</span><span id="dkVoiceState" class="subtle">Off</span></div>
             <div class="field"><span class="field-label">Timer</span><span id="dkTimer" class="num">0:00</span></div>
             <label class="field" style="cursor:pointer"><span class="field-label">Reverse direction</span><input type="checkbox" id="dkReverse"></label>
           </div>
           <div class="card" id="dkAvatarCard">
-            <div class="card-head"><i data-icon="user"></i><span class="card-title">Avatar transition</span></div>
-            <p class="subtle" style="margin-bottom:8px">When you swipe, a big-headed avatar sprints in, grabs the slide and hauls it away. Add as many faces as you like: <b>each swipe uses the next face, so every face gets its turn before any repeats.</b></p>
-            <label class="field" style="cursor:pointer"><span class="field-label">Avatar pulls the slide</span><input type="checkbox" id="dkAvOn"></label>
+            <div class="card-head"><i data-icon="user"></i><span class="card-title">Duck transition</span></div>
+            <p class="subtle" style="margin-bottom:8px">When the slide changes, little robot ducks waddle in, clip a rope to the slide and tow it away. <b>Each duck wears a face from your photos</b>, and each swipe uses the next photo, so every face gets its turn before any repeats. <b>Voice:</b> switch Voice on and say <i>"Hey duck, pull the slide to the right"</i>.</p>
+            <label class="field" style="cursor:pointer"><span class="field-label">Ducks pull the slide</span><input type="checkbox" id="dkAvOn"></label>
             <label class="field" style="cursor:pointer"><span class="field-label">Also for keys and clicks</span><input type="checkbox" id="dkAvAll"></label>
             <label class="field" style="cursor:pointer"><span class="field-label">Shuffle the order</span><input type="checkbox" id="dkAvShuffle"></label>
+            <label class="field"><span class="field-label">Ducks per swipe</span><select class="select" id="dkDucks"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+            <label class="field" style="cursor:pointer"><span class="field-label">Quack sounds</span><input type="checkbox" id="dkDuckSound"></label>
             <div id="dkAvSlots"></div>
             <div class="tool-group" style="flex-wrap:wrap;gap:6px;margin-top:10px">
-              <button class="btn btn-sm btn-primary" id="dkAvTestNext"><span>Preview: next</span></button>
-              <button class="btn btn-sm btn-primary" id="dkAvTestPrev"><span>Preview: previous</span></button>
+              <button class="btn btn-sm btn-primary" id="dkAvTestNext"><span>Preview: to the right</span></button>
+              <button class="btn btn-sm btn-primary" id="dkAvTestPrev"><span>Preview: to the left</span></button>
             </div>
             <input type="file" id="dkAvFile" accept="image/*" multiple class="hidden">
-            <p class="subtle" style="margin-top:8px">Photos are cropped to a square around the centre and stay in this browser. For the camera option, turn Gestures on and face the camera.</p>
+            <p class="subtle" style="margin-top:8px">Photos are cropped to a square around the centre and stay in this browser. For the camera option, turn Gestures on and face the camera. Voice control sends what you say to your browser's speech service (Chrome or Edge) to be turned into text, so it is off until you switch it on.</p>
           </div>
           <div class="card" id="dkLibCard">
             <div class="card-head"><i data-icon="presentation"></i><span class="card-title">My presentations</span><span class="card-meta" id="dkLibCount"></span></div>
