@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0d11">
+<meta name="robots" content="noindex">
+<title>Sign twin admin · Digital Twin Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/design.css">
+<style>
+  body { padding: var(--s4) var(--s4) var(--s6); max-width: 920px; margin: 0 auto; }
+  .top { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s4); }
+  .top h1 { font-size: var(--fs-lg, 20px); }
+  .top .grow { flex: 1; }
+  .stack { display: flex; flex-direction: column; gap: var(--s3); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row .input { min-width: 0; }
+  textarea.input { width: 100%; min-height: 84px; resize: vertical; font: inherit; padding: 10px 12px; height: auto; }
+  .lines .ln { display: grid; grid-template-columns: minmax(110px, 22%) 1fr auto auto auto; gap: 6px; margin-bottom: 6px; align-items: center; }
+  @media (max-width: 640px) { .lines .ln { grid-template-columns: 1fr 1fr; } .lines .ln .t { grid-column: 1 / -1; } }
+  .lab { font-size: var(--fs-xs); color: var(--text-3); display: block; margin-bottom: 3px; }
+  .ok { color: #46c068; } .warn { color: var(--warning, #e0a83a); }
+  .log { font-size: var(--fs-xs); color: var(--text-3); line-height: 1.6; max-height: 130px; overflow: auto; }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>Sign twin admin</h1>
+    <span class="badge" id="link">Not connected</span>
+    <span class="badge" id="twin">Sign twin: not seen</span>
+    <span class="grow"></span>
+    <a class="btn btn-sm" id="openTwin" href="index.html#signdemo" target="_blank" rel="noopener">Open the Sign twin page</a>
+  </div>
+
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><span class="card-title">Room</span></div>
+      <div class="row">
+        <input class="input mono" id="room" maxlength="12" placeholder="Room code" aria-label="Room code" style="width:150px;text-transform:uppercase">
+        <button class="btn btn-primary btn-sm" id="join">Connect</button>
+        <span class="subtle">Use the room code shown on the Sign twin page (the Room chip at the top), or open this page from the link below it.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">Say something now</span></div>
+      <textarea class="input" id="free" maxlength="500" placeholder="Type what the avatar should say"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn btn-primary" id="freeTwin">Play on the Sign twin</button>
+        <button class="btn" id="freeHere">Preview here</button>
+        <button class="btn btn-ghost" id="stop">Stop</button>
+        <span class="subtle" id="freeMsg"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">What the avatar says for each sign</span><span class="card-meta" id="sync"></span></div>
+      <p class="subtle" style="margin-bottom:8px">Add a line for a sign. When the Sign twin recognises that sign, it says your line. Changes are sent to the Sign twin as you type.</p>
+      <div class="lines" id="lines"></div>
+      <div class="row" style="margin-top:6px">
+        <button class="btn btn-sm" id="add">Add a line</button>
+        <button class="btn btn-sm" id="push">Send all to the Sign twin</button>
+        <button class="btn btn-sm btn-ghost" id="reset">Reset to defaults</button>
+      </div>
+      <datalist id="signs"></datalist>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">Voice</span></div>
+      <div class="row">
+        <div style="flex:1;min-width:200px"><span class="lab">Voice (for the preview here and, if the Sign twin's computer has it, there too)</span><select class="input" id="voice" style="width:100%"></select></div>
+        <div style="width:150px"><span class="lab">Speed <span id="rateV"></span></span><input type="range" id="rate" min="0.6" max="1.4" step="0.05" value="0.95" style="width:100%"></div>
+        <div style="width:150px"><span class="lab">Pitch <span id="pitchV"></span></span><input type="range" id="pitch" min="0.6" max="1.6" step="0.05" value="1.05" style="width:100%"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-title">Activity</span></div>
+      <div class="log" id="log">Nothing yet.</div>
+      <p class="subtle" style="margin-top:8px">The Sign twin page must be open in the same room, and you must have clicked on it once (for example Start camera) so the browser allows it to speak.</p>
+    </div>
+  </div>
+
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>

@@ -80,6 +80,7 @@ function connect() {
   ws.onerror = () => { if (linkUp) logEvent("Backend link lost - reconnecting", "warn"); linkUp = false; };
   ws.onmessage = e => {
     const m = JSON.parse(e.data);
+    if (m.type === "admin") { emit("admin", m); return; }   // the Sign twin admin app: not a phone
     m.p = m.p === 2 ? 2 : 1;                      // player slot; phones that never say are player 1
     phoneSeen(m.p);                               // everything in this room comes from a phone
     emit("raw", m);                               // the games read every player's data from here

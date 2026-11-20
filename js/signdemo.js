@@ -4,7 +4,7 @@
 // have a line (js/sign/script.js, editable on this page) plus any signs you taught on the Sign language page (recordings are shared,
 // so "Welcome" taught there works here). Nothing is spoken for a "not sure" result. The Sign language page is not changed by this.
 
-import { $, on, twin } from "./core.js";
+import { $, on, twin, sendToPhone, ROOM } from "./core.js";
 import { icon, hydrateIcons } from "./icons.js";
 import { toast } from "./ui.js";
 import { Vision, HAND_BONES } from "./vision/vision.js";
@@ -122,3 +122,26 @@ on("section", name => {
 });
 hydrateIcons($("sec-signdemo"));
 if (twin.section === "signdemo") load().catch(() => {});
+
+// ------------------------------------------------------- admin app
+// admin.html connects to the same room and sends { type: "admin", cmd: "say" | "stop" | "lines" | "hello", ... }.
+// Anything it makes the avatar say is spoken here, on this page's speakers. Replies go back as { type: "adminAck" }.
+let adminSeen = 0;
+on("admin", m => {
+  adminSeen = Date.now();
+  if (m.cmd === "say" && typeof m.text === "string" && m.text.trim()) {
+    talker.speak(m.text.slice(0, 500), { rate: Number(m.rate) || undefined, pitch: Number(m.pitch) || undefined, voice: m.voice || null });
+    flash(m.label || "Admin", "ok");
+    $("sdSaid").textContent = m.text; $("sdSaid").classList.remove("empty");
+    log.unshift({ label: m.label || "Admin", line: m.text, byHand: true, at: Date.now() }); log.length = Math.min(log.length, 8);
+    $("sdLog").innerHTML = log.map(l => `<div><b>${esc(l.label)}</b>: ${esc(l.line)}</div>`).join("");
+  } else if (m.cmd === "stop") talker.stop();
+  else if (m.cmd === "lines" && m.lines && typeof m.lines === "object") {
+    const clean = {};
+    for (const [k, v] of Object.entries(m.lines)) if (typeof k === "string" && typeof v === "string" && k.trim() && v.trim()) clean[k.slice(0, 40)] = v.slice(0, 500);
+    talker.setLines(clean); applySet();
+  }
+  sendToPhone({ type: "adminAck", cmd: m.cmd, id: m.id, speaking: window.speechSynthesis?.speaking ?? false, lines: Object.keys(talker.getLines()).length });
+});
+
+$("sdAdminLink").href = `admin.html?room=${ROOM}`;     // the admin app joins this page's room

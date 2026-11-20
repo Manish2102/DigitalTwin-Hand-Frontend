@@ -76,7 +76,7 @@ export function createTalker(panel, { toast = () => {}, onChange = () => {} } = 
 
   let current = null;                                    // keep a reference: some browsers drop an utterance that gets garbage-collected
   function voiceStatus(msg, bad = false) { const e = $("tkVoiceStatus"); if (e) { e.textContent = msg; e.style.color = bad ? "var(--warning, #e0a83a)" : ""; } }
-  function speak(text, { cancel = true } = {}) {
+  function speak(text, { cancel = true, rate = 0.95, pitch = 1.05, voice = null } = {}) {
     text = String(text ?? "").trim();
     if (!text) return;
     $("tkBubble").textContent = text; $("tkBubble").classList.remove("idle"); $("tkBubble").classList.add("talking");
@@ -88,9 +88,9 @@ export function createTalker(panel, { toast = () => {}, onChange = () => {} } = 
     let started = false, tries = 0;
     const attempt = () => {
       tries++;
-      const u = new SpeechSynthesisUtterance(text), v = pickVoice();
+      const u = new SpeechSynthesisUtterance(text), v = (voice && synth.getVoices().find(x => x.name === voice)) || pickVoice();
       if (v) u.voice = v;
-      u.rate = 0.95; u.pitch = 1.05; u.volume = 1;
+      u.rate = rate; u.pitch = pitch; u.volume = 1;
       u.onstart = () => { started = true; talking = true; voiceStatus("Speaking..."); };
       u.onboundary = () => { level = 1; };                // a word starts: open the mouth wide
       u.onend = () => { if (current === u) current = null; if (!synth.speaking && !synth.pending) { stopTalking(); if (started) voiceStatus("Voice OK"); } };
@@ -163,6 +163,10 @@ export function createTalker(panel, { toast = () => {}, onChange = () => {} } = 
 
   return {
     speak,
+    stop() { synth?.cancel(); stopTalking(); },
+    // replace all lines (used by the admin app)
+    setLines(obj) { lines = { ...obj }; save(); renderRows(); },
+    getLines: () => ({ ...lines }),
     // call from a click (e.g. Start camera): lets the browser know speech is allowed on this page
     unlock() { if (!synth) return; try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; synth.speak(u); } catch {} },
     // a sign was recognised: say its line (words) or its name (letters)

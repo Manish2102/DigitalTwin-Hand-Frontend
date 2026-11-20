@@ -174,3 +174,14 @@ plus signs you taught on the Sign language page (such as Welcome; the recordings
 list, a sign that is NOT in the list can be misread as one that is (a test video of Hospital was read as "How are you" at 71%).
 Nothing is spoken for a "not sure" result: it shows suggestions you can tap. "Say each sign out loud" turns speech off;
 *Test voice* and *Stop* are next to it.
+
+## Sign twin admin app
+
+`admin.html` (open it from the Sign twin page, "Open admin app", which adds the room code) is a separate page where you type what the
+avatar should say and play it. It joins the Sign twin page's room through the same relay the phone uses (`/ws/phone?room=ROOM`) and sends
+`{ type: "admin", cmd }` messages: `say` (speak this now, with optional voice, speed and pitch), `stop`, `lines` (replace the line for each
+sign) and `hello` (presence check; the Sign twin answers with `adminAck`). The Sign twin page speaks on its own speakers; "Preview here"
+speaks on the admin computer only. Lines are saved in the admin browser and pushed to the Sign twin page as you type. The room code is
+the only access control, so treat it as a secret and use a fresh room for each event. The Sign twin page must be open in the same room and must
+have had one click (for example Start camera) before the browser lets it speak. Without Redis on the backend, messages can be lost if the
+admin and the Sign twin page land on different backend instances (the same limit as phones).
