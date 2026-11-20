@@ -1,4 +1,4 @@
-// signdemo.js - "Sign demo v1": a recognised sign triggers a line you wrote, spoken by a talking avatar.
+// signdemo.js - "Sign twin": a recognised sign triggers a line you wrote, spoken by a talking avatar.
 //
 // Recognition is real: the same hand and body tracking, models and recogniser as the Sign language page, limited to the signs that
 // have a line (js/sign/script.js, editable on this page) plus any signs you taught on the Sign language page (recordings are shared,

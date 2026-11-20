@@ -10,6 +10,6 @@ import "./games.js";       // Arcade: browser games controlled by the phone
 import "./scan.js";        // Object to 3D: webcam photo -> depth AI -> 3D model
 import "./deck.js";        // GestureDeck: present .pptx / .pdf, swipe to change slides
 import "./sign.js";        // Sign language: Indian Sign Language to text
-import "./signdemo.js";    // Sign demo v1: a recognised sign triggers a hardcoded line spoken by an avatar
+import "./signdemo.js";    // Sign twin: a recognised sign triggers a hardcoded line spoken by an avatar
 
 start();

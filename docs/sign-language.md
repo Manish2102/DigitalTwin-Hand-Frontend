@@ -163,9 +163,9 @@ This has not been measured with a real person signing live.
 A printable guide with pictures, a set-up checklist and a demo script: [isl-presentation-guide.pdf](isl-presentation-guide.pdf)
 (built by `tools/isl/make_guide.py`).
 
-## Sign demo v1: spoken lines and an avatar
+## Sign twin: spoken lines and an avatar
 
-A separate page (sidebar: *Sign demo v1*); the Sign language page above is unchanged. When a sign is recognised, the avatar (a small
+A separate page (sidebar: *Sign twin*); the Sign language page above is unchanged. When a sign is recognised, the avatar (a small
 SVG face at the top of the side panel) says a line out loud with the browser's speech synthesis, and its mouth moves while it talks
 (`js/signdemo.js`, `js/sign/talker.js`). The recognition is real (same tracking, models and recogniser as above); only the sentence
 spoken is yours. Which line comes from `js/sign/script.js` (hardcode your own there) or from the "What the avatar says" table on the
