@@ -18,7 +18,7 @@ const savePrefs = () => { try { localStorage.setItem(PREFS, JSON.stringify(prefs
 prefs.corner ??= "br"; prefs.sens ??= "normal"; prefs.reverse ??= false; prefs.camVisible ??= true; prefs.camSize ??= "m";
 
 let deck = null, cur = 0, front = $("dkSlideA"), back = $("dkSlideB"), showing = 0, loading = false;
-let gesturesOn = false, black = false, startedAt = 0;
+let lastSeen = "", gesturesOn = false, black = false, startedAt = 0;
 const detector = new SwipeDetector({ sensitivity: prefs.sens });
 const vision = new Vision({ hands: true, pose: false, numHands: 2 });
 const stats = { swipes: 0, last: "", lastAt: 0 };
@@ -211,7 +211,12 @@ vision.onResult(r => {
   const dir = detector.update(performance.now(), r.hands, r.aspect);
   drawCam(r);
   $("dkMeter").style.width = `${Math.round(detector.progress * 100)}%`;
-  if (!dir) return;
+  if (!dir) {
+    const seen = r.hands.length ? "Hand seen. Swipe sideways with an open palm." : "No hand seen. Hold an open hand up to the camera.";
+    if (seen !== lastSeen) { lastSeen = seen; $("dkLast").textContent = seen; }
+    return;
+  }
+  lastSeen = "";
   stats.swipes++; stats.last = dir; stats.lastAt = Date.now();
   const forward = prefs.reverse ? dir === "left" : dir === "right";
   if (twin.section === "deck" && deck) forward ? next("gesture") : prev("gesture");

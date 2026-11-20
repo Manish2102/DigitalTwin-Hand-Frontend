@@ -10,9 +10,9 @@
 // Directions are as the presenter sees them: "right" = the hand moves to the presenter's right.
 
 const PRESETS = {
-  strict: { palms: 2.8, minFrac: 0.16, maxMs: 520, straight: 0.5, mono: 0.85, cooldown: 1100, back: 1600, settle: 250 },
-  normal: { palms: 2.2, minFrac: 0.12, maxMs: 620, straight: 0.6, mono: 0.8, cooldown: 900, back: 1400, settle: 200 },
-  easy:   { palms: 1.7, minFrac: 0.09, maxMs: 760, straight: 0.7, mono: 0.75, cooldown: 800, back: 1200, settle: 150 },
+  strict: { palms: 2.4, minFrac: 0.15, maxMs: 700, straight: 0.6, mono: 0.75, cooldown: 1100, back: 1600, settle: 200 },
+  normal: { palms: 1.9, minFrac: 0.11, maxMs: 850, straight: 0.8, mono: 0.7,  cooldown: 900,  back: 1400, settle: 120 },
+  easy:   { palms: 1.4, minFrac: 0.08, maxMs: 1000, straight: 1.0, mono: 0.65, cooldown: 800,  back: 1200, settle: 80 },
 };
 const MIN_MS = 90;               // faster than this is tracking noise, not a hand movement
 const KEEP_MS = 1500;
@@ -30,7 +30,7 @@ export function handInfo(lm, aspect = 4 / 3) {
   for (const [tip, pip] of [[8, 6], [12, 10], [16, 14], [20, 18]]) {
     if (dist(lm[tip], lm[0], aspect) > dist(lm[pip], lm[0], aspect) * 1.12) straight++;
   }
-  return { x: 1 - x, y, palm, open: straight >= 3 };
+  return { x: 1 - x, y, palm, open: straight >= 2 };
 }
 
 export class SwipeDetector {
@@ -71,22 +71,23 @@ export class SwipeDetector {
       this.progress = Math.max(this.progress, Math.min(1, Math.abs(dx) / need));
       if (Math.abs(dx) < need || Math.abs(dy) > c.straight * Math.abs(dx)) continue;
       const seg = this.buf.slice(k), dir = Math.sign(dx);
-      if (seg.length < 4) continue;                                   // a real movement spans several frames
+      if (seg.length < 3) continue;                                   // a real movement spans several frames
       let same = 0, open = 0, jump = 0;
       for (let j = 1; j < seg.length; j++) {
         const step = (seg[j].x - seg[j - 1].x) * aspect;
         if (Math.sign(step) === dir || step === 0) same++;
         jump = Math.max(jump, Math.abs(step), Math.abs(seg[j].y - seg[j - 1].y));
       }
-      if (jump > 0.5 * Math.abs(dx)) continue;                        // one-frame jump = tracking glitch (e.g. a hand swap)
+      if (jump > 0.7 * Math.abs(dx)) continue;                        // one-frame jump = tracking glitch (e.g. a hand swap)
       for (const p of seg) if (p.open) open++;
       if (same < c.mono * (seg.length - 1)) continue;
       if (this.requireOpen && open < 0.6 * seg.length) continue;
       // the hand must have been in view, and fairly still, just before the movement began
-      const before = this.buf.filter(p => p.t < s.t && p.t >= s.t - c.settle);
+      const before = this.buf.filter(p => p.t < s.t && p.t >= s.t - 450);
       if (!before.length || s.t - this.buf[0].t < c.settle) continue;
       const drift = Math.max(...before.map(p => Math.abs(p.x - s.x) * aspect));
-      if (drift > 0.6 * palm) continue;
+      if (drift > 1.0 * palm) continue;                               // a wave back and forth is not a swipe
+      if (this.requireOpen && !(seg[seg.length - 1].open && seg[seg.length - 2].open)) continue;   // the hand must still be open at the end
       const name = dir > 0 ? "right" : "left";
       if (this.backDir === -dir && t < this.backUntil) {             // the hand coming back after a swipe
         this.buf = []; this.coolUntil = t + 300; return null;
