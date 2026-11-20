@@ -163,11 +163,14 @@ This has not been measured with a real person signing live.
 A printable guide with pictures, a set-up checklist and a demo script: [isl-presentation-guide.pdf](isl-presentation-guide.pdf)
 (built by `tools/isl/make_guide.py`).
 
-## Avatar and spoken lines
+## Sign demo v1: spoken lines and an avatar
 
-When a sign is recognised, the avatar (a small SVG face at the top of the side panel) says a line out loud with the browser's
-speech synthesis, and its mouth moves while it talks (`js/sign/talker.js`). Which line comes from `js/sign/script.js`
-(hardcode your own there) or from the "What the avatar says" table on the page, which is stored in the browser and wins until you
-press "Reset to defaults". A sign with no line is spoken as its own name; letters are spoken as the letter. The line is spoken only for a
-recognised sign (never for a "not sure" result), so the avatar says what the app actually recognised. "Say each sign out loud"
-turns it off; *Test voice* and *Stop* are next to it.
+A separate page (sidebar: *Sign demo v1*); the Sign language page above is unchanged. When a sign is recognised, the avatar (a small
+SVG face at the top of the side panel) says a line out loud with the browser's speech synthesis, and its mouth moves while it talks
+(`js/signdemo.js`, `js/sign/talker.js`). The recognition is real (same tracking, models and recogniser as above); only the sentence
+spoken is yours. Which line comes from `js/sign/script.js` (hardcode your own there) or from the "What the avatar says" table on the
+page, which is stored in the browser and wins until you press "Reset to defaults". The page only listens for the signs that have a line,
+plus signs you taught on the Sign language page (such as Welcome; the recordings are shared). Because it chooses among that short
+list, a sign that is NOT in the list can be misread as one that is (a test video of Hospital was read as "How are you" at 71%).
+Nothing is spoken for a "not sure" result: it shows suggestions you can tap. "Say each sign out loud" turns speech off;
+*Test voice* and *Stop* are next to it.

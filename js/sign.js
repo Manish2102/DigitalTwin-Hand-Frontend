@@ -10,7 +10,6 @@ import { toast, copyText } from "./ui.js";
 import { Vision, HAND_BONES } from "./vision/vision.js";
 import { loadModel } from "./sign/model.js";
 import { Recognizer, dist, MATCH_D0 } from "./sign/recognizer.js";
-import { createTalker } from "./sign/talker.js";
 import { REST_Y, anchors } from "./sign/features.js";
 
 // Easy, distinct signs for a talk or demo (each recognised in every test video). A short list is far more accurate than 106 words.
@@ -20,7 +19,6 @@ const STORE = "dtl.signTemplates", SETKEY = "dtl.signSet";
 let wordSet0 = (() => { try { return localStorage.getItem(SETKEY) || "demo"; } catch { return "demo"; } })();
 let wordSet = wordSet0 === "phrases" ? "demo" : wordSet0;
 let samples = (() => { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; } })();   // { label: [base64 float32] }
-const talker = createTalker($("sec-sign").querySelector(".panel"), { toast });
 const vision = new Vision({ hands: true, pose: true, numHands: 2 });
 let rec = null, models = null, modelsP = null, mode = "words";
 let text = [];                     // tokens: { t: "word" | "letter" | "space", s }
@@ -29,7 +27,7 @@ window.__sign = { vision, get rec() { return rec; }, get text() { return text; }
 
 function loadModels() {
   modelsP ??= Promise.all([loadModel(new URL("./sign/models/words.json", import.meta.url)), loadModel(new URL("./sign/models/letters.json", import.meta.url))])
-    .then(([words, letters]) => { models = { words, letters }; rec = new Recognizer(models); rec.setMode(mode); applyWordSet(); renderTeach(); renderVocab(); talker.setLabels(["Welcome", ...models.words.labels]); renderAccuracy(); return models; })
+    .then(([words, letters]) => { models = { words, letters }; rec = new Recognizer(models); rec.setMode(mode); applyWordSet(); renderTeach(); renderVocab(); renderAccuracy(); return models; })
     .catch(e => { modelsP = null; throw e; });
   return modelsP;
 }
@@ -69,7 +67,6 @@ function handle(ev) {
     return;
   }
   add(ev.type, ev.label);
-  talker.say(ev.label, ev.type);
   showResult({ kind: "ok", label: ev.label, p: ev.p, top: ev.top, type: ev.type });
 }
 
@@ -105,7 +102,7 @@ function showResult(r) {
   } else {
     el.innerHTML = `<div class="sl-res unsure"><b>Not sure</b><span class="subtle">${esc(r.reason)}. Sign it again, or tap the right one:</span>
       <div class="sl-sugg">${r.top.map(t => `<button class="btn btn-sm" data-add="${esc(t.label)}">${esc(t.label)} <span class="subtle">${Math.round(t.p * 100)}%</span></button>`).join("")}</div></div>`;
-    el.querySelectorAll("[data-add]").forEach(b => b.onclick = () => { add(mode === "words" ? "word" : "letter", b.dataset.add); talker.say(b.dataset.add, mode === "words" ? "word" : "letter"); el.innerHTML = `<div class="sl-res ok"><b>${esc(b.dataset.add)}</b><span class="badge">added by you</span></div>`; });
+    el.querySelectorAll("[data-add]").forEach(b => b.onclick = () => { add(mode === "words" ? "word" : "letter", b.dataset.add); el.innerHTML = `<div class="sl-res ok"><b>${esc(b.dataset.add)}</b><span class="badge">added by you</span></div>`; });
   }
   $("slFlash").textContent = r.kind === "ok" ? r.label : "Not sure";
   $("slFlash").className = `sl-flash show ${r.kind}`;
@@ -168,7 +165,14 @@ $("slModes").querySelectorAll("button").forEach(b => b.onclick = () => {
 $("slUndo").onclick = () => { while (text.length && text[text.length - 1].t === "space") text.pop(); text.pop(); renderText(); };
 $("slClear").onclick = () => { text = []; renderText(); };
 $("slCopy").onclick = () => copyText(sentence(), "Text copied");
-$("slSpeak").onclick = () => { const s = sentence(); if (s) talker.speak(s); };
+$("slSpeak").onclick = () => {
+  const s = sentence();
+  if (!s || !("speechSynthesis" in window)) { toast("Speech is not available in this browser", "warning"); return; }
+  const u = new SpeechSynthesisUtterance(s);
+  const voices = speechSynthesis.getVoices();
+  u.voice = voices.find(v => v.lang === "en-IN") ?? voices.find(v => v.lang?.startsWith("en")) ?? null;
+  u.rate = 0.95; speechSynthesis.cancel(); speechSynthesis.speak(u);
+};
 
 // ---------------------------------------------------------------- vocabulary
 function renderVocab() {

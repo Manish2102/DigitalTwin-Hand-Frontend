@@ -247,7 +247,7 @@
   .av-slot .av-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
   @media (prefers-reduced-motion: reduce) { .dk-av.walk .av-leg, .dk-av.walk .av-arm, .dk-av.walk .av-head, .dk-av.walk .av-bob { animation-duration: 1s; } }
   /* GestureDeck */
-  #sec-deck .workspace, #sec-sign .workspace { min-height: 0; }
+  #sec-deck .workspace, #sec-sign .workspace, #sec-signdemo .workspace { min-height: 0; }
   .dk-stage { position: relative; flex: 1; min-height: 340px; overflow: hidden; background: #050608; outline: none;
               background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 24px 24px; }
   .dk-stage.drag { box-shadow: inset 0 0 0 3px var(--accent); }
@@ -502,6 +502,10 @@
       <button class="nav-item" data-section="sign" data-tip="Sign language" data-tip-pos="right">
         <i data-icon="signs" data-size="18"></i>
         <span class="nav-text"><span class="nav-title">Sign language</span><span class="nav-desc">Indian Sign Language to text</span></span>
+      </button>
+      <button class="nav-item" data-section="signdemo" data-tip="Sign demo v1" data-tip-pos="right">
+        <i data-icon="signs" data-size="18"></i>
+        <span class="nav-text"><span class="nav-title">Sign demo v1</span><span class="nav-desc">Signs trigger your lines, spoken</span></span>
       </button>
     </nav>
 
@@ -1079,6 +1083,44 @@
             <div class="card-head"><i data-icon="chart"></i><span class="card-title">Measured accuracy</span></div>
             <div id="slAccuracy"><p class="subtle">Loading...</p></div>
             <p class="subtle" style="margin-top:8px">Trained on INCLUDE (AI4Bharat, IIT Madras) and an ISL fingerspelling dataset from Mendeley Data, both CC BY 4.0. Facial expressions and full ISL grammar are not recognised yet; see the reference for details.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+    <section class="section" id="sec-signdemo" aria-label="Sign demo v1">
+      <div class="toolbar">
+        <div class="tool-group">
+          <button class="btn btn-primary" id="sdCam"><i data-icon="camera"></i><span>Start camera</span></button>
+        </div>
+        <span class="divider"></span>
+        <span class="subtle">Version 1: a sign you make triggers a line you wrote; an avatar says it. The Sign language page is unchanged.</span>
+      </div>
+      <div class="workspace">
+        <div class="stage-col" style="display:flex;flex-direction:column">
+          <div class="sl-stage" id="sdStage">
+            <video id="sdVideo" muted playsinline></video>
+            <canvas id="sdCanvas" aria-label="Camera with the tracked hands"></canvas>
+            <div class="sl-top"><span class="badge" id="sdState">Camera off</span><span class="badge" id="sdFps"></span></div>
+            <div class="sl-flash" id="sdFlash" aria-live="polite"></div>
+            <div class="sl-empty" id="sdEmpty">
+              <i data-icon="signs" data-size="40"></i>
+              <h2>Sign demo v1</h2>
+              <p id="sdEmptyText">Start the camera, stand back so your hands and shoulders are in view, sign one word, then lower your hands. The avatar says the line you wrote for it.</p>
+            </div>
+          </div>
+          <div class="sl-text-wrap">
+            <div class="sl-text empty" id="sdSaid" aria-live="polite"></div>
+            <div class="subtle" id="sdLog" style="margin-top:6px"></div>
+          </div>
+        </div>
+        <aside class="panel" id="sdPanel">
+          <div class="card">
+            <div class="card-head"><span class="card-title">How this page works</span></div>
+            <ol class="howto">
+              <li>It only listens for the signs in the "What the avatar says" table (plus signs you taught on the Sign language page, such as Welcome).</li>
+              <li>When it recognises one, the avatar says your line out loud. If it is not sure, it says nothing and offers suggestions.</li>
+              <li>Edit the lines in the table, or in <code>js/sign/script.js</code>.</li>
+            </ol>
           </div>
         </aside>
       </div>

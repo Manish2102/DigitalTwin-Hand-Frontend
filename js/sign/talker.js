@@ -22,7 +22,7 @@ const CSS = `
   .tk-tools { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin: 8px 0 0; }
 `;
 
-export function createTalker(panel, { toast = () => {} } = {}) {
+export function createTalker(panel, { toast = () => {}, onChange = () => {} } = {}) {
   const style = document.createElement("style"); style.textContent = CSS; document.head.appendChild(style);
   const wrap = document.createElement("div");
   wrap.innerHTML = `
@@ -112,7 +112,7 @@ export function createTalker(panel, { toast = () => {} } = {}) {
   })(t0);
 
   // ----------------------------------------------------- the lines
-  const save = () => wr(LINES_KEY, lines);
+  const save = () => { wr(LINES_KEY, lines); onChange(Object.keys(lines)); };
   function renderRows() {
     $("tkRows").innerHTML = Object.entries(lines).map(([l, t], i) => `<div class="tk-row" data-i="${i}">
       <input class="input tk-l" list="tkLabels" value="${esc(l)}" aria-label="Sign" placeholder="sign">
@@ -148,6 +148,7 @@ export function createTalker(panel, { toast = () => {} } = {}) {
       speak(text, { cancel: type === "word" });
     },
     lineFor: label => lines[label] ?? label,
+    labels: () => Object.keys(lines),
     setLabels(list) { $("tkLabels").innerHTML = [...new Set(list)].map(l => `<option value="${esc(l)}">`).join(""); },
     get auto() { return auto; },
   };

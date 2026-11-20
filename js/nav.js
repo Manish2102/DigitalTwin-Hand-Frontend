@@ -13,6 +13,7 @@ const SECTIONS = {
   scan: { title: "Object to 3D", desc: "Show an object to the laptop webcam: an AI model estimates its depth and builds a 3D model you can rotate and export." },
   deck: { title: "GestureDeck", desc: "Present your own PowerPoint or PDF and change slides with a swipe of your hand, seen by the laptop camera." },
   sign: { title: "Sign language", desc: "Indian Sign Language to text: sign to the laptop camera and read the words as you sign." },
+  signdemo: { title: "Sign demo v1", desc: "A signed word triggers a line you wrote, spoken out loud by a talking avatar. Recognition is real; the lines are yours." },
 };
 // The games add what the phone needs to know (which sensor, which game); see games.js
 let modeExtra = () => ({});
