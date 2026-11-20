@@ -10,9 +10,9 @@
 // Directions are as the presenter sees them: "right" = the hand moves to the presenter's right.
 
 const PRESETS = {
-  strict: { maxFrac: 0.40, palms: 2.4, minFrac: 0.15, maxMs: 700, straight: 0.6, mono: 0.75, cooldown: 1100, back: 1600, settle: 200 },
-  normal: { maxFrac: 0.30, palms: 1.9, minFrac: 0.11, maxMs: 850, straight: 0.8, mono: 0.7,  cooldown: 900,  back: 1400, settle: 120 },
-  easy:   { maxFrac: 0.22, palms: 1.4, minFrac: 0.08, maxMs: 1000, straight: 1.0, mono: 0.65, cooldown: 800,  back: 1200, settle: 80 },
+  strict: { vmin: 1.8, maxFrac: 0.40, palms: 2.4, minFrac: 0.15, maxMs: 700, straight: 0.6, mono: 0.75, cooldown: 1100, back: 1600, settle: 200 },
+  normal: { vmin: 1.4, maxFrac: 0.30, palms: 1.9, minFrac: 0.11, maxMs: 850, straight: 0.8, mono: 0.7,  cooldown: 900,  back: 1400, settle: 120 },
+  easy:   { vmin: 1.1, maxFrac: 0.22, palms: 1.4, minFrac: 0.08, maxMs: 1000, straight: 1.0, mono: 0.65, cooldown: 800,  back: 1200, settle: 80 },
 };
 const MAX_PALM = 0.2;            // palm length (frame heights) used for the distance rules, at most
 const MIN_MS = 90;               // faster than this is tracking noise, not a hand movement
@@ -82,7 +82,9 @@ export class SwipeDetector {
       if (jump > 0.7 * Math.abs(dx)) continue;                        // one-frame jump = tracking glitch (e.g. a hand swap)
       for (const p of seg) if (p.open) open++;
       if (same < c.mono * (seg.length - 1)) continue;
-      if (this.requireOpen && open < 0.6 * seg.length) continue;
+      const mv = seg.filter((p, j) => j > 0 && Math.abs(p.x - seg[j - 1].x) * aspect > 0.5 * Math.abs(dx) / (seg.length - 1));   // frames where the hand really moves
+      if (this.requireOpen && mv.length && mv.filter(p => p.open).length < 0.6 * mv.length) continue;   // ... must be open
+      if (this.requireOpen && open < 0.4 * seg.length) continue;
       // the hand must have been in view, and fairly still, just before the movement began
       const before = this.buf.filter(p => p.t < s.t && p.t >= s.t - 450);
       if (!before.length || s.t - this.buf[0].t < c.settle) continue;
@@ -98,7 +100,39 @@ export class SwipeDetector {
       this.buf = []; this.progress = 1;
       break;
     }
+    if (!fired) fired = this._fast(t, aspect);
     return fired;
+  }
+
+  // Second way to swipe, the same idea as the Air Slides game: the hand is simply FAST and sideways.
+  // Speed is in frame widths per second over the last 250 ms. Works when tracking drops frames or the hand is close.
+  _fast(t, aspect) {
+    const c = this.cfg, b = this.buf;
+    const win = b.filter(p => t - p.t <= 250);
+    if (win.length < 3) return null;
+    const a = win[0], z = win[win.length - 1], sec = (z.t - a.t) / 1000;
+    if (sec < 0.08) return null;
+    const dx = z.x - a.x, dyW = (z.y - a.y) / aspect;                  // frame widths
+    this.progress = Math.max(this.progress, Math.min(1, Math.abs(dx) / sec / c.vmin));
+    if (Math.abs(dx) / sec < c.vmin || Math.abs(dx) < 0.15 || Math.abs(dx) < 1.6 * Math.abs(dyW)) return null;
+    const dir = Math.sign(dx);
+    let same = 0, jump = 0, open = 0;
+    for (let j = 1; j < win.length; j++) {
+      const st = win[j].x - win[j - 1].x;
+      if (Math.sign(st) === dir || st === 0) same++;
+      jump = Math.max(jump, Math.abs(st));
+    }
+    for (const p of win) if (p.open) open++;
+    if (jump > 0.7 * Math.abs(dx) || same < 0.7 * (win.length - 1)) return null;
+    if (this.requireOpen && (open < 0.6 * win.length || !z.open)) return null;
+    const before = b.filter(p => p.t < a.t && p.t >= a.t - 450);
+    if (!before.length || a.t - b[0].t < c.settle) return null;
+    const palm = Math.min((a.palm + z.palm) / 2, MAX_PALM);
+    if (Math.max(...before.map(p => Math.abs(p.x - a.x))) * aspect > 1.0 * palm) return null;
+    if (this.backDir === -dir && t < this.backUntil) { this.buf = []; this.coolUntil = t + 300; return null; }
+    this.coolUntil = t + c.cooldown; this.backDir = dir; this.backUntil = t + c.back;
+    this.buf = []; this.progress = 1;
+    return dir > 0 ? "right" : "left";
   }
 }
 
