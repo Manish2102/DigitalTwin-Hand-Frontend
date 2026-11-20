@@ -11,6 +11,7 @@
 import { anchors, frameFeatures, sequenceFeatures, isActive, FRAME_DIM } from "./features.js";
 
 const END_REST_MS = 280, MIN_SIGN_MS = 350, MAX_SIGN_MS = 4500;
+const MIN_LIST_MASS = 0.3;       // words from a short list: least network probability the list must hold in total
 const HOLD_MS = 650, LETTER_WINDOW = 12, MARGIN = 0.12;
 // Distance (standardised features) at which a recording stops looking like one of the user's own: repeats of one sign by one
 // person measured about 8-14, other signs 17 and up (tools/isl/experiment_match.py).
@@ -122,7 +123,15 @@ export class Recognizer {
     const cand = new Set([...(this.subset ?? L), ...Object.keys(T)]);
     const s = {}; let msum = 0;
     for (let i = 0; i < L.length; i++) if (cand.has(L[i])) { s[L[i]] = pm[i]; msum += pm[i]; }
+    // If the network puts little weight on ANY listed sign, the sign is probably not one of them. Re-scaling those tiny numbers
+    // up to 100% (as below) is what made one listed word, such as "Thank you", win for every other sign: say "not sure" instead.
+    const own = new Set(Object.keys(this.templates ?? {}));
+    if (msum < MIN_LIST_MASS && !own.size) {
+      const top = Array.from(pm, (p, i) => ({ label: L[i], p })).sort((a, b) => b.p - a.p).slice(0, 3);
+      return { type: "unsure", top, reason: "not one of the listed signs" };
+    }
     for (const l of cand) s[l] = (s[l] ?? 0) / (msum || 1);
+    if (msum < MIN_LIST_MASS) for (const l of cand) if (!own.has(l)) s[l] *= msum / MIN_LIST_MASS;
     if (this.templates) {
       // a taught sign gets a boost from how closely this matches ITS recordings; it never lowers the other signs
       const z = model.standardise(x);
