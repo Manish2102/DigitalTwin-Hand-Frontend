@@ -932,8 +932,17 @@
           </div>
         </div>
         <span class="divider"></span>
+        <div class="tool-group" id="slSetGroup" aria-label="Which words">
+          <div class="seg" id="slSets">
+            <button data-set="phrases" class="sel" data-tip="13 everyday phrases: much easier to recognise than all 106 words">Presentation phrases</button>
+            <button data-set="mine" id="slSetMine" class="hidden" data-tip="Only the signs you taught it">My signs</button>
+            <button data-set="all">All words</button>
+          </div>
+        </div>
+        <span class="divider"></span>
         <div class="tool-group">
           <a class="btn" href="https://github.com/Manish2102/DigitalTwin-Hand-Frontend/blob/main/docs/isl-reference.md" target="_blank" rel="noopener" data-tip="Every supported sign with an illustration and a description"><i data-icon="book"></i><span>Sign reference</span></a>
+          <a class="btn" href="docs/isl-presentation-guide.pdf" target="_blank" rel="noopener" data-tip="PDF: how to sign the 13 presentation phrases and run a live demo"><i data-icon="book"></i><span>Presentation guide (PDF)</span></a>
         </div>
       </div>
       <div class="workspace">
@@ -966,6 +975,17 @@
             <div class="card-head"><i data-icon="checkCircle"></i><span class="card-title">Last sign</span></div>
             <div id="slResult"><p class="subtle">Nothing yet.</p></div>
             <ul class="list" id="slHistory" style="margin-top:8px"></ul>
+          </div>
+          <div class="card" id="slTeachCard">
+            <div class="card-head"><i data-icon="signs"></i><span class="card-title">Teach it your signs</span><span class="card-meta" id="slTeachCount"></span></div>
+            <p class="subtle" style="margin-bottom:8px">For a presentation: record each sign you will use 3 times. It then matches <b>your</b> way of signing and only looks for those signs. The recordings stay in this browser.</p>
+            <div class="tool-group" style="flex-wrap:wrap;gap:6px">
+              <select class="input" id="slTeachWord" aria-label="Sign to teach"></select>
+              <button class="btn btn-primary" id="slTeachRec"><span>Record a sample</span></button>
+            </div>
+            <div class="subtle" id="slTeachMsg" style="margin:8px 0">Start the camera first.</div>
+            <div class="sl-chips" id="slTeachList"></div>
+            <button class="btn btn-ghost btn-sm" id="slTeachClear" style="margin-top:8px">Forget my recordings</button>
           </div>
           <div class="card">
             <div class="card-head"><i data-icon="info"></i><span class="card-title">For good recognition</span></div>

@@ -15,6 +15,7 @@ export async function loadModel(url) {
   return {
     ...m, mean: undefined, std: undefined, layers: undefined,
     inputSize: mean.length,
+    standardise(x) { const a = new Float32Array(x.length); for (let i = 0; i < x.length; i++) a[i] = (x[i] - mean[i]) / std[i]; return a; },
     predict(x) {
       let a = new Float32Array(x.length);
       for (let i = 0; i < x.length; i++) a[i] = (x[i] - mean[i]) / std[i];

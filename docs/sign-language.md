@@ -133,3 +133,26 @@ temperature-scaled on held-out signers (T = 2.1 for letters, 1.9 for words) befo
   hands leaving the picture reduce accuracy. The accuracy above is on recorded data; live use with a webcam is usually
   somewhat lower, especially for people whose signing differs from the dataset signers.
 - **Not a substitute for an interpreter.** This is a demonstration of the technology and a help for short exchanges.
+
+
+## Presentation phrases and "Teach it your signs"
+
+For a talk or demo, the Words mode has three sets (the buttons next to the mode switch):
+
+- **Presentation phrases** (default): 13 everyday signs (Hello, How are you, Thank you, Good Morning, Good afternoon, Pleased,
+  I, you, Friend, Mother, Father, Today, Tomorrow). The recogniser only chooses among these and uses a looser confidence
+  threshold (0.45, margin 0.10), because with few candidates a lower probability is still reliable. Measured on INCLUDE test videos of
+  unseen signers (`tools/isl/replay_phrases.mjs`, end to end through the browser code): all 106 words 49 of 67 videos right;
+  the 17 phrases tried first 55 of 67; the final 13 phrases 43 of 48 right, 1 wrong, 2 not sure, 2 not detected.
+  Good evening / Good night and Brother / Sister were left out of the default list because they were confused with each other.
+- **My signs**: appears after you record a sign at least twice (3 times recommended) with *Teach it your signs*. The recogniser
+  then only looks for the signs you taught and blends the network's answer 50/50 with the distance to your own recordings
+  (standardised 16-step feature vectors, nearest recording per sign, scaled by how much your own repeats vary).
+  Recordings are stored in this browser (`localStorage`, key `dtl.signTemplates`) and never leave it.
+  Replay with the first 3 test videos per phrase as the "user's recordings": 18 of 20 right, 1 wrong, 1 not sure
+  (same videos without recordings: 18 right, 2 wrong). The test uses other signers, so it understates the benefit for one person;
+  it has not been measured with a real person signing live.
+- **All words**: the full 106-word vocabulary.
+
+A printable guide with pictures, a set-up checklist and a demo script: [isl-presentation-guide.pdf](isl-presentation-guide.pdf)
+(built by `tools/isl/make_guide.py`).

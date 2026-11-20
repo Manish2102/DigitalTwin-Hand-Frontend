@@ -12,6 +12,11 @@ import { loadModel } from "./sign/model.js";
 import { Recognizer } from "./sign/recognizer.js";
 import { REST_Y, anchors } from "./sign/features.js";
 
+// Everyday phrases for a talk or demo. Recognition limited to a list like this is much more accurate than 106 words.
+export const PHRASES = ["Hello", "How are you", "Thank you", "Good Morning", "Good afternoon", "Pleased", "I", "you", "Friend", "Mother", "Father", "Today", "Tomorrow"];
+const STORE = "dtl.signTemplates", SETKEY = "dtl.signSet";
+let wordSet = (() => { try { return localStorage.getItem(SETKEY) || "phrases"; } catch { return "phrases"; } })();
+let samples = (() => { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; } })();   // { label: [base64 float32] }
 const vision = new Vision({ hands: true, pose: true, numHands: 2 });
 let rec = null, models = null, modelsP = null, mode = "words";
 let text = [];                     // tokens: { t: "word" | "letter" | "space", s }
@@ -20,7 +25,7 @@ window.__sign = { vision, get rec() { return rec; }, get text() { return text; }
 
 function loadModels() {
   modelsP ??= Promise.all([loadModel(new URL("./sign/models/words.json", import.meta.url)), loadModel(new URL("./sign/models/letters.json", import.meta.url))])
-    .then(([words, letters]) => { models = { words, letters }; rec = new Recognizer(models); rec.setMode(mode); renderVocab(); renderAccuracy(); return models; })
+    .then(([words, letters]) => { models = { words, letters }; rec = new Recognizer(models); rec.setMode(mode); applyWordSet(); renderTeach(); renderVocab(); renderAccuracy(); return models; })
     .catch(e => { modelsP = null; throw e; });
   return modelsP;
 }
@@ -53,6 +58,7 @@ vision.onResult(r => {
 });
 
 function handle(ev) {
+  if (ev.type === "sample") { addSample(ev.label, ev.x); return; }
   if (ev.type === "space") { if (text.length && text[text.length - 1].t === "letter") text.push({ t: "space" }); renderText(); return; }
   if (ev.type === "unsure") {
     showResult({ kind: "unsure", top: ev.top, reason: ev.reason });
@@ -149,7 +155,7 @@ function draw(r) {
 $("slModes").querySelectorAll("button").forEach(b => b.onclick = () => {
   mode = b.dataset.mode;
   $("slModes").querySelectorAll("button").forEach(x => x.classList.toggle("sel", x === b));
-  rec?.setMode(mode);
+  rec?.setMode(mode); applyWordSet();
   $("slHint").textContent = mode === "words"
     ? "Sign one word at a time and lower your hands below the rest line after each word."
     : "Hold each letter or number still for about half a second. Lower your hands to end a word.";
@@ -216,3 +222,65 @@ on("section", name => { if (name !== "sign" && vision.state !== "off") vision.st
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 renderText(); hydrateIcons($("sec-sign"));
 if (twin.section === "sign") loadModels().catch(e => { $("slVocab").innerHTML = `<p class="subtle">Could not load the sign models: ${esc(e.message)}</p>`; });
+
+
+// ------------------------------------------------- word set and "teach my signs"
+const b64 = x => { const u = new Uint8Array(new Float32Array(x).buffer); let s = ""; for (const c of u) s += String.fromCharCode(c); return btoa(s); };
+const unb64 = t => { const s = atob(t), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new Float32Array(u.buffer); };
+function saveSamples() { try { localStorage.setItem(STORE, JSON.stringify(samples)); } catch { toast("Could not save your recordings in this browser", "warning"); } }
+const taught = () => Object.keys(samples).filter(l => samples[l].length >= 2);
+let teaching = false;
+
+function applyWordSet() {
+  if (wordSet === "mine" && taught().length < 2) wordSet = "phrases";
+  $("slSets").querySelectorAll("button").forEach(b => b.classList.toggle("sel", b.dataset.set === wordSet));
+  $("slSetMine").classList.toggle("hidden", taught().length < 2);
+  $("slSetGroup").classList.toggle("hidden", mode !== "words");
+  if (!rec || !models) return;
+  const labels = models.words.labels;
+  if (wordSet === "mine") {
+    const t = {};
+    for (const l of taught()) t[l] = samples[l].map(x => models.words.standardise(unb64(x)));
+    rec.setSubset(taught()); rec.setTemplates(t);
+  } else {
+    rec.setSubset(wordSet === "phrases" ? PHRASES.filter(l => labels.includes(l)) : null); rec.setTemplates(null);
+  }
+}
+$("slSets").querySelectorAll("button").forEach(b => b.onclick = () => {
+  wordSet = b.dataset.set; try { localStorage.setItem(SETKEY, wordSet); } catch {}
+  applyWordSet();
+});
+
+function renderTeach() {
+  if (!models) return;
+  const sel = $("slTeachWord");
+  if (!sel.options.length) {
+    const rest = models.words.labels.filter(l => !PHRASES.includes(l));
+    sel.innerHTML = `<optgroup label="Presentation phrases">${PHRASES.map(l => `<option>${esc(l)}</option>`).join("")}</optgroup><optgroup label="Other words">${rest.map(l => `<option>${esc(l)}</option>`).join("")}</optgroup>`;
+  }
+  const have = Object.entries(samples).filter(([, v]) => v.length);
+  $("slTeachList").innerHTML = have.map(([l, v]) => `<span class="chip${v.length >= 3 ? " hit" : ""}">${esc(l)} ${v.length}/3</span>`).join("") || `<span class="subtle">Nothing recorded yet.</span>`;
+  $("slTeachCount").textContent = taught().length ? `${taught().length} signs ready` : "";
+}
+function addSample(label, x) {
+  rec.capture = null; teaching = false;
+  (samples[label] ??= []).push(b64(x));
+  if (samples[label].length > 6) samples[label].shift();
+  saveSamples();
+  const n = samples[label].length;
+  $("slTeachMsg").textContent = n >= 3 ? `${label}: ${n} recordings. Good. Pick the next sign, or try it.` : `${label}: ${n} of 3 recorded. Record another.`;
+  $("slTeachRec").querySelector("span").textContent = "Record a sample";
+  if (taught().length >= 2 && wordSet !== "mine") { wordSet = "mine"; try { localStorage.setItem(SETKEY, wordSet); } catch {} }
+  applyWordSet(); renderTeach();
+  toast(`Recorded "${label}" (${n})`, "success", 1800);
+}
+$("slTeachRec").onclick = () => {
+  if (!rec || vision.state !== "on") { toast("Start the camera first", "warning"); return; }
+  if (mode !== "words") $("slModes").querySelector('[data-mode="words"]').click();
+  if (teaching) { rec.capture = null; teaching = false; $("slTeachMsg").textContent = "Cancelled."; $("slTeachRec").querySelector("span").textContent = "Record a sample"; return; }
+  const label = $("slTeachWord").value;
+  rec.reset(); rec.capture = label; teaching = true;
+  $("slTeachMsg").textContent = `Now sign "${label}" the way you will in the talk, then lower your hands.`;
+  $("slTeachRec").querySelector("span").textContent = "Cancel";
+};
+$("slTeachClear").onclick = () => { samples = {}; saveSamples(); if (wordSet === "mine") wordSet = "phrases"; applyWordSet(); renderTeach(); $("slTeachMsg").textContent = "Your recordings were removed."; };
