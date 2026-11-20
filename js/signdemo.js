@@ -12,6 +12,9 @@ import { loadModel } from "./sign/model.js";
 import { Recognizer } from "./sign/recognizer.js";
 import { createTalker } from "./sign/talker.js";
 
+let avatar3d = null;
+const GREET = new Set(["Hello", "Welcome", "Good Morning", "Good afternoon", "Good evening", "Pleased"]);
+
 const TEMPLATES = "dtl.signTemplates";                       // written by the Sign language page's "Teach it your signs"
 const vision = new Vision({ hands: true, pose: true, numHands: 2 });
 let rec = null, words = null, loading = null;
@@ -19,7 +22,10 @@ const log = [];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const talker = createTalker($("sdPanel"), { toast, onChange: () => applySet() });
-window.__signdemo = { vision, talker, get rec() { return rec; }, get log() { return log; } };
+import("./sign/avatar3d.js").then(m => m.createAvatar3D($("sdStage"), talker, { section: $("sec-signdemo") }))
+  .then(a => { avatar3d = a; talker.hide2d(); })
+  .catch(e => { console.warn("3D avatar not available, using the flat avatar:", e.message); });
+window.__signdemo = { get avatar3d() { return avatar3d; }, vision, talker, get rec() { return rec; }, get log() { return log; } };
 
 // ------------------------------------------------------------------ models
 function load() {
@@ -94,6 +100,8 @@ function said(label, byHand, p) {
   talker.say(label, "word");
   flash(label, "ok");
   $("sdSaid").textContent = line; $("sdSaid").classList.remove("empty");
+  $("sdSub").textContent = line; $("sdSub").classList.add("show"); clearTimeout(said.t); said.t = setTimeout(() => $("sdSub").classList.remove("show"), 2500 + line.length * 70);
+  if (GREET.has(label)) avatar3d?.wave();
   log.unshift({ label, line, byHand: !!byHand, p, at: Date.now() }); log.length = Math.min(log.length, 8);
   $("sdLog").innerHTML = log.map(l => `<div><b>${esc(l.label)}</b> ${l.byHand ? "(chosen by you)" : l.p ? `(${Math.round(l.p * 100)}% sure)` : ""}: ${esc(l.line)}</div>`).join("");
 }

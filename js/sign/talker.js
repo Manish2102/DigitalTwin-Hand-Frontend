@@ -64,7 +64,7 @@ export function createTalker(panel, { toast = () => {}, onChange = () => {} } = 
   const $ = id => document.getElementById(id);
   const synth = "speechSynthesis" in window ? window.speechSynthesis : null;
   let lines = rd(LINES_KEY, null) ?? { ...SAYINGS };
-  let auto = rd(AUTO_KEY, true), talking = false, level = 0, bubbleT = 0;
+  let auto = rd(AUTO_KEY, true), talking = false, level = 0, bubbleT = 0, mouthOpen = 0;
 
   // ----------------------------------------------------------- voice
   function pickVoice() {
@@ -126,6 +126,7 @@ export function createTalker(panel, { toast = () => {}, onChange = () => {} } = 
     const t = (now - t0) / 1000;
     let open = 0;
     if (talking) { level *= 0.9; open = Math.min(1, 0.25 + 0.55 * Math.abs(Math.sin(t * 13)) + 0.35 * level); }
+    mouthOpen = open;
     mouth.setAttribute("ry", (2.5 + open * 13).toFixed(1)); mouth.setAttribute("rx", (14 - open * 2).toFixed(1));
     head.setAttribute("transform", talking ? `translate(0 ${(Math.sin(t * 7) * 1.6).toFixed(1)}) rotate(${(Math.sin(t * 3.1) * 1.2).toFixed(1)} 100 150)` : "");
     if (now > nextBlink) { blinkUntil = now + 130; nextBlink = now + 2200 + Math.random() * 2600; }
@@ -179,5 +180,8 @@ export function createTalker(panel, { toast = () => {}, onChange = () => {} } = 
     labels: () => Object.keys(lines),
     setLabels(list) { $("tkLabels").innerHTML = [...new Set(list)].map(l => `<option value="${esc(l)}">`).join(""); },
     get auto() { return auto; },
+    get talking() { return talking; },
+    get mouth() { return mouthOpen; },
+    hide2d() { const a = document.querySelector("#tkCard .tk-avatar svg"); if (a) a.style.display = "none"; },
   };
 }
